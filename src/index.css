@@ -2,7 +2,80 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* ── Brand ── */
+  --c-primary:        #F7602E;
+  --c-primary-light:  #FAA284;
+  --c-primary-bg:     #FFF0EB;
+  --c-primary-border: #FABB96;
+
+  /* ── Base surfaces ── */
+  --c-bg:             #FEFBF6;
+  --c-white:          #FFFFFF;
+  --c-surface:        #F7F5F2;
+  --c-surface-2:      #F0EDE7;
+
+  /* ── Dark tones ── */
+  --c-dark:           #1D1D2F;
+  --c-dark-blue:      #24223B;
+  --c-third:          #DDA488;
+  --c-third-light:    #F5E8DF;
+
+  /* ── Borders ── */
+  --c-border:         #EDE8DF;
+  --c-border-dark:    #DDD9D1;
+
+  /* ── Text ── */
+  --c-text:           #1D1D2F;
+  --c-text-secondary: #56524E;
+  --c-text-muted:     #9E9A93;
+
+  /* ── Semantic ── */
+  --c-success:        #05C270;
+  --c-success-bg:     #E6FAF2;
+  --c-success-border: #A8E6CF;
+  --c-success-dark:   #036B42;
+  --c-danger:         #FF4B4B;
+  --c-danger-bg:      #FFF0F0;
+  --c-warning:        #FFD600;
+  --c-info:           #7B2FBE;
+  --c-info-bg:        #F3E8FF;
+
+  /* ── Typography ── */
+  --font:             'Plus Jakarta Sans', system-ui, sans-serif;
+  --text-xs:          11px;
+  --text-sm:          13px;
+  --text-base:        14px;
+  --text-md:          16px;
+  --text-lg:          20px;
+  --text-xl:          24px;
+
+  /* ── Radii ── */
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   12px;
+  --r-xl:   16px;
+  --r-full: 999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(29,29,47,0.06);
+  --shadow-md: 0 4px 12px rgba(29,29,47,0.08);
+}
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font);
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+input, textarea, button, select {
+  font-family: var(--font);
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
