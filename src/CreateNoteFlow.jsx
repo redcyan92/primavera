@@ -165,18 +165,34 @@ const NumberInput = ({ value, onChange, placeholder, unit }) => (
   </div>
 );
 
-const TypeCard = ({ emoji, title, desc, selected, bg, border, onClick }) => (
+const SearchIcon = ({ color }) => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+);
+
+const MegaphoneIcon = ({ color }) => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 0 1-5.8-1.6"/>
+  </svg>
+);
+
+const TypeCard = ({ icon, title, desc, selected, bg, border, onClick }) => (
   <button onClick={onClick} style={{
-    height: '90px', borderRadius: '14px', cursor: 'pointer',
+    minHeight: '140px', borderRadius: '16px', cursor: 'pointer',
     border: selected ? `2px solid ${border}` : '1px solid #EDE8DF',
     backgroundColor: selected ? bg : '#FFFFFF',
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', gap: '3px', padding: '12px', transition: 'all 0.2s',
+    display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+    justifyContent: 'space-between', gap: '10px', padding: '20px',
+    transition: 'all 0.2s',
     boxShadow: selected ? 'none' : '0 1px 3px rgba(29,29,47,0.04)',
+    width: '100%', textAlign: 'left',
   }}>
-    <span style={{ fontSize: '22px' }}>{emoji}</span>
-    <span style={{ fontSize: '14px', fontWeight: '700', color: '#1D1D2F', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>{title}</span>
-    <span style={{ fontSize: '11px', color: '#9E9A93', textAlign: 'center', lineHeight: '1.4', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>{desc}</span>
+    {icon}
+    <div>
+      <div style={{ fontSize: '15px', fontWeight: '700', color: '#1D1D2F', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", marginBottom: '4px' }}>{title}</div>
+      <div style={{ fontSize: '12px', color: '#9E9A93', lineHeight: '1.5', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>{desc}</div>
+    </div>
   </button>
 );
 
@@ -194,14 +210,15 @@ const textInputStyle = {
 
 // ─── Main component ────────────────────────────────────────────────────────
 
-const CreateNoteFlow = ({ isOpen, onClose, onSave }) => {
+const CreateNoteFlow = ({ isOpen, onClose, onSave, initialVisibility = null }) => {
   const [formData, setFormData] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      // Merge with INITIAL_DATA so new fields always have their default value
-      if (saved) return { ...INITIAL_DATA, ...JSON.parse(saved) };
+      const base = saved ? { ...INITIAL_DATA, ...JSON.parse(saved) } : INITIAL_DATA;
+      if (initialVisibility) return { ...base, visibility: initialVisibility };
+      return base;
     } catch {}
-    return INITIAL_DATA;
+    return initialVisibility ? { ...INITIAL_DATA, visibility: initialVisibility } : INITIAL_DATA;
   });
   const [stepIndex, setStepIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -209,7 +226,7 @@ const CreateNoteFlow = ({ isOpen, onClose, onSave }) => {
   // Steps: 0=tipo, 1=luogo, 2=ora, 3=artista, 4=otra persona, 5=yo mismo, 6=instagram, 7=texto
   const stepFlow = useMemo(() => {
     if (formData.visibility === 'targeted' || formData.visibility === 'private') return [0, 1, 2, 3, 4, 5, 6, 7];
-    if (formData.visibility === 'public') return [0, 3, 7];
+    if (formData.visibility === 'public') return [7, 3]; // text first, then artist — no type selection
     return [0];
   }, [formData.visibility]);
 
@@ -217,6 +234,13 @@ const CreateNoteFlow = ({ isOpen, onClose, onSave }) => {
   const isLastStep = stepIndex === stepFlow.length - 1;
   const progress = stepFlow.length > 1 ? stepIndex / (stepFlow.length - 1) : 0;
   const canSave = formData.description.trim().length > 0;
+
+  useEffect(() => {
+    if (isOpen && initialVisibility) {
+      setFormData({ ...INITIAL_DATA, visibility: initialVisibility });
+      setStepIndex(0);
+    }
+  }, [isOpen, initialVisibility]);
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(formData)); } catch {}
@@ -308,12 +332,16 @@ const CreateNoteFlow = ({ isOpen, onClose, onSave }) => {
             <h2 style={h2}>What kind of post?</h2>
             <p style={sub}>Choose how you want to share your moment</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <TypeCard emoji="🔍" title="Targeted Search"
+              <TypeCard
+                icon={<SearchIcon color={formData.visibility === 'targeted' || formData.visibility === 'private' ? '#2e7d32' : '#9E9A93'} />}
+                title="Targeted Search"
                 desc="AI-matched. Only shown to users with high compatibility. Precise matching."
                 selected={formData.visibility === 'targeted' || formData.visibility === 'private'}
                 bg="#f1f8e9" border="#a5d6a7"
                 onClick={() => handleTypeSelect('targeted')} />
-              <TypeCard emoji="📣" title="Public Post"
+              <TypeCard
+                icon={<MegaphoneIcon color={formData.visibility === 'public' ? '#1565c0' : '#9E9A93'} />}
+                title="Public Post"
                 desc="Visible to everyone. Anyone can see it, like it, and connect."
                 selected={formData.visibility === 'public'}
                 bg="#f0f7ff" border="#90caf9"
