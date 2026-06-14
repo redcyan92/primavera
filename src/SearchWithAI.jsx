@@ -110,7 +110,7 @@ export default function SearchWithAI({ onSave }) {
     self_clothing: '',
   });
 
-  const go = (nextStep, delay = 320) => {
+  const go = (nextStep, delay = 900) => {
     setStep('loading');
     setTimeout(() => setStep(nextStep), delay);
   };
@@ -185,18 +185,36 @@ export default function SearchWithAI({ onSave }) {
 
   // ── Step: input ───────────────────────────────────────────────────────────
   if (step === 'input') return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div>
-        <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 6px', color: t.dark, letterSpacing: '-0.5px', fontFamily: font }}>
-          Who did you vibe with? ⚡
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '75vh', gap: '24px' }}>
+      {/* AI badge */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <span style={{
+          fontSize: '11px', fontWeight: '700', letterSpacing: '0.06em',
+          textTransform: 'uppercase', padding: '4px 10px', borderRadius: '999px',
+          backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`,
+          fontFamily: font,
+        }}>AI Search</span>
+        <span style={{
+          fontSize: '11px', fontWeight: '600', letterSpacing: '0.04em',
+          textTransform: 'uppercase', padding: '4px 10px', borderRadius: '999px',
+          backgroundColor: t.surface, color: t.textMuted, border: `1px solid ${t.border}`,
+          fontFamily: font,
+        }}>EN · ES · IT</span>
+      </div>
+
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 8px', color: t.dark, letterSpacing: '-0.5px', fontFamily: font }}>
+          Who did you vibe with?
         </h1>
-        <p style={{ margin: 0, fontSize: '14px', color: t.textMuted, fontFamily: font, lineHeight: '1.5' }}>
-          Tell me anything you remember — the more detail, the better the match
+        <p style={{ margin: 0, fontSize: '14px', color: t.textMuted, fontFamily: font, lineHeight: '1.6', maxWidth: '300px' }}>
+          Tell me anything you remember — the more detail, the better the match.
+          <br />
+          <span style={{ color: t.textMuted, fontSize: '12px' }}>Only shared with compatible people.</span>
         </p>
       </div>
 
       <div style={{
-        backgroundColor: t.white, border: `1px solid ${t.border}`,
+        width: '100%', backgroundColor: t.white, border: `1px solid ${t.border}`,
         borderRadius: '16px', padding: '16px',
         boxShadow: '0 1px 4px rgba(29,29,47,0.05)',
       }}>
@@ -227,12 +245,8 @@ export default function SearchWithAI({ onSave }) {
           fontFamily: font, transition: 'background-color 0.2s',
         }}
       >
-        ⚡ Find them
+        Find them
       </button>
-
-      <p style={{ textAlign: 'center', fontSize: '12px', color: t.textMuted, margin: 0, fontFamily: font }}>
-        Works in English, Spanish & Italian
-      </p>
     </div>
   );
 
@@ -243,7 +257,7 @@ export default function SearchWithAI({ onSave }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div>
           <h2 style={{ fontSize: '22px', fontWeight: '800', margin: '0 0 6px', color: t.dark, fontFamily: font }}>
-            {detectedCount > 0 ? `Nice, I caught ${detectedCount} thing${detectedCount > 1 ? 's' : ''} ✨` : 'Got your description'}
+            {detectedCount > 0 ? `Nice, I caught ${detectedCount} thing${detectedCount > 1 ? 's' : ''}` : 'Got your description'}
           </h2>
           <p style={{ margin: 0, fontSize: '14px', color: t.textMuted, fontFamily: font }}>
             {detectedCount > 0 ? "Here's what I found — let's refine together" : "Let's fill in some details together"}
@@ -348,7 +362,7 @@ export default function SearchWithAI({ onSave }) {
       <StepHeader title="What were you watching?" sub="Which artist or stage were you at?" step={2} total={REFINE_TOTAL} />
 
       <div style={{ maxHeight: '55vh', overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '2px 0' }}>
-        {PS_ARTISTS.filter(a => a !== 'Otro').map(a => (
+        {PS_ARTISTS.filter(a => a !== 'Otro').slice().sort((a, b) => a.localeCompare(b)).map(a => (
           <Chip key={a} label={a} selected={refined.artist === a}
             onClick={() => setRefined(p => ({ ...p, artist: p.artist === a ? null : a }))} />
         ))}
@@ -494,7 +508,7 @@ export default function SearchWithAI({ onSave }) {
         </div>
       </div>
 
-      <NavButtons onBack={() => go('appearance')} onNext={handleSubmit} nextLabel="🔍 Submit search" isLast />
+      <NavButtons onBack={() => go('appearance')} onNext={handleSubmit} nextLabel="Submit search" isLast />
     </div>
   );
 
@@ -504,8 +518,12 @@ export default function SearchWithAI({ onSave }) {
       <div style={{
         width: '80px', height: '80px', borderRadius: '24px',
         backgroundColor: t.successBg, border: `2px solid ${t.successBorder}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '38px',
-      }}>⚡</div>
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17l-5-5" stroke={t.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
 
       <div>
         <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '0 0 8px', color: t.dark, fontFamily: font }}>Your search is live!</h2>
