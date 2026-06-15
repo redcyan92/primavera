@@ -278,7 +278,7 @@ export default function SearchWithAI({ onSave }) {
           }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M9 3l1.5 3L14 7.5 10.5 9 9 12.5 7.5 9 4 7.5 7.5 6zM16 11l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="currentColor"/>
+            <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor"/>
           </svg>
         </button>
         <style>{`
