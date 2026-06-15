@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { extractFields } from './extractFields';
 import { PS_ARTISTS, TIME_OPTIONS, LOCATION_OPTIONS, APPEARANCE_OPTIONS, DAY_OPTIONS } from './defaultOptions';
 
@@ -183,24 +183,47 @@ export default function SearchWithAI({ onSave }) {
   // ── Loading ───────────────────────────────────────────────────────────────
   if (step === 'loading') return <LoadingScreen message="On it…" sub="Reading between the lines" />;
 
+  // ── Typewriter placeholder ────────────────────────────────────────────────
+  const EXAMPLES = [
+    'tall girl with dark curly hair, was at Bicep around midnight near the front…',
+    'chico con gorra verde cerca del bar durante Rosalía, tatuajes en los brazos…',
+    'ragazzo alto con capelli biondi vicino al palco durante Four Tet…',
+    'person with glasses and a yellow jacket, we talked briefly near the entrance…',
+  ];
+  const [typeText, setTypeText] = useState('');
+  const [exIdx, setExIdx] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const typeRef = useRef(null);
+
+  useEffect(() => {
+    if (step !== 'input') return;
+    const full = EXAMPLES[exIdx];
+    const speed = isDeleting ? 18 : 38;
+    const pause = isDeleting ? 0 : 1800;
+
+    if (!isDeleting && typeText === full) {
+      typeRef.current = setTimeout(() => setIsDeleting(true), pause);
+    } else if (isDeleting && typeText === '') {
+      setIsDeleting(false);
+      setExIdx(i => (i + 1) % EXAMPLES.length);
+    } else {
+      typeRef.current = setTimeout(() => {
+        setTypeText(isDeleting ? typeText.slice(0, -1) : full.slice(0, typeText.length + 1));
+      }, speed);
+    }
+    return () => clearTimeout(typeRef.current);
+  }, [typeText, isDeleting, exIdx, step]);
+
   // ── Step: input ───────────────────────────────────────────────────────────
   if (step === 'input') return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '75vh', gap: '24px' }}>
       {/* AI badge */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <span style={{
-          fontSize: '11px', fontWeight: '700', letterSpacing: '0.06em',
-          textTransform: 'uppercase', padding: '4px 10px', borderRadius: '999px',
-          backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`,
-          fontFamily: font,
-        }}>AI Search</span>
-        <span style={{
-          fontSize: '11px', fontWeight: '600', letterSpacing: '0.04em',
-          textTransform: 'uppercase', padding: '4px 10px', borderRadius: '999px',
-          backgroundColor: t.surface, color: t.textMuted, border: `1px solid ${t.border}`,
-          fontFamily: font,
-        }}>EN · ES · IT</span>
-      </div>
+      <span style={{
+        fontSize: '11px', fontWeight: '600', letterSpacing: '0.04em',
+        padding: '5px 12px', borderRadius: '999px',
+        backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`,
+        fontFamily: font,
+      }}>AI Assisted &middot; Only shared with compatible people</span>
 
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 8px', color: t.dark, letterSpacing: '-0.5px', fontFamily: font }}>
@@ -208,45 +231,58 @@ export default function SearchWithAI({ onSave }) {
         </h1>
         <p style={{ margin: 0, fontSize: '14px', color: t.textMuted, fontFamily: font, lineHeight: '1.6', maxWidth: '300px' }}>
           Tell me anything you remember — the more detail, the better the match.
-          <br />
-          <span style={{ color: t.textMuted, fontSize: '12px' }}>Only shared with compatible people.</span>
         </p>
       </div>
 
+      {/* Text field with embedded send button */}
       <div style={{
         width: '100%', backgroundColor: t.white, border: `1px solid ${t.border}`,
-        borderRadius: '16px', padding: '16px',
-        boxShadow: '0 1px 4px rgba(29,29,47,0.05)',
+        borderRadius: '16px', padding: '14px 14px 10px',
+        boxShadow: '0 1px 4px rgba(29,29,47,0.05)', position: 'relative',
       }}>
+        {/* Animated placeholder */}
+        {!prompt && (
+          <div style={{
+            position: 'absolute', top: '14px', left: '14px', right: '56px',
+            fontSize: '14px', color: t.textMuted, fontFamily: font,
+            lineHeight: '1.6', pointerEvents: 'none', whiteSpace: 'pre-wrap',
+          }}>
+            {typeText}<span style={{ borderRight: `2px solid ${t.textMuted}`, marginLeft: '1px', animation: 'blink 1s step-end infinite' }} />
+          </div>
+        )}
         <textarea
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
-          placeholder="e.g. tall girl with dark curly hair, was at Bicep around midnight near the front. She was wearing a white top…"
           style={{
-            width: '100%', minHeight: '140px', background: 'transparent',
+            width: '100%', minHeight: '98px', background: 'transparent',
             border: 'none', outline: 'none', resize: 'none',
-            fontSize: '15px', color: t.text, fontFamily: font,
+            fontSize: '14px', color: t.text, fontFamily: font,
             lineHeight: '1.6', boxSizing: 'border-box',
+            paddingRight: '44px',
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
-          <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>{prompt.length} chars</span>
-        </div>
+        {/* Circle send button */}
+        <button
+          onClick={handleAnalyze}
+          disabled={!prompt.trim()}
+          style={{
+            position: 'absolute', bottom: '12px', right: '12px',
+            width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+            backgroundColor: prompt.trim() ? t.primary : t.borderDark,
+            color: '#fff', cursor: prompt.trim() ? 'pointer' : 'not-allowed',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background-color 0.2s', flexShrink: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <style>{`
+          @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}</style>
       </div>
-
-      <button
-        onClick={handleAnalyze}
-        disabled={!prompt.trim()}
-        style={{
-          width: '100%', padding: '15px', border: 'none', borderRadius: '14px',
-          backgroundColor: prompt.trim() ? t.primary : t.borderDark,
-          color: '#fff', fontSize: '15px', fontWeight: '700',
-          cursor: prompt.trim() ? 'pointer' : 'not-allowed',
-          fontFamily: font, transition: 'background-color 0.2s',
-        }}
-      >
-        Find them
-      </button>
     </div>
   );
 
@@ -565,7 +601,6 @@ export default function SearchWithAI({ onSave }) {
         color: t.text, fontWeight: '500', fontFamily: font,
       }}>+ New search</button>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
