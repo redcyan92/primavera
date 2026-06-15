@@ -187,7 +187,6 @@ export default function SearchWithAI({ onSave }) {
   const EXAMPLES = [
     'tall girl with dark curly hair, was at Bicep around midnight near the front…',
     'chico con gorra verde cerca del bar durante Rosalía, tatuajes en los brazos…',
-    'ragazzo alto con capelli biondi vicino al palco durante Four Tet…',
     'person with glasses and a yellow jacket, we talked briefly near the entrance…',
   ];
   const [typeText, setTypeText] = useState('');
