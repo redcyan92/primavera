@@ -712,23 +712,23 @@ const PrimaveraApp = () => {
                 {/* sliding pill */}
                 <div style={{
                   position: 'absolute', top: '4px', bottom: '4px',
-                  left: boardSubTab === 'everyone' ? '4px' : 'calc(50% + 2px)',
-                  width: 'calc(50% - 6px)',
-                  backgroundColor: t.primaryBg,
+                  left: boardSubTab === 'everyone' ? '4px' : '68px',
+                  width: '64px',
+                  backgroundColor: t.primary,
                   borderRadius: '8px',
-                  boxShadow: '0 1px 3px rgba(247,96,46,0.12)',
+                  boxShadow: '0 1px 3px rgba(247,96,46,0.2)',
                   transition: 'left 0.22s cubic-bezier(0.4,0,0.2,1)',
                   pointerEvents: 'none',
                 }} />
                 {[{ id: 'everyone', label: 'All' }, { id: 'mine', label: 'Mine' }].map(st => (
                   <button key={st.id} onClick={() => setBoardSubTab(st.id)} style={{
                     position: 'relative', zIndex: 1,
-                    padding: '6px 24px', borderRadius: '8px', cursor: 'pointer',
-                    border: 'none', background: 'transparent',
-                    color: t.primary,
+                    width: '64px', padding: '6px 0', borderRadius: '8px', cursor: 'pointer',
+                    border: 'none', background: 'transparent', textAlign: 'center',
+                    color: boardSubTab === st.id ? '#fff' : t.primary,
                     fontSize: '12px', fontWeight: boardSubTab === st.id ? '700' : '400',
                     fontFamily: font, letterSpacing: '0.03em',
-                    transition: 'color 0.22s, font-weight 0.1s',
+                    transition: 'color 0.22s',
                   }}>{st.label}</button>
                 ))}
               </div>
