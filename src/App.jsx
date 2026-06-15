@@ -703,20 +703,32 @@ const PrimaveraApp = () => {
                 </svg>
               </button>
             </div>
-            <div style={{ padding: '0 16px 14px', display: 'flex', gap: '8px' }}>
-              {[
-                { id: 'everyone', label: 'All' },
-                { id: 'mine', label: 'Mine' },
-              ].map(st => (
-                <button key={st.id} onClick={() => setBoardSubTab(st.id)} style={{
-                  padding: '6px 14px', borderRadius: '99px', cursor: 'pointer',
-                  border: boardSubTab === st.id ? 'none' : `1px solid ${t.border}`,
-                  backgroundColor: boardSubTab === st.id ? t.primary : t.white,
-                  color: boardSubTab === st.id ? t.white : t.textMuted,
-                  fontSize: '12px', fontWeight: boardSubTab === st.id ? '600' : '400',
-                  fontFamily: font,
-                }}>{st.label}</button>
-              ))}
+            <div style={{ padding: '0 16px 14px' }}>
+              <div style={{
+                display: 'inline-flex', position: 'relative',
+                backgroundColor: '#FFF0EB', borderRadius: '10px',
+                padding: '3px', gap: '0',
+              }}>
+                {/* sliding pill */}
+                <div style={{
+                  position: 'absolute', top: '3px', bottom: '3px',
+                  left: boardSubTab === 'everyone' ? '3px' : 'calc(50% + 1.5px)',
+                  width: 'calc(50% - 4.5px)',
+                  backgroundColor: t.primary, borderRadius: '7px',
+                  transition: 'left 0.22s cubic-bezier(0.4,0,0.2,1)',
+                  pointerEvents: 'none',
+                }} />
+                {[{ id: 'everyone', label: 'All' }, { id: 'mine', label: 'Mine' }].map(st => (
+                  <button key={st.id} onClick={() => setBoardSubTab(st.id)} style={{
+                    position: 'relative', zIndex: 1,
+                    padding: '6px 20px', borderRadius: '7px', cursor: 'pointer',
+                    border: 'none', background: 'transparent',
+                    color: boardSubTab === st.id ? '#fff' : t.primary,
+                    fontSize: '12px', fontWeight: '600', fontFamily: font,
+                    transition: 'color 0.22s',
+                  }}>{st.label}</button>
+                ))}
+              </div>
             </div>
 
             {boardSubTab === 'mine' && (() => {
