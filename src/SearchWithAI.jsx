@@ -219,11 +219,14 @@ export default function SearchWithAI({ onSave }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '75vh', gap: '24px' }}>
       {/* AI badge */}
       <span style={{
-        fontSize: '11px', fontWeight: '600', letterSpacing: '0.04em',
-        padding: '5px 12px', borderRadius: '999px',
+        fontSize: '11px', padding: '5px 12px', borderRadius: '999px',
         backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`,
         fontFamily: font,
-      }}>AI Assisted &middot; Only shared with compatible people</span>
+      }}>
+        <span style={{ fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase' }}>AI Assisted</span>
+        <span style={{ fontWeight: '400', margin: '0 4px' }}>&middot;</span>
+        <span style={{ fontWeight: '400' }}>Only shared with compatible people</span>
+      </span>
 
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 8px', color: t.dark, letterSpacing: '-0.5px', fontFamily: font }}>
@@ -275,7 +278,7 @@ export default function SearchWithAI({ onSave }) {
           }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 3l1.5 3L14 7.5 10.5 9 9 12.5 7.5 9 4 7.5 7.5 6zM16 11l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="currentColor"/>
           </svg>
         </button>
         <style>{`
