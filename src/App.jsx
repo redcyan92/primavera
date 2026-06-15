@@ -706,26 +706,29 @@ const PrimaveraApp = () => {
             <div style={{ padding: '0 16px 14px' }}>
               <div style={{
                 display: 'inline-flex', position: 'relative',
-                backgroundColor: '#FFF0EB', borderRadius: '10px',
-                padding: '3px', gap: '0',
+                backgroundColor: '#C4B9AE', borderRadius: '12px',
+                padding: '4px', gap: '0',
               }}>
                 {/* sliding pill */}
                 <div style={{
-                  position: 'absolute', top: '3px', bottom: '3px',
-                  left: boardSubTab === 'everyone' ? '3px' : 'calc(50% + 1.5px)',
-                  width: 'calc(50% - 4.5px)',
-                  backgroundColor: t.primary, borderRadius: '7px',
+                  position: 'absolute', top: '4px', bottom: '4px',
+                  left: boardSubTab === 'everyone' ? '4px' : 'calc(50% + 2px)',
+                  width: 'calc(50% - 6px)',
+                  backgroundColor: '#fff',
+                  borderRadius: '8px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                   transition: 'left 0.22s cubic-bezier(0.4,0,0.2,1)',
                   pointerEvents: 'none',
                 }} />
                 {[{ id: 'everyone', label: 'All' }, { id: 'mine', label: 'Mine' }].map(st => (
                   <button key={st.id} onClick={() => setBoardSubTab(st.id)} style={{
                     position: 'relative', zIndex: 1,
-                    padding: '6px 20px', borderRadius: '7px', cursor: 'pointer',
+                    padding: '6px 24px', borderRadius: '8px', cursor: 'pointer',
                     border: 'none', background: 'transparent',
-                    color: boardSubTab === st.id ? '#fff' : t.primary,
-                    fontSize: '12px', fontWeight: '600', fontFamily: font,
-                    transition: 'color 0.22s',
+                    color: boardSubTab === st.id ? t.dark : '#fff',
+                    fontSize: '12px', fontWeight: boardSubTab === st.id ? '700' : '500',
+                    fontFamily: font, letterSpacing: '0.03em',
+                    transition: 'color 0.22s, font-weight 0.1s',
                   }}>{st.label}</button>
                 ))}
               </div>
