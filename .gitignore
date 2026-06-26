@@ -16,3 +16,6 @@ dist
 # Claude Code
 .claude/
 .vercel
+
+# ShipStudio metadata
+.shipstudio/
