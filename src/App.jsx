@@ -289,6 +289,38 @@ const PrimaveraApp = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Seed history stack so the first back-swipe has somewhere to go
+  useEffect(() => {
+    history.replaceState({ tab: 'home' }, '');
+  }, []);
+
+  // Navigate tabs and push history so swipe-back works
+  const navigateTo = useCallback((newTab) => {
+    history.pushState({ tab: newTab }, '');
+    setTab(newTab);
+  }, []);
+
+  // Open modal and push history entry so swipe-back closes it
+  const openModal = useCallback(() => {
+    history.pushState({ modal: 'create' }, '');
+    openModal();
+  }, []);
+
+  // Intercept browser back gesture
+  useEffect(() => {
+    const onPop = (e) => {
+      if (isModalOpen) { setIsModalOpen(false); return; }
+      if (vibeCreating) {
+        if (vibeStep > 0) { setVibeStep(s => s - 1); history.pushState({ tab }, ''); }
+        else { setVibeCreating(false); }
+        return;
+      }
+      setTab(e.state?.tab || 'home');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [isModalOpen, vibeCreating, vibeStep, tab]);
+
   // Re-fetch whenever the tab becomes visible again
   useEffect(() => {
     const onVisible = () => { if (document.visibilityState === 'visible') loadData(userId, activeFestivalId); };
@@ -831,7 +863,7 @@ const PrimaveraApp = () => {
             </h1>
 
             {/* Card 1 — Find Someone */}
-            <button onClick={() => setTab('notes')} style={{
+            <button onClick={() => navigateTo('notes')} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
               flex: 1, width: '100%', padding: '28px 24px', borderRadius: '20px',
               border: `1.5px solid ${t.primaryBorder}`, backgroundColor: t.primaryBg,
@@ -862,7 +894,7 @@ const PrimaveraApp = () => {
             </button>
 
             {/* Card 2 — Share a Moment */}
-            <button onClick={() => setTab('public')} style={{
+            <button onClick={() => navigateTo('public')} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
               flex: 1, width: '100%', padding: '28px 24px', borderRadius: '20px',
               border: `1px solid ${t.border}`, backgroundColor: t.surface,
@@ -906,7 +938,7 @@ const PrimaveraApp = () => {
             mySearches={searchCards.map(c => c.note)}
             suggestedMatches={searchCards.flatMap(c => c.matches)}
             confirmedMatches={confirmedMatches}
-            onNavigateToConnections={() => setTab('matches')}
+            onNavigateToConnections={() => navigateTo('matches')}
           />
         )}
 
@@ -964,7 +996,7 @@ const PrimaveraApp = () => {
             {matchSubTab === 'ai' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {searchCards.length === 0 ? (
-                  <NoSearchCard onCreateSearch={() => setTab('notes')} />
+                  <NoSearchCard onCreateSearch={() => navigateTo('notes')} />
                 ) : searchCards.map(({ note: myNote, matches }) => {
                   const carouselItems = matches
                     .filter(m => m.userResponse !== 'no')
@@ -1402,7 +1434,7 @@ const PrimaveraApp = () => {
         padding: '6px 8px 10px', position: 'sticky', bottom: 0, gap: '4px',
       }}>
         {/* Home */}
-        <button onClick={() => setTab('home')} style={{
+        <button onClick={() => navigateTo('home')} style={{
           flex: 1, background: 'none', border: 'none', padding: '10px 0',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: tab === 'home' ? t.primary : t.textMuted,
@@ -1414,7 +1446,7 @@ const PrimaveraApp = () => {
         </button>
 
         {/* AI Search */}
-        <button onClick={() => setTab('notes')} style={{
+        <button onClick={() => navigateTo('notes')} style={{
           flex: 1, background: 'none', border: 'none', padding: '10px 0',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer',
@@ -1426,7 +1458,7 @@ const PrimaveraApp = () => {
         </button>
 
         {/* Vibes */}
-        <button onClick={() => setTab('public')} style={{
+        <button onClick={() => navigateTo('public')} style={{
           flex: 1, background: 'none', border: 'none', padding: '10px 0',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer',
@@ -1441,7 +1473,7 @@ const PrimaveraApp = () => {
         </button>
 
         {/* Connections — thunder icon */}
-        <button onClick={() => setTab('matches')} style={{
+        <button onClick={() => navigateTo('matches')} style={{
           flex: 1, background: 'none', border: 'none', padding: '10px 0',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: tab === 'matches' ? t.primary : t.textMuted,
@@ -1452,7 +1484,7 @@ const PrimaveraApp = () => {
         </button>
 
         {/* Profile */}
-        <button onClick={() => setTab('profile')} style={{
+        <button onClick={() => navigateTo('profile')} style={{
           flex: 1, background: 'none', border: 'none', padding: '10px 0',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: tab === 'profile' ? t.primary : t.textMuted,
