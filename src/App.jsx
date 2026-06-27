@@ -701,10 +701,10 @@ const PrimaveraApp = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px 48px', gap: '28px' }}>
           <div>
             <h1 style={{ fontSize: '26px', fontWeight: '700', color: t.dark, margin: '0 0 8px', letterSpacing: '0.01em', fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1.3' }}>
-              Before you start
+              Quick check
             </h1>
             <p style={{ margin: 0, fontSize: '14px', color: t.textSec, lineHeight: '1.5' }}>
-              OTRA is for adults only. Please confirm the following to continue.
+              Confirm the following to get started.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
