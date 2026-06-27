@@ -416,6 +416,24 @@ const PrimaveraApp = () => {
     return () => clearTimeout(t);
   }, [resendCountdown]);
 
+  // Push history on auth step transitions so swipe-back works
+  useEffect(() => {
+    if (authStep) history.pushState({ authStep }, '');
+  }, [authStep]);
+
+  // Handle swipe-back during auth flow
+  useEffect(() => {
+    if (authStep === null) return; // main app handles its own popstate
+    const onPop = () => {
+      if (authStep === 'otp')        { setAuthStep('email'); setOtpCode(''); setOtpError(''); }
+      else if (authStep === 'email') { setAuthStep('onboarding'); }
+      else if (authStep === 'onboarding') { setAuthStep('splash'); }
+      else if (authStep === 'age')   { /* can't go back — already logged in */ history.pushState({ authStep: 'age' }, ''); }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [authStep]);
+
   const handleSaveNote = async (formData) => {
     if (!userId) return;
     setLoading(true);
