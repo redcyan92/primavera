@@ -1379,7 +1379,7 @@ const PrimaveraApp = () => {
 
               {/* Sign out */}
               <button
-                onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSuggestedMatches([]); setAuthStep('splash'); }}
+                onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setAuthStep('splash'); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   background: 'none', border: `1px solid ${t.border}`, borderRadius: '10px',
