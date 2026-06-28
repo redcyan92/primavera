@@ -60,6 +60,7 @@ const supabase = {
   async createNote(userId, note)  { return this.request('notes', 'POST', { user_id: userId, ...note }); },
   async getNotes(userId)          { return this.request('notes', 'GET', null, `user_id=eq.${userId}`); },
   async getAllNotes(festivalId)    { return this.request('notes', 'GET', null, festivalId ? `festival_id=eq.${festivalId}` : null); },
+  async getNote(id)               { return this.request('notes', 'GET', null, `id=eq.${id}`); },
   async createMatch(match)        { return this.request('matches', 'POST', match); },
   async getMatches(userId)        { return this.request('matches', 'GET', null, `or=(user_1_id.eq.${userId},user_2_id.eq.${userId})`); },
   async updateMatch(matchId, data){ return this.request('matches', 'PATCH', data, `id=eq.${matchId}`); },
@@ -152,6 +153,11 @@ const PrimaveraApp = () => {
   });
   const [festivalSwitcherOpen, setFestivalSwitcherOpen] = useState(false);
   const activeFestival = activeFestivalId ? FESTIVALS[activeFestivalId] : null;
+
+  const [sharedPostId] = useState(() => new URLSearchParams(window.location.search).get('post'));
+  const [sharedPost, setSharedPost] = useState(null);
+  const [sharedPostAuthor, setSharedPostAuthor] = useState('');
+  const [sharedPostDismissed, setSharedPostDismissed] = useState(false);
 
   const [authStep, setAuthStep]             = useState(() => localStorage.getItem('fulmi_user_id') ? null : 'splash');
   const [user, setUser]                     = useState(() => {
@@ -289,6 +295,26 @@ const PrimaveraApp = () => {
     if (userId && activeFestivalId) { lastRefresh.current = 0; loadData(userId, activeFestivalId); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch shared post from ?post= URL param
+  useEffect(() => {
+    if (!sharedPostId) return;
+    (async () => {
+      const notes = await supabase.getNote(sharedPostId);
+      if (notes?.[0]) {
+        setSharedPost(toCamelCase(notes[0]));
+        const userRes = await supabase.getUserById(notes[0].user_id);
+        if (userRes?.[0]?.email) setSharedPostAuthor(userRes[0].email.split('@')[0]);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedPostId]);
+
+  // If already logged in and arriving via share link, land on Crowd tab
+  useEffect(() => {
+    if (sharedPostId && userId && !authStep) setTab('crowd');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedPostId, userId]);
 
   // Seed history stack so the first back-swipe has somewhere to go
   useEffect(() => {
@@ -560,6 +586,95 @@ const PrimaveraApp = () => {
       c.note.id === noteId ? { ...c, note: { ...c.note, instagram } } : c
     ));
   };
+
+  // ── Shared post preview (unregistered users arriving via share link) ──────
+
+  if (sharedPost && !sharedPostDismissed && authStep === 'splash') {
+    const chips = [
+      sharedPost.location && sharedPost.location.replace(/_/g, ' '),
+      sharedPost.time,
+      sharedPost.artist && sharedPost.artist !== 'Otro' ? sharedPost.artist : null,
+    ].filter(Boolean);
+
+    return (
+      <div style={{
+        maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
+        backgroundColor: '#EDE8DF', fontFamily: font,
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden', position: 'relative',
+      }}>
+        {/* Background gradient */}
+        <div style={{
+          position: 'absolute', top: 0, left: '50%',
+          transform: 'translateX(-50%)',
+          width: '140%', height: '60svh',
+          background: 'radial-gradient(ellipse 80% 100% at 50% 8%, #FF5B1B 0%, #FF5B1B 42%, rgba(120,195,238,0.6) 70%, transparent 88%)',
+          filter: 'blur(22px)', pointerEvents: 'none',
+        }} />
+
+        {/* Logo */}
+        <div style={{ position: 'relative', zIndex: 1, padding: '28px 24px 0' }}>
+          <OtraLogo color='#FFF0EB' style={{ height: '18px', width: 'auto' }} />
+        </div>
+
+        {/* Headline */}
+        <div style={{ position: 'relative', zIndex: 1, padding: '24px 24px 0' }}>
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: 'rgba(255,240,235,0.8)', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: font }}>
+            Someone shared this with you
+          </p>
+          <h1 style={{ margin: '6px 0 0', fontSize: '26px', fontWeight: '700', color: '#FFF0EB', fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1.25', letterSpacing: '0.01em' }}>
+            Do you know this person?
+          </h1>
+        </div>
+
+        {/* Post card */}
+        <div style={{ position: 'relative', zIndex: 1, margin: '20px 16px 0', backgroundColor: t.white, borderRadius: '20px', padding: '18px 18px 16px', boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}>
+          <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '700', color: t.textMuted, fontFamily: font }}>
+            Posted by <span style={{ color: t.dark }}>{sharedPostAuthor || 'someone'}</span> at the festival
+          </p>
+          <p style={{ margin: '0 0 12px', fontSize: '15px', color: t.dark, lineHeight: '1.55', fontFamily: font }}>
+            {sharedPost.description}
+          </p>
+          {chips.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
+              {chips.map(chip => (
+                <Badge key={chip} label={chip} color={t.textSec} bg={t.surface} border={t.border} />
+              ))}
+            </div>
+          )}
+          {/* Likes */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: t.textMuted }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={t.primary} stroke={t.primary} strokeWidth="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: t.primary, fontFamily: font }}>{sharedPost.likes || 0} {(sharedPost.likes || 0) === 1 ? 'vibe' : 'vibes'}</span>
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div style={{ position: 'relative', zIndex: 1, marginTop: 'auto', padding: '24px 24px 52px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <button
+            onClick={() => setAuthStep('onboarding')}
+            style={{
+              width: '100%', padding: '17px', border: 'none',
+              backgroundColor: t.dark, borderRadius: '14px',
+              fontSize: '16px', fontWeight: '700', color: '#FFFFFF',
+              cursor: 'pointer', fontFamily: font,
+            }}
+          >
+            Join to respond
+          </button>
+          <button
+            onClick={() => setSharedPostDismissed(true)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '13px', color: 'rgba(29,29,47,0.5)', fontFamily: font, padding: '4px',
+            }}
+          >
+            Just browsing — skip
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Splash screen ────────────────────────────────────────────────────────
 
@@ -1826,10 +1941,11 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
   }
 
   const handleShare = (note) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?post=${note.id}`;
     if (navigator.share) {
-      navigator.share({ title: 'otra — Vibe', text: note.description, url: window.location.href }).catch(() => {});
+      navigator.share({ title: 'otra — Vibe', text: `Someone at the festival is looking for a connection 👀\n\n"${note.description}"`, url: shareUrl }).catch(() => {});
     } else {
-      setShareNote(note);
+      setShareNote({ ...note, shareUrl });
     }
   };
 
@@ -2102,17 +2218,17 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
               {[
                 {
                   label: 'Copy link',
-                  action: () => { navigator.clipboard?.writeText(window.location.href); setShareNote(null); },
+                  action: () => { navigator.clipboard?.writeText(shareNote.shareUrl); setShareNote(null); },
                   svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
                 },
                 {
                   label: 'WhatsApp',
-                  action: () => { window.open(`https://wa.me/?text=${encodeURIComponent(shareNote.description)}`); setShareNote(null); },
+                  action: () => { window.open(`https://wa.me/?text=${encodeURIComponent(`Someone at the festival is looking for a connection 👀\n\n"${shareNote.description}"\n\n${shareNote.shareUrl}`)}`); setShareNote(null); },
                   svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
                 },
                 {
                   label: 'Instagram',
-                  action: () => setShareNote(null),
+                  action: () => { navigator.clipboard?.writeText(shareNote.shareUrl); setShareNote(null); },
                   svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
                 },
               ].map(({ label, svg, action }) => (
