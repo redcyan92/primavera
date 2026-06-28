@@ -2118,7 +2118,25 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
         </div>
         {isAccepted
           ? <Badge label="Mutual match" color={t.successDark} bg={t.successBg} border={t.successBorder} />
-          : <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>wants to connect</span>
+          : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>wants to connect</span>
+              <button
+                onClick={() => {
+                  const subject = encodeURIComponent(`Report: connection request ${req.matchId}`);
+                  const body = encodeURIComponent(`I'd like to report this connection request:\n\nFrom: ${req.authorName || 'Unknown'}\nMessage: ${req.message || '(no message)'}\n\nReason:`);
+                  window.location.href = `mailto:safety@otra.social?subject=${subject}&body=${body}`;
+                }}
+                title="Report this request"
+                style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', color: t.textMuted, display: 'flex', alignItems: 'center' }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                  <line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+              </button>
+            </div>
+          )
         }
       </div>
 
