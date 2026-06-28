@@ -1809,6 +1809,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
   const [shareNote, setShareNote] = useState(null);
   const [connectNote, setConnectNote] = useState(null);
   const [connectComment, setConnectComment] = useState('');
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   if (notes.length === 0) {
     return <EmptyState text="No vibes yet." sub="Be the first to share your moment! ⚡" />;
@@ -1829,6 +1830,13 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
     color: t.textMuted, fontFamily: font,
   };
 
+  React.useEffect(() => {
+    if (!openMenuId) return;
+    const close = () => setOpenMenuId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [openMenuId]);
+
   return (
     <div style={{ backgroundColor: t.white }}>
       {notes.map((note, idx) => {
@@ -1845,10 +1853,50 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
           }}>
             {/* Author + chips */}
             <div style={{ marginBottom: '10px' }}>
-              <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', fontFamily: font,
-                color: note.user_id === myUserId ? t.primary : t.dark }}>
-                {note.user_id === myUserId ? 'You' : (noteAuthors[note.user_id] || 'Someone')}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', fontFamily: font,
+                  color: note.user_id === myUserId ? t.primary : t.dark }}>
+                  {note.user_id === myUserId ? 'You' : (noteAuthors[note.user_id] || 'Someone')}
+                </p>
+                {note.user_id !== myUserId && (
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === note.id ? null : note.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', color: t.textMuted, display: 'flex', alignItems: 'center' }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                    </button>
+                    {openMenuId === note.id && (
+                      <div
+                        style={{
+                          position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                          backgroundColor: t.white, borderRadius: '10px',
+                          border: `1px solid ${t.border}`,
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                          minWidth: '120px', overflow: 'hidden',
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            const subject = encodeURIComponent(`Report: post ${note.id}`);
+                            const body = encodeURIComponent(`I'd like to report this post:\n\nPost ID: ${note.id}\nContent: ${note.description}\n\nReason:`);
+                            window.location.href = `mailto:safety@otra.social?subject=${subject}&body=${body}`;
+                          }}
+                          style={{
+                            width: '100%', padding: '12px 16px', background: 'none', border: 'none',
+                            textAlign: 'left', fontSize: '14px', color: t.danger,
+                            cursor: 'pointer', fontFamily: font,
+                          }}
+                        >
+                          Report
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               {chips.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                   {chips.map((chip, i) => (
@@ -1892,24 +1940,6 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                 </svg>
               </button>
-
-              {/* Report — only on other people's posts */}
-              {note.user_id !== myUserId && (
-                <button
-                  onClick={() => {
-                    const subject = encodeURIComponent(`Report: post ${note.id}`);
-                    const body = encodeURIComponent(`I'd like to report this post:\n\nPost ID: ${note.id}\nContent: ${note.description}\n\nReason:`);
-                    window.location.href = `mailto:safety@otra.social?subject=${subject}&body=${body}`;
-                  }}
-                  style={iconBtn}
-                  title="Report this post"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                    <line x1="4" y1="22" x2="4" y2="15"/>
-                  </svg>
-                </button>
-              )}
 
               <div style={{ flex: 1 }} />
 
