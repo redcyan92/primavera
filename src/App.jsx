@@ -1893,6 +1893,24 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
                 </svg>
               </button>
 
+              {/* Report — only on other people's posts */}
+              {note.user_id !== myUserId && (
+                <button
+                  onClick={() => {
+                    const subject = encodeURIComponent(`Report: post ${note.id}`);
+                    const body = encodeURIComponent(`I'd like to report this post:\n\nPost ID: ${note.id}\nContent: ${note.description}\n\nReason:`);
+                    window.location.href = `mailto:safety@otra.social?subject=${subject}&body=${body}`;
+                  }}
+                  style={iconBtn}
+                  title="Report this post"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                    <line x1="4" y1="22" x2="4" y2="15"/>
+                  </svg>
+                </button>
+              )}
+
               <div style={{ flex: 1 }} />
 
               {/* Connect — thunder icon */}
