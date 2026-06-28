@@ -64,6 +64,7 @@ const supabase = {
   async getMatches(userId)        { return this.request('matches', 'GET', null, `or=(user_1_id.eq.${userId},user_2_id.eq.${userId})`); },
   async updateMatch(matchId, data){ return this.request('matches', 'PATCH', data, `id=eq.${matchId}`); },
   async updateNote(noteId, data)  { return this.request('notes', 'PATCH', data, `id=eq.${noteId}`); },
+  async deleteNote(noteId)        { return this.request('notes', 'DELETE', null, `id=eq.${noteId}`); },
   async getMatchByNotes(n1, n2) {
     const r1 = await this.request('matches', 'GET', null, `note_1_id=eq.${n1}&note_2_id=eq.${n2}`);
     if (r1 && r1.length > 0) return r1;
@@ -490,6 +491,12 @@ const PrimaveraApp = () => {
     setPublicNotes(prev => prev.map(n =>
       n.id === noteId ? { ...n, liked: !n.liked, likes: (n.likes || 0) + (n.liked ? -1 : 1) } : n
     ));
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    setPublicNotes(prev => prev.filter(n => n.id !== noteId));
+    setMyNotes(prev => prev.filter(n => n.id !== noteId));
+    await supabase.deleteNote(noteId);
   };
 
   const handleDismissNote = (noteId) => {
@@ -1208,6 +1215,7 @@ const PrimaveraApp = () => {
                     noteAuthors={noteAuthors}
                     onSendRequest={handleSendRequest}
                     onLike={handleLikePublic}
+                    onDelete={handleDeleteNote}
                     myUserId={userId}
                   />
                 </div>
@@ -1221,6 +1229,8 @@ const PrimaveraApp = () => {
                   noteAuthors={noteAuthors}
                   onSendRequest={handleSendRequest}
                   onLike={handleLikePublic}
+                  onDelete={handleDeleteNote}
+                  myUserId={userId}
                 />
               </div>
             )}
@@ -1805,7 +1815,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
 
 // ─── VibesFeed ─────────────────────────────────────────────────────────────
 
-const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
+const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDelete }) => {
   const [shareNote, setShareNote] = useState(null);
   const [connectNote, setConnectNote] = useState(null);
   const [connectComment, setConnectComment] = useState('');
@@ -1858,25 +1868,32 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
                   color: note.user_id === myUserId ? t.primary : t.dark }}>
                   {note.user_id === myUserId ? 'You' : (noteAuthors[note.user_id] || 'Someone')}
                 </p>
-                {note.user_id !== myUserId && (
-                  <div style={{ position: 'relative' }}>
-                    <button
-                      onClick={() => setOpenMenuId(openMenuId === note.id ? null : note.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', color: t.textMuted, display: 'flex', alignItems: 'center' }}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setOpenMenuId(openMenuId === note.id ? null : note.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', color: t.textMuted, display: 'flex', alignItems: 'center' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                  </button>
+                  {openMenuId === note.id && (
+                    <div
+                      style={{
+                        position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                        backgroundColor: t.white, borderRadius: '10px',
+                        border: `1px solid ${t.border}`,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                        minWidth: '120px', overflow: 'hidden',
+                      }}
+                      onClick={e => e.stopPropagation()}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-                    </button>
-                    {openMenuId === note.id && (
-                      <div
-                        style={{
-                          position: 'absolute', top: '100%', right: 0, zIndex: 50,
-                          backgroundColor: t.white, borderRadius: '10px',
-                          border: `1px solid ${t.border}`,
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
-                          minWidth: '120px', overflow: 'hidden',
-                        }}
-                        onClick={e => e.stopPropagation()}
-                      >
+                      {note.user_id === myUserId ? (
+                        <button
+                          onClick={() => { setOpenMenuId(null); onDelete(note.id); }}
+                          style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '14px', color: t.danger, cursor: 'pointer', fontFamily: font }}
+                        >
+                          Delete
+                        </button>
+                      ) : (
                         <button
                           onClick={() => {
                             setOpenMenuId(null);
@@ -1884,18 +1901,14 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId }) => {
                             const body = encodeURIComponent(`I'd like to report this post:\n\nPost ID: ${note.id}\nContent: ${note.description}\n\nReason:`);
                             window.location.href = `mailto:safety@otra.social?subject=${subject}&body=${body}`;
                           }}
-                          style={{
-                            width: '100%', padding: '12px 16px', background: 'none', border: 'none',
-                            textAlign: 'left', fontSize: '14px', color: t.danger,
-                            cursor: 'pointer', fontFamily: font,
-                          }}
+                          style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '14px', color: t.danger, cursor: 'pointer', fontFamily: font }}
                         >
                           Report
                         </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               {chips.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
