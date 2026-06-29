@@ -202,37 +202,58 @@
       overflow: hidden;
     }
 
-    /* Left: all titles stacked */
+    /* Left: titles — stacked absolutely, only active fades in */
     .step-titles {
+      position: relative;
+    }
+    .step-title-row {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
       padding: 40px var(--px) 40px 20px;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
     }
-    .step-title-row {
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
-      padding: 20px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-      transition: opacity 0.5s ease;
-      cursor: default;
+    .step-title-row.active {
+      opacity: 1;
+      pointer-events: auto;
     }
-    .step-title-row:first-child { border-top: 1px solid rgba(255,255,255,0.12); }
-    .step-title-row:not(.active) { opacity: 0.25; }
     .step-n {
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
       font-size: clamp(12px, 1.2vw, 14px);
       font-weight: 500;
-      color: rgba(255,255,255,0.7);
-      min-width: 28px;
-      flex-shrink: 0;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 12px;
     }
     .step-label {
-      font-size: clamp(48px, 8vw, 116px);
+      font-size: clamp(52px, 9vw, 124px);
       font-weight: 400;
-      line-height: 1.0;
+      line-height: 0.95;
       color: #fff;
+    }
+
+    /* Step progress dots */
+    .step-dots {
+      position: absolute;
+      bottom: 40px;
+      left: var(--px);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .step-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transition: background 0.4s, transform 0.4s;
+    }
+    .step-dot.active {
+      background: #fff;
+      transform: scale(1.3);
     }
 
     /* Right: image panels stacked, only active is visible */
@@ -306,17 +327,19 @@
       50% { transform: translateY(5px); }
     }
 
-    /* mobile: single-column, fixed height (no sticky scroll on small screens) */
+    /* mobile: single-column, stacked vertically */
     @media (max-width: 767px) {
       .steps-outer { height: auto; }
       .steps-sticky {
         position: relative;
         height: auto;
         grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
       }
-      .step-titles { padding: 40px var(--px) 20px; }
-      .step-label { font-size: clamp(40px, 12vw, 60px); }
-      .step-panels { position: relative; inset: unset; padding: 20px var(--px) 48px; }
+      .step-titles { position: relative; min-height: 180px; }
+      .step-title-row { padding: 32px var(--px) 20px; }
+      .step-label { font-size: clamp(48px, 14vw, 72px); }
+      .step-panels { position: relative; inset: unset; padding: 16px var(--px) 48px; }
       .step-panel {
         position: relative;
         inset: unset;
@@ -327,6 +350,7 @@
       .step-panel:not(.active) { display: none; }
       .step-img { aspect-ratio: 16/9; }
       .scroll-hint { display: none; }
+      .step-dots { bottom: 16px; left: var(--px); }
     }
 
     /* ── CROWD ── */
@@ -506,19 +530,24 @@
   <div class="steps-outer" id="steps-outer">
     <div class="steps-sticky">
 
-      <!-- Left: titles (one set, JS toggles active) -->
+      <!-- Left: one title at a time, fades on scroll -->
       <div class="step-titles">
         <div class="step-title-row active" data-step="0">
-          <span class="step-n">01</span>
+          <span class="step-n">01 / 03</span>
           <span class="step-label">Search</span>
         </div>
         <div class="step-title-row" data-step="1">
-          <span class="step-n">02</span>
+          <span class="step-n">02 / 03</span>
           <span class="step-label">Match</span>
         </div>
         <div class="step-title-row" data-step="2">
-          <span class="step-n">03</span>
+          <span class="step-n">03 / 03</span>
           <span class="step-label">Connect</span>
+        </div>
+        <div class="step-dots">
+          <div class="step-dot active" data-dot="0"></div>
+          <div class="step-dot" data-dot="1"></div>
+          <div class="step-dot" data-dot="2"></div>
         </div>
       </div>
 
@@ -636,6 +665,7 @@
     const stepsOuter = document.getElementById('steps-outer');
     const titleRows = document.querySelectorAll('.step-title-row');
     const panels = document.querySelectorAll('.step-panel');
+    const dots = document.querySelectorAll('.step-dot');
     const hint = document.getElementById('scroll-hint');
     let currentStep = 0;
 
@@ -644,6 +674,7 @@
       currentStep = step;
       titleRows.forEach((r, i) => r.classList.toggle('active', i === step));
       panels.forEach((p, i) => p.classList.toggle('active', i === step));
+      dots.forEach((d, i) => d.classList.toggle('active', i === step));
     }
 
     window.addEventListener('scroll', () => {
