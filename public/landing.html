@@ -189,23 +189,22 @@
     /* ── STEPS (sticky scroll) ── */
     .steps-outer {
       position: relative;
-      height: 300vh; /* 3 steps × 100vh scrolling distance */
+      height: 300vh;
     }
+    /* The sticky panel — NO overflow set here so sticky works in all browsers */
     .steps-sticky {
       position: sticky;
       top: 0;
       height: 100vh;
       background: var(--orange);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: stretch;
-      overflow: clip; /* clip doesn't create a scroll container (unlike hidden), preserving sticky */
+      display: flex;
     }
 
-    /* Left: titles — stacked absolutely, only active fades in */
-    .step-titles {
+    /* Left half — contains all 3 titles stacked absolutely */
+    .step-left {
+      flex: 1;
       position: relative;
-      height: 100vh; /* match sticky panel height so inset:0 works */
+      overflow: hidden; /* clip on child, not on sticky parent */
     }
     .step-title-row {
       position: absolute;
@@ -215,7 +214,7 @@
       justify-content: center;
       padding: 40px var(--px) 40px 20px;
       opacity: 0;
-      transition: opacity 0.6s ease;
+      transition: opacity 0.55s ease;
       pointer-events: none;
     }
     .step-title-row.active {
@@ -236,7 +235,7 @@
       color: #fff;
     }
 
-    /* Step progress dots */
+    /* Progress dots — anchored to bottom-left of the sticky panel */
     .step-dots {
       position: absolute;
       bottom: 40px;
@@ -244,6 +243,7 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      z-index: 2;
     }
     .step-dot {
       width: 6px;
@@ -257,21 +257,23 @@
       transform: scale(1.3);
     }
 
-    /* Right: image panels stacked, only active is visible */
-    .step-panels {
+    /* Right half — contains all 3 image panels stacked absolutely */
+    .step-right {
+      flex: 1;
       position: relative;
-      height: 100vh; /* explicit height so absolute children have a containing block */
+      overflow: hidden;
     }
     .step-panel {
       position: absolute;
-      inset: 40px 20px 40px var(--px);
+      inset: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      padding: 40px 20px 40px 20px;
       gap: 24px;
       opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: translateY(16px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
       pointer-events: none;
     }
     .step-panel.active {
@@ -300,12 +302,11 @@
       max-width: 44ch;
     }
 
-    /* scroll hint */
+    /* Scroll hint */
     .scroll-hint {
       position: absolute;
       bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%);
+      right: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -324,25 +325,25 @@
       50% { transform: translateY(5px); }
     }
 
-    /* mobile: single-column, stacked vertically */
+    /* Mobile: static stacked layout, no sticky */
     @media (max-width: 767px) {
       .steps-outer { height: auto; }
       .steps-sticky {
         position: relative;
         height: auto;
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto;
+        flex-direction: column;
       }
-      .step-titles { position: relative; height: auto; min-height: 180px; }
+      .step-left { height: 220px; overflow: hidden; }
       .step-title-row { padding: 32px var(--px) 20px; }
       .step-label { font-size: clamp(48px, 14vw, 72px); }
-      .step-panels { position: relative; inset: unset; padding: 16px var(--px) 48px; }
+      .step-right { overflow: visible; }
       .step-panel {
         position: relative;
         inset: unset;
         opacity: 1;
         transform: none;
         pointer-events: auto;
+        padding: 20px var(--px) 48px;
       }
       .step-panel:not(.active) { display: none; }
       .step-img { aspect-ratio: 16/9; }
@@ -528,7 +529,7 @@
     <div class="steps-sticky">
 
       <!-- Left: one title at a time, fades on scroll -->
-      <div class="step-titles">
+      <div class="step-left">
         <div class="step-title-row active" data-step="0">
           <span class="step-n">01 / 03</span>
           <span class="step-label">Search</span>
@@ -549,7 +550,7 @@
       </div>
 
       <!-- Right: one panel per step, only active is visible -->
-      <div class="step-panels">
+      <div class="step-right">
         <div class="step-panel active" data-step="0">
           <div class="step-img">App screenshot · Search</div>
           <p class="step-desc">Describe who you saw, where, when. The more honest, the better the match.</p>
