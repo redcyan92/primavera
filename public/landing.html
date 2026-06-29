@@ -186,28 +186,20 @@
     }
     .diff-item:last-child { border-bottom: none; }
 
-    /* ── STEPS (snap scroll) ── */
+    /* ── STEPS (sticky scroll) ── */
     .steps-outer {
-      background: var(--orange);
       position: relative;
+      height: 300vh; /* 3 steps × 100vh scrolling distance */
     }
-    .steps-snap {
+    .steps-sticky {
+      position: sticky;
+      top: 0;
       height: 100vh;
-      overflow-y: scroll;
-      scroll-snap-type: y mandatory;
-      -webkit-overflow-scrolling: touch;
-    }
-    /* hide scrollbar */
-    .steps-snap::-webkit-scrollbar { display: none; }
-    .steps-snap { scrollbar-width: none; }
-
-    .snap-step {
-      height: 100vh;
-      scroll-snap-align: start;
+      background: var(--orange);
       display: grid;
       grid-template-columns: 1fr 1fr;
       align-items: stretch;
-      position: relative;
+      overflow: hidden;
     }
 
     /* Left: all titles stacked */
@@ -216,7 +208,6 @@
       flex-direction: column;
       justify-content: center;
       padding: 40px var(--px) 40px 20px;
-      gap: 0;
     }
     .step-title-row {
       display: flex;
@@ -224,35 +215,51 @@
       gap: 16px;
       padding: 20px 0;
       border-bottom: 1px solid rgba(255,255,255,0.12);
-      transition: opacity 0.4s;
+      transition: opacity 0.5s ease;
+      cursor: default;
     }
     .step-title-row:first-child { border-top: 1px solid rgba(255,255,255,0.12); }
-    .step-title-row.active .step-label { color: #fff; }
-    .step-title-row:not(.active) { opacity: 0.3; }
+    .step-title-row:not(.active) { opacity: 0.25; }
     .step-n {
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
       font-size: clamp(12px, 1.2vw, 14px);
       font-weight: 500;
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.7);
       min-width: 28px;
       flex-shrink: 0;
     }
     .step-label {
-      font-size: clamp(52px, 8vw, 120px);
+      font-size: clamp(48px, 8vw, 116px);
       font-weight: 400;
       line-height: 1.0;
-      color: rgba(255,255,255,0.25);
-      transition: color 0.4s;
+      color: #fff;
     }
-    .step-title-row.active .step-label { color: #fff; }
 
-    /* Right: image + description */
-    .step-content {
+    /* Right: image panels stacked, only active is visible */
+    .step-panels {
+      position: relative;
       display: flex;
       flex-direction: column;
       justify-content: center;
       padding: 40px 20px 40px var(--px);
+      gap: 0;
+    }
+    .step-panel {
+      position: absolute;
+      inset: 40px 20px 40px var(--px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       gap: 24px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+    .step-panel.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
     .step-img {
       width: 100%;
@@ -271,7 +278,7 @@
     .step-desc {
       font-size: clamp(14px, 1.4vw, 16px);
       line-height: 1.75;
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,0.75);
       max-width: 44ch;
     }
 
@@ -299,22 +306,27 @@
       50% { transform: translateY(5px); }
     }
 
-    /* mobile: stack vertically */
+    /* mobile: single-column, fixed height (no sticky scroll on small screens) */
     @media (max-width: 767px) {
-      .snap-step {
+      .steps-outer { height: auto; }
+      .steps-sticky {
+        position: relative;
+        height: auto;
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
       }
-      .step-titles {
-        padding: 32px var(--px) 16px;
-        gap: 0;
-      }
-      .step-title-row { padding: 12px 0; }
+      .step-titles { padding: 40px var(--px) 20px; }
       .step-label { font-size: clamp(40px, 12vw, 60px); }
-      .step-content {
-        padding: 16px var(--px) 80px;
+      .step-panels { position: relative; inset: unset; padding: 20px var(--px) 48px; }
+      .step-panel {
+        position: relative;
+        inset: unset;
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
       }
+      .step-panel:not(.active) { display: none; }
       .step-img { aspect-ratio: 16/9; }
+      .scroll-hint { display: none; }
     }
 
     /* ── CROWD ── */
@@ -490,78 +502,45 @@
 
   <div class="divider"></div>
 
-  <!-- HOW IT WORKS — snap scroll -->
-  <div class="steps-outer">
-    <div class="steps-snap" id="steps-snap">
+  <!-- HOW IT WORKS — sticky scroll -->
+  <div class="steps-outer" id="steps-outer">
+    <div class="steps-sticky">
 
-      <!-- SEARCH -->
-      <div class="snap-step" data-index="0">
-        <div class="step-titles">
-          <div class="step-title-row active" data-step="0">
-            <span class="step-n">01</span>
-            <span class="step-label">Search</span>
-          </div>
-          <div class="step-title-row" data-step="1">
-            <span class="step-n">02</span>
-            <span class="step-label">Match</span>
-          </div>
-          <div class="step-title-row" data-step="2">
-            <span class="step-n">03</span>
-            <span class="step-label">Connect</span>
-          </div>
+      <!-- Left: titles (one set, JS toggles active) -->
+      <div class="step-titles">
+        <div class="step-title-row active" data-step="0">
+          <span class="step-n">01</span>
+          <span class="step-label">Search</span>
         </div>
-        <div class="step-content">
+        <div class="step-title-row" data-step="1">
+          <span class="step-n">02</span>
+          <span class="step-label">Match</span>
+        </div>
+        <div class="step-title-row" data-step="2">
+          <span class="step-n">03</span>
+          <span class="step-label">Connect</span>
+        </div>
+      </div>
+
+      <!-- Right: one panel per step, only active is visible -->
+      <div class="step-panels">
+        <div class="step-panel active" data-step="0">
           <div class="step-img">App screenshot · Search</div>
           <p class="step-desc">Describe who you saw, where, when. The more honest, the better the match.</p>
         </div>
-        <div class="scroll-hint" id="scroll-hint">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Scroll
-        </div>
-      </div>
-
-      <!-- MATCH -->
-      <div class="snap-step" data-index="1">
-        <div class="step-titles">
-          <div class="step-title-row" data-step="0">
-            <span class="step-n">01</span>
-            <span class="step-label">Search</span>
-          </div>
-          <div class="step-title-row active" data-step="1">
-            <span class="step-n">02</span>
-            <span class="step-label">Match</span>
-          </div>
-          <div class="step-title-row" data-step="2">
-            <span class="step-n">03</span>
-            <span class="step-label">Connect</span>
-          </div>
-        </div>
-        <div class="step-content">
+        <div class="step-panel" data-step="1">
           <div class="step-img">App screenshot · Match</div>
           <p class="step-desc">If they're looking for you too, the system connects you. Both sides have to be searching.</p>
         </div>
-      </div>
-
-      <!-- CONNECT -->
-      <div class="snap-step" data-index="2">
-        <div class="step-titles">
-          <div class="step-title-row" data-step="0">
-            <span class="step-n">01</span>
-            <span class="step-label">Search</span>
-          </div>
-          <div class="step-title-row" data-step="1">
-            <span class="step-n">02</span>
-            <span class="step-label">Match</span>
-          </div>
-          <div class="step-title-row active" data-step="2">
-            <span class="step-n">03</span>
-            <span class="step-label">Connect</span>
-          </div>
-        </div>
-        <div class="step-content">
+        <div class="step-panel" data-step="2">
           <div class="step-img">App screenshot · Connect</div>
           <p class="step-desc">Swap Instagram or WhatsApp. Take it from there.</p>
         </div>
+      </div>
+
+      <div class="scroll-hint" id="scroll-hint">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Scroll
       </div>
 
     </div>
@@ -653,21 +632,36 @@
   </div>
 
   <script>
-    // Shrink nav on scroll
     const nav = document.getElementById('main-nav');
-    window.addEventListener('scroll', () => {
-      nav.classList.toggle('scrolled', window.scrollY > 40);
-    }, { passive: true });
-
-    // Hide scroll hint after first snap
-    const snap = document.getElementById('steps-snap');
+    const stepsOuter = document.getElementById('steps-outer');
+    const titleRows = document.querySelectorAll('.step-title-row');
+    const panels = document.querySelectorAll('.step-panel');
     const hint = document.getElementById('scroll-hint');
-    if (snap && hint) {
-      snap.addEventListener('scroll', () => {
-        if (snap.scrollTop > 60) hint.style.opacity = '0';
-        else hint.style.opacity = '1';
-      }, { passive: true });
+    let currentStep = 0;
+
+    function setStep(step) {
+      if (step === currentStep) return;
+      currentStep = step;
+      titleRows.forEach((r, i) => r.classList.toggle('active', i === step));
+      panels.forEach((p, i) => p.classList.toggle('active', i === step));
     }
+
+    window.addEventListener('scroll', () => {
+      // Nav shrink
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+
+      // Steps: calculate which step based on scroll progress through the outer container
+      if (!stepsOuter) return;
+      const rect = stepsOuter.getBoundingClientRect();
+      const scrolled = -rect.top; // px scrolled into the section
+      const total = rect.height - window.innerHeight; // total scrollable px (200vh)
+      const progress = Math.max(0, Math.min(1, scrolled / total));
+      const step = Math.min(2, Math.floor(progress * 3));
+      setStep(step);
+
+      // Hide scroll hint once past step 0
+      if (hint) hint.style.opacity = scrolled > 60 ? '0' : '1';
+    }, { passive: true });
   </script>
 
 </body>
