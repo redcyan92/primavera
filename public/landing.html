@@ -199,7 +199,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       align-items: stretch;
-      overflow: hidden;
+      overflow: clip; /* clip doesn't create a scroll container (unlike hidden), preserving sticky */
     }
 
     /* Left: titles — stacked absolutely, only active fades in */
@@ -260,11 +260,7 @@
     /* Right: image panels stacked, only active is visible */
     .step-panels {
       position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 40px 20px 40px var(--px);
-      gap: 0;
+      height: 100vh; /* explicit height so absolute children have a containing block */
     }
     .step-panel {
       position: absolute;
