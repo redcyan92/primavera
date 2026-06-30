@@ -7,13 +7,14 @@
   <meta name="description" content="Something happened at the festival. A conversation, a look, a shared song. OTRA helps you find that person — if they're looking for you too." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="preload" href="/fonts/HealTheWebA-Regular.otf" as="font" type="font/otf" crossorigin />
   <style>
     @font-face {
       font-family: 'HealTheWeb';
       src: url('/fonts/HealTheWebA-Regular.otf') format('opentype');
       font-weight: normal;
       font-style: normal;
-      font-display: swap;
+      font-display: block;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,6 +31,14 @@
       --content: 1280px;
       --px: 20px;
       --py: 80px;
+
+      --radius-xs: 2px;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-xl: 10px;
+      --radius-xxl: 12px;
+      --radius-pill: 999px;
     }
 
     html { scroll-behavior: smooth; }
@@ -130,7 +139,7 @@
       padding: 15px 32px;
       background: var(--ink);
       color: #fff;
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       font-size: 15px;
       font-weight: 700;
       font-family: inherit;
@@ -162,7 +171,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius-lg);
       overflow: hidden;
       background: var(--cream);
     }
@@ -197,6 +206,12 @@
       top: 0;
       height: 100vh;
       background: var(--orange);
+    }
+    /* Centers content to match .section-wrap on wide screens */
+    .steps-inner {
+      max-width: var(--content);
+      margin: 0 auto;
+      height: 100%;
       display: flex;
     }
 
@@ -212,49 +227,31 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 40px var(--px) 40px 20px;
+      padding: 40px var(--px);
       opacity: 0;
       transition: opacity 0.55s ease;
       pointer-events: none;
     }
-    .step-title-row.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .step-n {
-      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-      font-size: clamp(12px, 1.2vw, 14px);
-      font-weight: 500;
-      color: rgba(255,255,255,0.5);
-      margin-bottom: 12px;
-    }
+    /* opacity set by GSAP inline — no .active class needed */
     .step-label {
       font-size: clamp(52px, 9vw, 124px);
       font-weight: 400;
       line-height: 0.95;
       color: #fff;
     }
+    .step-label-mobile { display: none; }
 
-    /* Progress dots — anchored to bottom-left of the sticky panel */
-    .step-dots {
-      position: absolute;
-      bottom: 40px;
-      left: var(--px);
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      z-index: 2;
-    }
-    .step-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.3);
-      transition: background 0.4s, transform 0.4s;
-    }
-    .step-dot.active {
-      background: #fff;
-      transform: scale(1.3);
+    /* Mobile: hide left column, stack panels as cards */
+    @media (max-width: 767px) {
+      .step-left { display: none; }
+      .step-label-mobile {
+        display: block;
+        font-family: 'HealTheWeb', system-ui, sans-serif;
+        font-size: clamp(52px, 18vw, 80px);
+        line-height: 0.95;
+        color: #fff;
+        margin-bottom: 16px;
+      }
     }
 
     /* Right half — contains all 3 image panels stacked absolutely */
@@ -269,32 +266,187 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 40px 20px 40px 20px;
+      padding: 40px var(--px);
       gap: 24px;
       opacity: 0;
       transform: translateY(16px);
       transition: opacity 0.55s ease, transform 0.55s ease;
       pointer-events: none;
     }
-    .step-panel.active {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
+    /* opacity/transform set by GSAP inline */
     .step-img {
       width: 100%;
       aspect-ratio: 4/3;
-      background: rgba(255,255,255,0.1);
-      border-radius: 16px;
+      border-radius: var(--radius-xl);
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.15);
+      position: relative;
+    }
+
+    /* Mock phone mockup */
+    .mock-phone {
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: rgba(255,255,255,0.35);
-      font-size: 13px;
-      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     }
+    .mock-screen {
+      width: 80%;
+      height: 90%;
+      border-radius: var(--radius-xxl);
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+    .mock-gradient {
+      position: absolute;
+      inset: 0;
+    }
+    .mock-gradient-search {
+      background: linear-gradient(160deg, #2D1B69 0%, #0F0F3A 40%, #1a0533 100%);
+    }
+    .mock-gradient-match {
+      background: linear-gradient(160deg, #0D2137 0%, #0a1628 40%, #1a0a2e 100%);
+    }
+    .mock-gradient-connect {
+      background: linear-gradient(160deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+    }
+    .mock-ui {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px 12px;
+    }
+    .mock-prompt {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-pill);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      backdrop-filter: blur(8px);
+    }
+    .mock-prompt-icon { flex-shrink: 0; opacity: 0.7; }
+    .mock-typewriter {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+      white-space: nowrap;
+      overflow: hidden;
+      flex: 1;
+    }
+    .mock-cursor {
+      width: 1px;
+      height: 14px;
+      background: rgba(255,255,255,0.7);
+      flex-shrink: 0;
+      animation: blink 0.9s step-end infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Match UI */
+    .mock-ui-match {
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 16px;
+    }
+    .mock-match-badge {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: #FF5B1B;
+      background: rgba(255,91,27,0.15);
+      border: 1px solid rgba(255,91,27,0.3);
+      border-radius: var(--radius-pill);
+      padding: 5px 12px;
+      letter-spacing: 0.04em;
+    }
+    .mock-match-cards {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .mock-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .mock-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    .mock-avatar-you { background: linear-gradient(135deg, #FF5B1B, #ff8c5a); }
+    .mock-avatar-them { background: linear-gradient(135deg, #7B61FF, #a78bff); }
+    .mock-card span {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+    }
+    .mock-heart {
+      font-size: 20px;
+      color: #FF5B1B;
+    }
+    .mock-match-sub {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* Connect UI */
+    .mock-ui-connect {
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 10px;
+    }
+    .mock-msg { display: flex; }
+    .mock-msg-in { justify-content: flex-start; }
+    .mock-msg-out { justify-content: flex-end; }
+    .mock-bubble {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 10px;
+      padding: 7px 11px;
+      border-radius: var(--radius-lg);
+      max-width: 80%;
+      line-height: 1.4;
+    }
+    .mock-bubble-in {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.85);
+      border-bottom-left-radius: var(--radius-xs);
+    }
+    .mock-bubble-out {
+      background: #FF5B1B;
+      color: #fff;
+      border-bottom-right-radius: var(--radius-xs);
+    }
+    .mock-connect-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-pill);
+      padding: 8px 12px;
+      margin-top: 4px;
+    }
+    .mock-connect-input {
+      flex: 1;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+    }
+    .mock-connect-send {
+      font-size: 13px;
+      color: #FF5B1B;
+    }
+
     .step-desc {
       font-size: clamp(14px, 1.4vw, 16px);
       line-height: 1.75;
@@ -331,24 +483,19 @@
       .steps-sticky {
         position: relative;
         height: auto;
-        flex-direction: column;
       }
-      .step-left { height: 220px; overflow: hidden; }
-      .step-title-row { padding: 32px var(--px) 20px; }
-      .step-label { font-size: clamp(48px, 14vw, 72px); }
-      .step-right { overflow: visible; }
+      .steps-inner { flex-direction: column; height: auto; }
+      .step-right { overflow: visible; flex: none; }
       .step-panel {
         position: relative;
         inset: unset;
-        opacity: 1;
-        transform: none;
+        opacity: 1 !important;
+        transform: none !important;
         pointer-events: auto;
-        padding: 20px var(--px) 48px;
+        padding: 40px var(--px) 48px;
+        display: flex;
       }
-      .step-panel:not(.active) { display: none; }
-      .step-img { aspect-ratio: 16/9; }
       .scroll-hint { display: none; }
-      .step-dots { bottom: 16px; left: var(--px); }
     }
 
     /* ── CROWD ── */
@@ -360,8 +507,8 @@
     }
     .crowd-placeholder {
       background: var(--cream-dark);
-      border: 1.5px dashed #CCC8C0;
-      border-radius: 14px;
+      border: 2px dashed #CCC8C0;
+      border-radius: var(--radius-lg);
       padding: 48px 32px;
       text-align: center;
       color: var(--subtle);
@@ -390,7 +537,7 @@
     }
     .festival-list {
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius-lg);
       overflow: hidden;
       background: var(--cream);
     }
@@ -436,7 +583,7 @@
       padding: 15px 32px;
       background: #fff;
       color: var(--ink);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       font-size: 15px;
       font-weight: 700;
       text-align: center;
@@ -527,43 +674,98 @@
   <!-- HOW IT WORKS — sticky scroll -->
   <div class="steps-outer" id="steps-outer">
     <div class="steps-sticky">
+    <div class="steps-inner">
 
       <!-- Left: one title at a time, fades on scroll -->
       <div class="step-left">
-        <div class="step-title-row active" data-step="0">
-          <span class="step-n">01 / 03</span>
+        <div class="step-title-row" data-step="0">
           <span class="step-label">Search</span>
         </div>
         <div class="step-title-row" data-step="1">
-          <span class="step-n">02 / 03</span>
           <span class="step-label">Match</span>
         </div>
         <div class="step-title-row" data-step="2">
-          <span class="step-n">03 / 03</span>
           <span class="step-label">Connect</span>
-        </div>
-        <div class="step-dots">
-          <div class="step-dot active" data-dot="0"></div>
-          <div class="step-dot" data-dot="1"></div>
-          <div class="step-dot" data-dot="2"></div>
         </div>
       </div>
 
       <!-- Right: one panel per step, only active is visible -->
       <div class="step-right">
-        <div class="step-panel active" data-step="0">
-          <div class="step-img">App screenshot · Search</div>
+        <div class="step-panel" data-step="0">
+          <span class="step-label step-label-mobile">Search</span>
+          <div class="step-img step-img-search">
+            <div class="mock-phone">
+              <div class="mock-screen">
+                <div class="mock-gradient mock-gradient-search"></div>
+                <div class="mock-ui">
+                  <div class="mock-prompt">
+                    <div class="mock-prompt-icon">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/><path d="M11 11l2.5 2.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="mock-typewriter" id="tw-search"></div>
+                    <div class="mock-cursor"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <p class="step-desc">Describe who you saw, where, when. The more honest, the better the match.</p>
         </div>
         <div class="step-panel" data-step="1">
-          <div class="step-img">App screenshot · Match</div>
+          <span class="step-label step-label-mobile">Match</span>
+          <div class="step-img step-img-match">
+            <div class="mock-phone">
+              <div class="mock-screen">
+                <div class="mock-gradient mock-gradient-match"></div>
+                <div class="mock-ui mock-ui-match">
+                  <div class="mock-match-badge">✦ It's a match</div>
+                  <div class="mock-match-cards">
+                    <div class="mock-card mock-card-you">
+                      <div class="mock-avatar mock-avatar-you"></div>
+                      <span>You</span>
+                    </div>
+                    <div class="mock-heart">♥</div>
+                    <div class="mock-card mock-card-them">
+                      <div class="mock-avatar mock-avatar-them"></div>
+                      <span>Them</span>
+                    </div>
+                  </div>
+                  <p class="mock-match-sub">Both of you were searching</p>
+                </div>
+              </div>
+            </div>
+          </div>
           <p class="step-desc">If they're looking for you too, the system connects you. Both sides have to be searching.</p>
         </div>
         <div class="step-panel" data-step="2">
-          <div class="step-img">App screenshot · Connect</div>
+          <span class="step-label step-label-mobile">Connect</span>
+          <div class="step-img step-img-connect">
+            <div class="mock-phone">
+              <div class="mock-screen">
+                <div class="mock-gradient mock-gradient-connect"></div>
+                <div class="mock-ui mock-ui-connect">
+                  <div class="mock-msg mock-msg-in">
+                    <div class="mock-bubble mock-bubble-in">What stage were you at? 🎵</div>
+                  </div>
+                  <div class="mock-msg mock-msg-out">
+                    <div class="mock-bubble mock-bubble-out">Main stage, front row!</div>
+                  </div>
+                  <div class="mock-msg mock-msg-in">
+                    <div class="mock-bubble mock-bubble-in">That was me 👋</div>
+                  </div>
+                  <div class="mock-connect-bar">
+                    <div class="mock-connect-input">Send a message…</div>
+                    <div class="mock-connect-send">→</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <p class="step-desc">Swap Instagram or WhatsApp. Take it from there.</p>
         </div>
       </div>
+
+    </div>
 
       <div class="scroll-hint" id="scroll-hint">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -658,39 +860,60 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
   <script>
+    gsap.registerPlugin(ScrollTrigger);
+
     const nav = document.getElementById('main-nav');
-    const stepsOuter = document.getElementById('steps-outer');
-    const titleRows = document.querySelectorAll('.step-title-row');
-    const panels = document.querySelectorAll('.step-panel');
-    const dots = document.querySelectorAll('.step-dot');
-    const hint = document.getElementById('scroll-hint');
-    let currentStep = 0;
-
-    function setStep(step) {
-      if (step === currentStep) return;
-      currentStep = step;
-      titleRows.forEach((r, i) => r.classList.toggle('active', i === step));
-      panels.forEach((p, i) => p.classList.toggle('active', i === step));
-      dots.forEach((d, i) => d.classList.toggle('active', i === step));
-    }
-
     window.addEventListener('scroll', () => {
-      // Nav shrink
       nav.classList.toggle('scrolled', window.scrollY > 40);
-
-      // Steps: calculate which step based on scroll progress through the outer container
-      if (!stepsOuter) return;
-      const rect = stepsOuter.getBoundingClientRect();
-      const scrolled = -rect.top; // px scrolled into the section
-      const total = rect.height - window.innerHeight; // total scrollable px (200vh)
-      const progress = Math.max(0, Math.min(1, scrolled / total));
-      const step = Math.min(2, Math.floor(progress * 3));
-      setStep(step);
-
-      // Hide scroll hint once past step 0
-      if (hint) hint.style.opacity = scrolled > 60 ? '0' : '1';
     }, { passive: true });
+
+    // Typewriter animation for search prompt
+    const twEl = document.getElementById('tw-search');
+    const twText = 'tall guy, red jacket, main stage...';
+    let twIdx = 0;
+    function typeNext() {
+      if (!twEl) return;
+      twEl.textContent = twText.slice(0, twIdx);
+      twIdx = twIdx < twText.length ? twIdx + 1 : 0;
+      setTimeout(typeNext, twIdx === 0 ? 1200 : 75);
+    }
+    typeNext();
+
+    const outer = document.getElementById('steps-outer');
+    const titles = gsap.utils.toArray('.step-title-row');
+    const panels = gsap.utils.toArray('.step-panel');
+    const hint = document.getElementById('scroll-hint');
+
+    // Initial states: step 0 visible, rest hidden
+    gsap.set(titles[0], { opacity: 1 });
+    gsap.set(panels[0], { opacity: 1, y: 0 });
+    gsap.set([titles[1], titles[2]], { opacity: 0 });
+    gsap.set([panels[1], panels[2]], { opacity: 0, y: 16 });
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: outer,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.8,
+        onUpdate: (self) => {
+          if (hint) hint.style.opacity = self.progress > 0.05 ? '0' : '1';
+        }
+      }
+    });
+
+    tl
+      .to(titles[0], { opacity: 0, duration: 0.3 }, 0.55)
+      .to(panels[0], { opacity: 0, y: -16, duration: 0.3 }, 0.55)
+      .to(titles[1], { opacity: 1, duration: 0.3 }, 0.55)
+      .to(panels[1], { opacity: 1, y: 0, duration: 0.3 }, 0.55)
+      .to(titles[1], { opacity: 0, duration: 0.3 }, 1.55)
+      .to(panels[1], { opacity: 0, y: -16, duration: 0.3 }, 1.55)
+      .to(titles[2], { opacity: 1, duration: 0.3 }, 1.55)
+      .to(panels[2], { opacity: 1, y: 0, duration: 0.3 }, 1.55);
   </script>
 
 </body>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { radius } from './radius';
 
 const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -59,7 +60,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
         width: '100%',
         maxWidth: '380px',
         backgroundColor: '#fff',
-        borderRadius: '16px 16px 0 0',
+        borderRadius: `${radius.lg} ${radius.lg} 0 0`,
         padding: '1.5rem',
         maxHeight: '90vh',
         overflow: 'auto'
@@ -85,7 +86,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.description}
               onChange={handleChange}
               placeholder="Cuéntanos qué pasó, dónde, con quién..."
-              style={{ width: '100%', minHeight: '100px', padding: '12px', border: '0.5px solid #ddd', borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical' }}
+              style={{ width: '100%', minHeight: '100px', padding: '12px', border: '0.5px solid #ddd', borderRadius: radius.sm, fontSize: '14px', fontFamily: 'inherit', resize: 'vertical' }}
             />
           </div>
 
@@ -99,7 +100,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.artist}
               onChange={handleChange}
               placeholder="ej: Rosalía, Main Stage, etc."
-              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: '8px', fontSize: '14px' }}
+              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: radius.sm, fontSize: '14px' }}
             />
           </div>
 
@@ -113,7 +114,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.time}
               onChange={handleChange}
               placeholder="ej: viernes 21:30, sábado tarde, etc."
-              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: '8px', fontSize: '14px' }}
+              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: radius.sm, fontSize: '14px' }}
             />
           </div>
 
@@ -127,7 +128,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.location}
               onChange={handleChange}
               placeholder="ej: barra, mosh pit, zona VIP, etc."
-              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: '8px', fontSize: '14px' }}
+              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: radius.sm, fontSize: '14px' }}
             />
           </div>
 
@@ -141,7 +142,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.otherPersonDesc}
               onChange={handleChange}
               placeholder="ej: chica, pelo rojo, vestido negro, tatuaje..."
-              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: '8px', fontSize: '14px' }}
+              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: radius.sm, fontSize: '14px' }}
             />
           </div>
 
@@ -155,7 +156,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.ownDesc}
               onChange={handleChange}
               placeholder="ej: chico, camiseta blanca, gafas, tatuaje..."
-              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: '8px', fontSize: '14px' }}
+              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: radius.sm, fontSize: '14px' }}
             />
           </div>
 
@@ -169,11 +170,11 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.companions}
               onChange={handleChange}
               placeholder="ej: estaba solo, con dos amigas, con pareja..."
-              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: '8px', fontSize: '14px' }}
+              style={{ width: '100%', padding: '10px', border: '0.5px solid #ddd', borderRadius: radius.sm, fontSize: '14px' }}
             />
           </div>
 
-          <div style={{ backgroundColor: '#f0f7ff', padding: '12px', borderRadius: '8px', border: '0.5px solid #b3d9ff' }}>
+          <div style={{ backgroundColor: '#f0f7ff', padding: '12px', borderRadius: radius.sm, border: '0.5px solid #b3d9ff' }}>
             <label style={{ fontSize: '12px', fontWeight: '500', color: '#1976d2', display: 'block', marginBottom: '6px' }}>
               📱 Mi Instagram (opcional pero recomendado)
             </label>
@@ -183,7 +184,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
               value={formData.instagram}
               onChange={handleChange}
               placeholder="ej: @tusername (sin arroba también vale)"
-              style={{ width: '100%', padding: '10px', border: '0.5px solid #b3d9ff', borderRadius: '8px', fontSize: '14px', backgroundColor: '#fff' }}
+              style={{ width: '100%', padding: '10px', border: '0.5px solid #b3d9ff', borderRadius: radius.sm, fontSize: '14px', backgroundColor: '#fff' }}
             />
             <p style={{ fontSize: '11px', color: '#1976d2', margin: '6px 0 0 0' }}>
               💡 Solo se revela si hay match mutuo
@@ -210,13 +211,13 @@ const CreateNoteModal = ({ isOpen, onClose, onSave }) => {
             <button
               type="button"
               onClick={onClose}
-              style={{ flex: 1, padding: '12px', border: '0.5px solid #ddd', borderRadius: '8px', backgroundColor: '#f5f5f5', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+              style={{ flex: 1, padding: '12px', border: '0.5px solid #ddd', borderRadius: radius.sm, backgroundColor: '#f5f5f5', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '8px', backgroundColor: '#1976d2', color: '#fff', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+              style={{ flex: 1, padding: '12px', border: 'none', borderRadius: radius.sm, backgroundColor: '#1976d2', color: '#fff', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
             >
               Publicar
             </button>

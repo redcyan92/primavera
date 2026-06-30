@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PS_ARTISTS, TIME_OPTIONS, LOCATION_OPTIONS } from './defaultOptions';
+import { radius } from './radius';
 
 const t = {
   primary: '#FF5B1B', primaryBg: '#FFF0EB', primaryBorder: '#FABB96',
@@ -11,8 +12,8 @@ const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 
 const Chip = ({ label, selected, onClick }) => (
   <button onClick={onClick} style={{
-    padding: '6px 12px', borderRadius: '999px', cursor: 'pointer',
-    border: selected ? `1.5px solid ${t.primary}` : `1px solid ${t.border}`,
+    padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
+    border: selected ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
     backgroundColor: selected ? t.primaryBg : t.white,
     fontSize: '12px', color: selected ? t.primary : t.textSec,
     fontWeight: selected ? '600' : '400', fontFamily: font,
@@ -28,7 +29,7 @@ const ProgressBar = ({ step, total }) => (
   <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
     {Array.from({ length: total }).map((_, i) => (
       <div key={i} style={{
-        flex: 1, height: '3px', borderRadius: '2px',
+        flex: 1, height: '3px', borderRadius: radius.xs,
         backgroundColor: i < step ? t.primary : t.border,
         transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
       }} />
@@ -40,13 +41,13 @@ const NavButtons = ({ onBack, onNext, nextLabel = 'Next →', nextEnabled = true
   <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', paddingBottom: '8px' }}>
     {onBack && (
       <button onClick={onBack} style={{
-        flex: 1, padding: '13px', borderRadius: '12px', border: `1px solid ${t.border}`,
+        flex: 1, padding: '13px', borderRadius: radius.md, border: `1px solid ${t.border}`,
         backgroundColor: t.white, cursor: 'pointer', fontSize: '14px',
         color: t.text, fontWeight: '500', fontFamily: font,
       }}>← Back</button>
     )}
     <button onClick={onNext} disabled={!nextEnabled} style={{
-      flex: 2, padding: '13px', borderRadius: '12px', border: 'none',
+      flex: 2, padding: '13px', borderRadius: radius.md, border: 'none',
       backgroundColor: nextEnabled ? (isLast ? t.primary : t.dark) : t.borderDark,
       cursor: nextEnabled ? 'pointer' : 'not-allowed',
       fontSize: '14px', color: '#fff', fontWeight: '700', fontFamily: font,
@@ -102,11 +103,11 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
     }} onClick={handleClose}>
       <div style={{
         width: '100%', maxWidth: '380px', backgroundColor: t.white,
-        borderRadius: '24px 24px 0 0', padding: '24px 20px 40px',
+        borderRadius: `${radius.xxl} ${radius.xxl} 0 0`, padding: '24px 20px 40px',
         maxHeight: '92svh', overflowY: 'auto',
       }} onClick={e => e.stopPropagation()}>
 
-        <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: '2px', margin: '0 auto 20px' }} />
+        <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: radius.xs, margin: '0 auto 20px' }} />
 
         {/* ── Step 0: Type ── */}
         {step === 0 && (
@@ -124,8 +125,8 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
               ].map(({ value, title, sub }) => (
                 <button key={value} onClick={() => { set('visibility', value); setStep(1); }} style={{
                   width: '100%', textAlign: 'left', padding: '18px 20px',
-                  borderRadius: '16px', cursor: 'pointer',
-                  border: `1.5px solid ${t.border}`, backgroundColor: t.white,
+                  borderRadius: radius.lg, cursor: 'pointer',
+                  border: `2px solid ${t.border}`, backgroundColor: t.white,
                   transition: 'border-color 0.15s cubic-bezier(0.23, 1, 0.32, 1)',
                 }}>
                   <p style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: '700', color: t.dark, fontFamily: font }}>{title}</p>
@@ -159,7 +160,7 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {LOCATION_OPTIONS.map(loc => (
                 <button key={loc.value} onClick={() => set('location', data.location === loc.value ? null : loc.value)} style={{
-                  padding: '11px 16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'left',
+                  padding: '11px 16px', borderRadius: radius.md, cursor: 'pointer', textAlign: 'left',
                   border: data.location === loc.value ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
                   backgroundColor: data.location === loc.value ? t.primaryBg : t.white,
                   fontSize: '14px', color: data.location === loc.value ? t.primary : t.text,
@@ -186,7 +187,7 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
               {days.map(d => (
                 <button key={d.value} onClick={() => set('day', data.day === d.value ? null : d.value)} style={{
-                  flex: 1, padding: '11px 0', borderRadius: '10px', cursor: 'pointer',
+                  flex: 1, padding: '11px 0', borderRadius: radius.md, cursor: 'pointer',
                   border: data.day === d.value ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
                   backgroundColor: data.day === d.value ? t.primaryBg : t.white,
                   fontSize: '14px', fontWeight: data.day === d.value ? '700' : '400',
@@ -199,7 +200,7 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {TIME_OPTIONS.map(opt => (
                 <button key={opt.value} onClick={() => set('timePeriod', data.timePeriod === opt.value ? null : opt.value)} style={{
-                  padding: '11px 16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'left',
+                  padding: '11px 16px', borderRadius: radius.md, cursor: 'pointer', textAlign: 'left',
                   border: data.timePeriod === opt.value ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
                   backgroundColor: data.timePeriod === opt.value ? t.primaryBg : t.white,
                   fontSize: '14px', color: data.timePeriod === opt.value ? t.primary : t.text,
@@ -235,7 +236,7 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
                   placeholder="e.g. Tall, dark curly hair, was near the front during Four Tet, wearing a white shirt…"
                   style={{
                     width: '100%', minHeight: '100px', padding: '12px 14px',
-                    borderRadius: '12px', border: `1px solid ${t.border}`,
+                    borderRadius: radius.md, border: `1px solid ${t.border}`,
                     fontSize: '14px', fontFamily: font, color: t.dark,
                     backgroundColor: t.white, resize: 'none', outline: 'none',
                     lineHeight: '1.55', boxSizing: 'border-box',
@@ -251,7 +252,7 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
                   placeholder="That moment when the crowd went completely silent… if you were there, you know 🧡"
                   style={{
                     width: '100%', minHeight: '120px', padding: '12px 14px',
-                    borderRadius: '12px', border: `1px solid ${t.border}`,
+                    borderRadius: radius.md, border: `1px solid ${t.border}`,
                     fontSize: '14px', fontFamily: font, color: t.dark,
                     backgroundColor: t.white, resize: 'none', outline: 'none',
                     lineHeight: '1.55', boxSizing: 'border-box',
@@ -270,7 +271,7 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
                 placeholder="e.g. I was wearing a red jacket, short brown hair, was with two friends…"
                 style={{
                   width: '100%', minHeight: '80px', padding: '12px 14px',
-                  borderRadius: '12px', border: `1px solid ${t.border}`,
+                  borderRadius: radius.md, border: `1px solid ${t.border}`,
                   fontSize: '14px', fontFamily: font, color: t.dark,
                   backgroundColor: t.white, resize: 'none', outline: 'none',
                   lineHeight: '1.55', boxSizing: 'border-box',
@@ -286,7 +287,7 @@ export default function CreateNoteFlow({ isOpen, onClose, onSave, days = [] }) {
                 onChange={e => set('instagram', e.target.value)}
                 placeholder="@your_instagram"
                 style={{
-                  width: '100%', padding: '11px 14px', borderRadius: '12px',
+                  width: '100%', padding: '11px 14px', borderRadius: radius.md,
                   border: `1px solid ${t.border}`, fontSize: '14px', fontFamily: font,
                   color: t.dark, backgroundColor: t.white, outline: 'none', boxSizing: 'border-box',
                 }}

@@ -4,6 +4,7 @@ import Onboarding from './Onboarding';
 import SearchWithAI from './SearchWithAI';
 import { findMatches, calculateMatchScore } from './matchingAlgorithm';
 import { LOCATION_OPTIONS, TIME_OPTIONS } from './defaultOptions';
+import { radius } from './radius';
 import { FESTIVALS, FESTIVAL_LIST, DEFAULT_FESTIVAL_ID } from './festivals';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
@@ -139,7 +140,7 @@ const Badge = ({ label, color, bg, border }) => (
     display: 'inline-block', fontSize: '10px', fontWeight: '600',
     color, backgroundColor: bg,
     border: `0.5px solid ${border}`,
-    padding: '3px 8px', borderRadius: '999px',
+    padding: '3px 8px', borderRadius: radius.pill,
     fontFamily: font,
   }}>{label}</span>
 );
@@ -628,7 +629,7 @@ const PrimaveraApp = () => {
         </div>
 
         {/* Post card */}
-        <div style={{ position: 'relative', zIndex: 1, margin: '20px 16px 0', backgroundColor: t.white, borderRadius: '20px', padding: '18px 18px 16px', boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}>
+        <div style={{ position: 'relative', zIndex: 1, margin: '20px 16px 0', backgroundColor: t.white, borderRadius: radius.xl, padding: '18px 18px 16px', boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}>
           <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '700', color: t.textMuted, fontFamily: font }}>
             Posted by <span style={{ color: t.dark }}>{sharedPostAuthor || 'someone'}</span> at the festival
           </p>
@@ -655,7 +656,7 @@ const PrimaveraApp = () => {
             onClick={() => setAuthStep('onboarding')}
             style={{
               width: '100%', padding: '17px', border: 'none',
-              backgroundColor: t.dark, borderRadius: '14px',
+              backgroundColor: t.dark, borderRadius: radius.lg,
               fontSize: '16px', fontWeight: '700', color: '#FFFFFF',
               cursor: 'pointer', fontFamily: font,
             }}
@@ -713,7 +714,7 @@ const PrimaveraApp = () => {
             onClick={() => setAuthStep('onboarding')}
             style={{
               width: '100%', padding: '17px', border: 'none',
-              backgroundColor: t.dark, borderRadius: '14px',
+              backgroundColor: t.dark, borderRadius: radius.lg,
               fontSize: '16px', fontWeight: '700', color: '#FFFFFF',
               cursor: 'pointer', fontFamily: font,
             }}
@@ -759,7 +760,7 @@ const PrimaveraApp = () => {
               required disabled={loading} autoFocus
               className="fulmi-input"
               style={{
-                height: '52px', padding: '0 16px', borderRadius: '14px',
+                height: '52px', padding: '0 16px', borderRadius: radius.lg,
                 border: 'none', fontSize: '15px',
                 backgroundColor: 'rgba(255,255,255,0.18)', color: '#FFFFFF',
                 outline: 'none', fontFamily: font,
@@ -767,7 +768,7 @@ const PrimaveraApp = () => {
             />
             {otpError && <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.85)' }}>{otpError}</p>}
             <button type="submit" disabled={loading || !pendingEmail} style={{
-              height: '52px', cursor: 'pointer', borderRadius: '14px',
+              height: '52px', cursor: 'pointer', borderRadius: radius.lg,
               border: 'none', backgroundColor: '#FFFFFF',
               fontSize: '15px', fontWeight: '700', color: t.primary,
               fontFamily: font, marginTop: '4px',
@@ -810,7 +811,7 @@ const PrimaveraApp = () => {
               required disabled={loading} autoFocus
               className="fulmi-input"
               style={{
-                height: '52px', padding: '0 16px', borderRadius: '14px',
+                height: '52px', padding: '0 16px', borderRadius: radius.lg,
                 border: 'none', fontSize: '22px', letterSpacing: '0.25em', textAlign: 'center',
                 backgroundColor: 'rgba(255,255,255,0.18)', color: '#FFFFFF',
                 outline: 'none', fontFamily: font,
@@ -818,7 +819,7 @@ const PrimaveraApp = () => {
             />
             {otpError && <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.85)' }}>{otpError}</p>}
             <button type="submit" disabled={loading || otpCode.length < 6} style={{
-              height: '52px', cursor: 'pointer', borderRadius: '14px',
+              height: '52px', cursor: 'pointer', borderRadius: radius.lg,
               border: 'none', backgroundColor: '#FFFFFF',
               fontSize: '15px', fontWeight: '700', color: t.primary,
               fontFamily: font, marginTop: '4px',
@@ -890,7 +891,7 @@ const PrimaveraApp = () => {
                 <div
                   onClick={() => set(v => !v)}
                   style={{
-                    width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0, marginTop: '1px',
+                    width: '22px', height: '22px', borderRadius: radius.sm, flexShrink: 0, marginTop: '1px',
                     border: `2px solid ${checked ? t.primary : t.borderDark}`,
                     backgroundColor: checked ? t.primary : 'transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -907,7 +908,7 @@ const PrimaveraApp = () => {
             onClick={handleConfirmAge}
             disabled={!ageChecked || !termsChecked || loading}
             style={{
-              height: '52px', cursor: 'pointer', borderRadius: '14px',
+              height: '52px', cursor: 'pointer', borderRadius: radius.lg,
               border: 'none', backgroundColor: t.dark,
               fontSize: '15px', fontWeight: '700', color: '#FFFFFF',
               fontFamily: font,
@@ -935,7 +936,7 @@ const PrimaveraApp = () => {
             { color: '#C090C8', x: '45%',  y: '40%', w: '50%', h: '38%' },
             { color: '#E8B0A0', x: '30%',  y: '55%', w: '40%', h: '30%' },
           ].map((b, i) => (
-            <div key={i} style={{ position: 'absolute', left: b.x, top: b.y, width: b.w, height: b.h, backgroundColor: b.color, borderRadius: '50%', filter: 'blur(52px)', transform: 'translate(-50%, -50%)' }} />
+            <div key={i} style={{ position: 'absolute', left: b.x, top: b.y, width: b.w, height: b.h, backgroundColor: b.color, borderRadius: radius.circle, filter: 'blur(52px)', transform: 'translate(-50%, -50%)' }} />
           ))}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 35%, #EDE8DF 68%)' }} />
         </div>
@@ -952,7 +953,7 @@ const PrimaveraApp = () => {
                 loadData(userId, f.id);
               }} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                width: '100%', padding: '18px 20px', borderRadius: '16px',
+                width: '100%', padding: '18px 20px', borderRadius: radius.lg,
                 border: 'none', backgroundColor: t.dark,
                 cursor: 'pointer', textAlign: 'left',
               }}>
@@ -981,7 +982,7 @@ const PrimaveraApp = () => {
           <button onClick={() => setFestivalSwitcherOpen(true)} style={{
             display: 'flex', alignItems: 'center', gap: '5px',
             backgroundColor: t.surface, border: `1px solid ${t.border}`,
-            borderRadius: '8px', padding: '7px 10px 7px 12px',
+            borderRadius: radius.sm, padding: '7px 10px 7px 12px',
             cursor: 'pointer', color: t.textMuted,
           }}>
             <span style={{ fontSize: '11px', fontWeight: '500', fontFamily: font, letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>{activeFestival?.fullName || 'Select festival'}</span>
@@ -1005,8 +1006,8 @@ const PrimaveraApp = () => {
             {/* Card 1 — Find Someone */}
             <button onClick={() => navigateTo('notes')} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-              flex: 1, width: '100%', padding: '28px 24px', borderRadius: '20px',
-              border: `1.5px solid ${t.primaryBorder}`, backgroundColor: t.primaryBg,
+              flex: 1, width: '100%', padding: '28px 24px', borderRadius: radius.xl,
+              border: `2px solid ${t.primaryBorder}`, backgroundColor: t.primaryBg,
               cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
               boxShadow: '0 2px 12px rgba(255,91,27,0.10)',
             }}>
@@ -1018,7 +1019,7 @@ const PrimaveraApp = () => {
                     <path d="M17.552 0.211931C17.6032 -0.0706435 18.0097 -0.0706435 18.0591 0.211931C18.4307 2.34677 20.102 4.01997 22.2387 4.39158C22.5223 4.4419 22.5223 4.84837 22.2387 4.89772C20.1029 5.2703 18.4307 6.94255 18.0591 9.07737C18.0107 9.36091 17.6023 9.36091 17.552 9.07737C17.1803 6.94253 15.509 5.27032 13.3743 4.89772C13.0907 4.84836 13.0907 4.44192 13.3743 4.39158C15.5091 4.01997 17.1803 2.34675 17.552 0.211931Z" fill={t.primary}/>
                   </svg>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(255,91,27,0.08)', borderRadius: '999px', padding: '5px 10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(255,91,27,0.08)', borderRadius: radius.pill, padding: '5px 10px' }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                   </svg>
@@ -1036,7 +1037,7 @@ const PrimaveraApp = () => {
             {/* Card 2 — Share a Moment */}
             <button onClick={() => navigateTo('public')} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-              flex: 1, width: '100%', padding: '28px 24px', borderRadius: '20px',
+              flex: 1, width: '100%', padding: '28px 24px', borderRadius: radius.xl,
               border: `1px solid ${t.border}`, backgroundColor: t.surface,
               cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
             }}>
@@ -1051,7 +1052,7 @@ const PrimaveraApp = () => {
                     <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill={t.dark}/>
                   </svg>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(29,29,47,0.07)', borderRadius: '999px', padding: '5px 10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(29,29,47,0.07)', borderRadius: radius.pill, padding: '5px 10px' }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={t.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -1093,7 +1094,7 @@ const PrimaveraApp = () => {
             <div style={{ marginBottom: '20px' }}>
               <div style={{
                 display: 'inline-flex', position: 'relative',
-                backgroundColor: t.surface, borderRadius: '12px', border: `1px solid ${t.border}`,
+                backgroundColor: t.surface, borderRadius: radius.md, border: `1px solid ${t.border}`,
                 padding: '4px', gap: '0',
               }}>
                 <div style={{
@@ -1101,7 +1102,7 @@ const PrimaveraApp = () => {
                   left: matchSubTab === 'ai' ? '4px' : '114px',
                   width: '110px',
                   backgroundColor: t.white,
-                  borderRadius: '8px',
+                  borderRadius: radius.sm,
                   boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                   transition: 'left 0.22s cubic-bezier(0.23, 1, 0.32, 1)',
                   pointerEvents: 'none',
@@ -1109,7 +1110,7 @@ const PrimaveraApp = () => {
                 {[{ id: 'ai', label: 'AI Found' }, { id: 'requests', label: 'Requests' }].map(st => (
                   <button key={st.id} onClick={() => setMatchSubTab(st.id)} style={{
                     position: 'relative', zIndex: 1,
-                    width: '110px', padding: '6px 0', borderRadius: '8px', cursor: 'pointer',
+                    width: '110px', padding: '6px 0', borderRadius: radius.sm, cursor: 'pointer',
                     border: 'none', background: 'transparent', textAlign: 'center',
                     color: matchSubTab === st.id ? t.dark : t.textSec,
                     fontSize: '12px', fontWeight: matchSubTab === st.id ? '700' : '400',
@@ -1123,7 +1124,7 @@ const PrimaveraApp = () => {
                         backgroundColor: matchSubTab === 'requests' ? 'rgba(255,255,255,0.35)' : t.primary,
                         color: '#fff',
                         fontSize: '9px', fontWeight: '700',
-                        borderRadius: '99px', padding: '1px 5px', fontFamily: font,
+                        borderRadius: radius.pill, padding: '1px 5px', fontFamily: font,
                         verticalAlign: 'middle',
                       }}>{receivedRequests.length}</span>
                     )}
@@ -1175,7 +1176,7 @@ const PrimaveraApp = () => {
                         {metaChips.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
                             {metaChips.map((chip, i) => (
-                              <span key={i} style={{ fontSize: '10px', color: t.textMuted, backgroundColor: t.white, borderRadius: '6px', padding: '3px 8px', border: `1px solid ${t.border}`, textTransform: 'capitalize' }}>{chip}</span>
+                              <span key={i} style={{ fontSize: '10px', color: t.textMuted, backgroundColor: t.white, borderRadius: radius.sm, padding: '3px 8px', border: `1px solid ${t.border}`, textTransform: 'capitalize' }}>{chip}</span>
                             ))}
                           </div>
                         )}
@@ -1216,7 +1217,7 @@ const PrimaveraApp = () => {
                               {carouselItems.map((_, i) => (
                                 <button key={i} onClick={() => setIdx(i)} style={{
                                   width: i === clampedIdx ? '20px' : '6px',
-                                  height: '6px', borderRadius: '3px', border: 'none',
+                                  height: '6px', borderRadius: radius.xs, border: 'none',
                                   cursor: 'pointer', padding: 0,
                                   backgroundColor: i === clampedIdx ? t.primary : t.borderDark,
                                   transition: 'width 0.2s cubic-bezier(0.23, 1, 0.32, 1), background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
@@ -1277,7 +1278,7 @@ const PrimaveraApp = () => {
               <h1 style={{ fontSize: '26px', fontWeight: '800', margin: 0, color: t.dark, letterSpacing: '0.01em', fontFamily: "'HealTheWeb', system-ui, sans-serif" }}>Crowd</h1>
               <button onClick={() => { setVibeCreating(true); setVibeStep(0); setVibeText(''); setVibeArtist(null); }} style={{
                 width: '38px', height: '38px', backgroundColor: t.primary,
-                border: 'none', borderRadius: '12px', cursor: 'pointer',
+                border: 'none', borderRadius: radius.md, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 3px 10px rgba(247,96,46,0.35)',
               }}>
@@ -1289,7 +1290,7 @@ const PrimaveraApp = () => {
             <div style={{ padding: '0 16px 14px' }}>
               <div style={{
                 display: 'inline-flex', position: 'relative',
-                backgroundColor: t.surface, borderRadius: '12px', border: `1px solid ${t.border}`,
+                backgroundColor: t.surface, borderRadius: radius.md, border: `1px solid ${t.border}`,
                 padding: '4px', gap: '0',
               }}>
                 {/* sliding pill */}
@@ -1298,7 +1299,7 @@ const PrimaveraApp = () => {
                   left: boardSubTab === 'everyone' ? '4px' : '68px',
                   width: '64px',
                   backgroundColor: t.white,
-                  borderRadius: '8px',
+                  borderRadius: radius.sm,
                   boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                   transition: 'left 0.22s cubic-bezier(0.23, 1, 0.32, 1)',
                   pointerEvents: 'none',
@@ -1306,7 +1307,7 @@ const PrimaveraApp = () => {
                 {[{ id: 'everyone', label: 'All' }, { id: 'mine', label: 'Mine' }].map(st => (
                   <button key={st.id} onClick={() => setBoardSubTab(st.id)} style={{
                     position: 'relative', zIndex: 1,
-                    width: '64px', padding: '6px 0', borderRadius: '8px', cursor: 'pointer',
+                    width: '64px', padding: '6px 0', borderRadius: radius.sm, cursor: 'pointer',
                     border: 'none', background: 'transparent', textAlign: 'center',
                     color: boardSubTab === st.id ? t.dark : t.textSec,
                     fontSize: '12px', fontWeight: boardSubTab === st.id ? '700' : '400',
@@ -1388,7 +1389,7 @@ const PrimaveraApp = () => {
                       onChange={e => setVibeText(e.target.value)}
                       placeholder="Four Tet dropped that track and everyone just went silent. Still thinking about it."
                       style={{
-                        width: '100%', minHeight: '180px', padding: '14px 14px 48px', borderRadius: '14px',
+                        width: '100%', minHeight: '180px', padding: '14px 14px 48px', borderRadius: radius.lg,
                         border: `1px solid ${t.border}`, fontSize: '14px', fontFamily: font,
                         color: t.dark, backgroundColor: t.white, boxSizing: 'border-box',
                         resize: 'none', outline: 'none', lineHeight: '1.65',
@@ -1408,7 +1409,7 @@ const PrimaveraApp = () => {
                       disabled={!vibeText.trim()}
                       style={{
                         position: 'absolute', bottom: '12px', right: '12px',
-                        width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+                        width: '36px', height: '36px', borderRadius: radius.circle, border: 'none',
                         backgroundColor: vibeText.trim() ? t.dark : t.borderDark,
                         color: '#fff', cursor: vibeText.trim() ? 'pointer' : 'not-allowed',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1438,8 +1439,8 @@ const PrimaveraApp = () => {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignContent: 'flex-start', paddingBottom: '48px' }}>
                       {(activeFestival?.artists || []).filter(a => a !== 'Otro').slice().sort((a, b) => a.localeCompare(b)).map(artist => (
                         <button key={artist} onClick={() => setVibeArtist(vibeArtist === artist ? null : artist)} style={{
-                          padding: '6px 12px', borderRadius: '999px', cursor: 'pointer',
-                          border: vibeArtist === artist ? `1.5px solid ${t.primary}` : `1px solid ${t.border}`,
+                          padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
+                          border: vibeArtist === artist ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
                           backgroundColor: vibeArtist === artist ? t.primaryBg : t.white,
                           fontSize: '12px', color: vibeArtist === artist ? t.primary : t.textSec,
                           fontWeight: vibeArtist === artist ? '600' : '400', fontFamily: font,
@@ -1450,12 +1451,12 @@ const PrimaveraApp = () => {
                   </div>
                   <div style={{ display: 'flex', gap: '10px', paddingTop: '20px' }}>
                     <button onClick={() => setVibeStep(0)} style={{
-                      flex: 1, padding: '14px', borderRadius: '12px',
+                      flex: 1, padding: '14px', borderRadius: radius.md,
                       border: `1px solid ${t.border}`, backgroundColor: t.white,
                       color: t.dark, fontSize: '14px', fontWeight: '500', fontFamily: font, cursor: 'pointer',
                     }}>← Back</button>
                     <button onClick={submitVibe} style={{
-                      flex: 2, padding: '14px', borderRadius: '12px', border: 'none',
+                      flex: 2, padding: '14px', borderRadius: radius.md, border: 'none',
                       backgroundColor: t.primary, color: '#fff',
                       fontSize: '14px', fontWeight: '700', fontFamily: font, cursor: 'pointer',
                     }}>Share ✓</button>
@@ -1476,7 +1477,7 @@ const PrimaveraApp = () => {
               <div style={cardStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                   <div style={{
-                    width: '52px', height: '52px', borderRadius: '14px',
+                    width: '52px', height: '52px', borderRadius: radius.lg,
                     backgroundColor: t.primaryBg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '20px', fontWeight: '700', color: t.primary,
@@ -1494,7 +1495,7 @@ const PrimaveraApp = () => {
                     { value: myNotes.filter(n => n.visibility === 'public').length, label: 'Vibes' },
                     { value: confirmedMatches.length, label: 'Connections' },
                   ].map(({ value, label }) => (
-                    <div key={label} style={{ backgroundColor: t.surface, padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div key={label} style={{ backgroundColor: t.surface, padding: '12px', borderRadius: radius.md, textAlign: 'center' }}>
                       <p style={{ fontSize: '20px', fontWeight: '700', margin: '0 0 2px', color: t.dark }}>{value}</p>
                       <p style={{ fontSize: '11px', color: t.textMuted, margin: 0 }}>{label}</p>
                     </div>
@@ -1507,7 +1508,7 @@ const PrimaveraApp = () => {
                 onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setAuthStep('splash'); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  background: 'none', border: `1px solid ${t.border}`, borderRadius: '10px',
+                  background: 'none', border: `1px solid ${t.border}`, borderRadius: radius.md,
                   padding: '10px 14px', cursor: 'pointer', color: t.textMuted,
                   fontSize: '13px', fontFamily: font, fontWeight: '500', width: '100%',
                 }}
@@ -1535,10 +1536,10 @@ const PrimaveraApp = () => {
         }}>
           <div onClick={e => e.stopPropagation()} style={{
             width: '100%', maxWidth: '380px', margin: '0 auto',
-            backgroundColor: t.white, borderRadius: '20px 20px 0 0',
+            backgroundColor: t.white, borderRadius: `${radius.xl} ${radius.xl} 0 0`,
             padding: '20px 20px 36px', display: 'flex', flexDirection: 'column', gap: '10px',
           }}>
-            <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: '2px', margin: '0 auto 12px' }} />
+            <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: radius.xs, margin: '0 auto 12px' }} />
             <p style={{ fontSize: '12px', fontWeight: '600', color: t.textMuted, fontFamily: font, margin: '0 0 4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Switch festival</p>
             {FESTIVAL_LIST.map(f => (
               <button key={f.id} onClick={() => {
@@ -1550,8 +1551,8 @@ const PrimaveraApp = () => {
                 loadData(userId, f.id);
               }} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                width: '100%', padding: '14px 16px', borderRadius: '12px',
-                border: f.id === activeFestivalId ? `1.5px solid ${t.primary}` : `1px solid ${t.border}`,
+                width: '100%', padding: '14px 16px', borderRadius: radius.md,
+                border: f.id === activeFestivalId ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
                 backgroundColor: f.id === activeFestivalId ? t.primaryBg : t.white,
                 cursor: 'pointer', textAlign: 'left',
               }}>
@@ -1646,26 +1647,26 @@ const PrimaveraApp = () => {
 
 const cardStyle = {
   backgroundColor: '#FFFFFF', border: '1px solid #EDE8DF',
-  borderRadius: '14px', padding: '14px',
+  borderRadius: radius.lg, padding: '14px',
   boxShadow: '0 1px 3px rgba(29,29,47,0.05)',
 };
 
 const btnPrimary = {
   flex: 1, padding: '9px', border: 'none',
-  backgroundColor: '#FF5B1B', borderRadius: '10px',
+  backgroundColor: '#FF5B1B', borderRadius: radius.md,
   cursor: 'pointer', fontSize: '13px', color: '#FFFFFF',
   fontWeight: '600', fontFamily: font,
 };
 
 const btnOutline = {
   flex: 1, padding: '9px', border: '1px solid #EDE8DF', backgroundColor: '#F7F5F2',
-  borderRadius: '10px', cursor: 'pointer', fontSize: '13px', color: '#1D1D2F',
+  borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', color: '#1D1D2F',
   fontWeight: '500', fontFamily: font,
 };
 
 const btnGhost = {
   flex: 1, padding: '9px', border: '1px solid #EDE8DF', backgroundColor: '#FFFFFF',
-  borderRadius: '10px', cursor: 'pointer', fontSize: '13px', color: '#9E9A93',
+  borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', color: '#9E9A93',
   fontFamily: font,
 };
 
@@ -1682,7 +1683,7 @@ const HourglassIcon = ({ size = 16, color }) => (
 const NoSearchCard = ({ onCreateSearch }) => (
   <div style={{
     backgroundColor: t.surface, border: `1px solid ${t.border}`,
-    borderRadius: '20px', padding: '24px 20px',
+    borderRadius: radius.xl, padding: '24px 20px',
     minHeight: '360px', display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center',
   }}>
@@ -1695,7 +1696,7 @@ const NoSearchCard = ({ onCreateSearch }) => (
       <p style={{ margin: '0 0 20px', fontSize: '13px', color: t.textMuted, fontFamily: font, lineHeight: '1.5' }}>Create an AI search to start finding your match</p>
     </div>
     <button onClick={onCreateSearch} style={{
-      padding: '12px 24px', borderRadius: '12px', border: 'none',
+      padding: '12px 24px', borderRadius: radius.md, border: 'none',
       backgroundColor: t.primary, color: '#fff', cursor: 'pointer',
       fontSize: '14px', fontWeight: '700', fontFamily: font,
     }}>Create search →</button>
@@ -1707,7 +1708,7 @@ const SearchingCard = ({ text, sub } = {}) => (
   <div style={{
     backgroundColor: text ? t.surface : t.primaryBg,
     border: `1px solid ${text ? t.border : t.primaryBorder}`,
-    borderRadius: '20px', padding: '24px 20px',
+    borderRadius: radius.xl, padding: '24px 20px',
     minHeight: '360px', display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: '14px', textAlign: 'center',
   }}>
@@ -1715,7 +1716,7 @@ const SearchingCard = ({ text, sub } = {}) => (
       <div style={{
         width: '44px', height: '44px',
         border: `3px solid ${t.primaryBorder}`, borderTop: `3px solid ${t.primary}`,
-        borderRadius: '50%', animation: 'spin 0.8s linear infinite',
+        borderRadius: radius.circle, animation: 'spin 0.8s linear infinite',
       }} />
     )}
     <div>
@@ -1755,7 +1756,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
   return (
     <div style={{
       backgroundColor: accentBg, border: `1px solid ${accentBorder}`,
-      borderRadius: '20px', padding: '24px 20px 20px',
+      borderRadius: radius.xl, padding: '24px 20px 20px',
       minHeight: '360px', display: 'flex', flexDirection: 'column',
       boxShadow: `0 4px 20px ${accentShadow}`,
     }}>
@@ -1770,7 +1771,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
         <div style={{
           display: 'flex', alignItems: 'center', gap: '4px',
           backgroundColor: isGreen ? 'rgba(5,194,112,0.12)' : 'rgba(247,96,46,0.10)',
-          borderRadius: '99px', padding: '4px 10px',
+          borderRadius: radius.pill, padding: '4px 10px',
         }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -1783,7 +1784,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
       {state === 'they_want' && (
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: '5px', alignSelf: 'flex-start',
-          backgroundColor: 'rgba(247,96,46,0.10)', borderRadius: '8px', padding: '5px 10px', marginBottom: '12px',
+          backgroundColor: 'rgba(247,96,46,0.10)', borderRadius: radius.sm, padding: '5px 10px', marginBottom: '12px',
         }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill={t.primary} stroke="none">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
@@ -1807,7 +1808,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
             return (
               <span key={key} style={{
                 fontSize: '11px', fontFamily: font, textTransform: 'capitalize',
-                borderRadius: '6px', padding: '4px 10px',
+                borderRadius: radius.sm, padding: '4px 10px',
                 backgroundColor: common ? 'rgba(247,96,46,0.13)' : 'rgba(29,29,47,0.05)',
                 color: common ? t.primary : t.textMuted,
                 fontWeight: common ? '600' : '400',
@@ -1830,8 +1831,8 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
       {(state === 'pending' || state === 'they_want') && (
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
           <button onClick={onNo} style={{
-            width: '60px', height: '60px', borderRadius: '50%',
-            border: `1.5px solid ${t.borderDark}`, backgroundColor: t.white,
+            width: '60px', height: '60px', borderRadius: radius.circle,
+            border: `2px solid ${t.borderDark}`, backgroundColor: t.white,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(29,29,47,0.08)',
           }}>
@@ -1840,7 +1841,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
             </svg>
           </button>
           <button onClick={onYes} style={{
-            width: '60px', height: '60px', borderRadius: '50%', border: 'none',
+            width: '60px', height: '60px', borderRadius: radius.circle, border: 'none',
             backgroundColor: t.primary, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 16px rgba(247,96,46,0.35)',
@@ -1855,7 +1856,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
       {state === 'requested' && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          backgroundColor: 'rgba(247,96,46,0.08)', borderRadius: '12px', padding: '13px',
+          backgroundColor: 'rgba(247,96,46,0.08)', borderRadius: radius.md, padding: '13px',
         }}>
           <HourglassIcon size={16} color={t.primary} />
           <span style={{ fontSize: '13px', fontWeight: '600', color: t.primary, fontFamily: font }}>Request sent — waiting for reply</span>
@@ -1873,8 +1874,8 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
               value={igInput} onChange={e => setIgInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
               style={{
-                flex: 1, padding: '11px 14px', borderRadius: '12px',
-                border: `1.5px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font,
+                flex: 1, padding: '11px 14px', borderRadius: radius.md,
+                border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font,
                 backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -1882,7 +1883,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
               onClick={() => igInput.trim() && onAddInstagram(igInput.trim())}
               disabled={!igInput.trim()}
               style={{
-                width: '46px', height: '46px', borderRadius: '50%', border: 'none', flexShrink: 0,
+                width: '46px', height: '46px', borderRadius: radius.circle, border: 'none', flexShrink: 0,
                 backgroundColor: igInput.trim() ? t.successDark : t.borderDark,
                 cursor: igInput.trim() ? 'pointer' : 'not-allowed',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1900,7 +1901,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
       {state === 'mutual_wait_theirs' && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: '12px', padding: '13px',
+          backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px',
         }}>
           <HourglassIcon size={16} color={t.successDark} />
           <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Waiting for their contact…</span>
@@ -1910,7 +1911,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
       {state === 'mutual_done' && confirmed?.note?.instagram && (
         <div style={{
           backgroundColor: t.white, border: `1px solid ${t.successBorder}`,
-          borderRadius: '12px', padding: '12px 16px',
+          borderRadius: radius.md, padding: '12px 16px',
           display: 'flex', alignItems: 'center', gap: '10px',
         }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.successDark} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -1995,7 +1996,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                     <div
                       style={{
                         position: 'absolute', top: '100%', right: 0, zIndex: 50,
-                        backgroundColor: t.white, borderRadius: '10px',
+                        backgroundColor: t.white, borderRadius: radius.md,
                         border: `1px solid ${t.border}`,
                         boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
                         minWidth: '120px', overflow: 'hidden',
@@ -2031,7 +2032,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                   {chips.map((chip, i) => (
                     <span key={i} style={{
                       fontSize: '10px', color: t.textMuted, backgroundColor: t.surface,
-                      borderRadius: '5px', padding: '2px 7px', fontFamily: font,
+                      borderRadius: radius.xs, padding: '2px 7px', fontFamily: font,
                       textTransform: 'capitalize',
                     }}>{chip}</span>
                   ))}
@@ -2102,7 +2103,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
           zIndex: 200, padding: '20px',
         }} onClick={() => setConnectNote(null)}>
           <div style={{
-            backgroundColor: t.white, borderRadius: '24px',
+            backgroundColor: t.white, borderRadius: radius.xxl,
             padding: '24px', width: '100%', maxWidth: '360px',
             boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
           }} onClick={e => e.stopPropagation()}>
@@ -2122,7 +2123,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
 
             {/* Post preview */}
             <div style={{
-              backgroundColor: t.surface, borderRadius: '14px', padding: '14px', marginBottom: '16px',
+              backgroundColor: t.surface, borderRadius: radius.lg, padding: '14px', marginBottom: '16px',
               border: `1px solid ${t.border}`,
             }}>
               <div style={{ marginBottom: '8px' }}>
@@ -2142,7 +2143,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                     ].filter(Boolean).map((chip, i) => (
                       <span key={i} style={{
                         fontSize: '10px', color: t.textMuted, backgroundColor: t.white,
-                        borderRadius: '5px', padding: '2px 7px', fontFamily: font, textTransform: 'capitalize',
+                        borderRadius: radius.xs, padding: '2px 7px', fontFamily: font, textTransform: 'capitalize',
                       }}>{chip}</span>
                     ))}
                   </div>
@@ -2161,7 +2162,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
               autoFocus
               style={{
                 width: '100%', minHeight: '80px', padding: '12px 14px',
-                borderRadius: '12px', border: `1px solid ${t.border}`,
+                borderRadius: radius.md, border: `1px solid ${t.border}`,
                 fontSize: '14px', fontFamily: font, color: t.dark,
                 backgroundColor: t.white, resize: 'none', outline: 'none',
                 lineHeight: '1.5', boxSizing: 'border-box',
@@ -2181,7 +2182,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                   setConnectComment('');
                 }}
                 style={{
-                  width: '48px', height: '48px', borderRadius: '50%', border: 'none',
+                  width: '48px', height: '48px', borderRadius: radius.circle, border: 'none',
                   backgroundColor: connectComment.trim() ? t.primary : t.borderDark,
                   cursor: connectComment.trim() ? 'pointer' : 'not-allowed',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2206,10 +2207,10 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
           zIndex: 100,
         }} onClick={() => setShareNote(null)}>
           <div style={{
-            backgroundColor: t.white, borderRadius: '20px 20px 0 0',
+            backgroundColor: t.white, borderRadius: `${radius.xl} ${radius.xl} 0 0`,
             padding: '24px 20px 36px', width: '100%', maxWidth: '380px',
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: '2px', margin: '0 auto 20px' }} />
+            <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: radius.xs, margin: '0 auto 20px' }} />
             <p style={{ fontSize: '15px', fontWeight: '700', color: t.dark, margin: '0 0 6px', fontFamily: font }}>Share this vibe</p>
             <p style={{ fontSize: '13px', color: t.textSec, margin: '0 0 20px', lineHeight: '1.5', fontFamily: font }}>
               {shareNote.description?.substring(0, 80)}{shareNote.description?.length > 80 ? '…' : ''}
@@ -2234,7 +2235,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
               ].map(({ label, svg, action }) => (
                 <button key={label} onClick={action} style={{
                   flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-                  backgroundColor: t.surface, border: 'none', borderRadius: '12px', padding: '14px 8px',
+                  backgroundColor: t.surface, border: 'none', borderRadius: radius.md, padding: '14px 8px',
                   cursor: 'pointer', fontSize: '11px', color: t.textSec, fontFamily: font, fontWeight: '500',
                 }}>
                   {svg}
@@ -2257,7 +2258,7 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
   return (
     <div style={{
       backgroundColor: isAccepted ? t.successBg : t.white,
-      borderRadius: '20px',
+      borderRadius: radius.xl,
       border: `1px solid ${isAccepted ? t.successBorder : t.border}`,
       padding: '20px',
       minHeight: '220px',
@@ -2305,7 +2306,7 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
           {chips.map((chip, i) => (
             <span key={i} style={{
               fontSize: '10px', color: t.textMuted, backgroundColor: isAccepted ? 'rgba(5,194,112,0.10)' : t.surface,
-              borderRadius: '6px', padding: '3px 8px', fontFamily: font, textTransform: 'capitalize',
+              borderRadius: radius.sm, padding: '3px 8px', fontFamily: font, textTransform: 'capitalize',
             }}>{chip}</span>
           ))}
         </div>
@@ -2315,7 +2316,7 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
       {myVibeNote?.description && (
         <div style={{
           backgroundColor: isAccepted ? 'rgba(5,194,112,0.08)' : t.surface,
-          borderRadius: '10px', padding: '10px 12px',
+          borderRadius: radius.md, padding: '10px 12px',
           marginBottom: '14px',
           borderLeft: `3px solid ${isAccepted ? t.successBorder : t.primaryBorder}`,
         }}>
@@ -2344,7 +2345,7 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
       ) : iHaveIg ? (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: '12px', padding: '13px',
+          backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px',
         }}>
           <HourglassIcon size={16} color={t.successDark} />
           <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Contact shared — waiting for theirs</span>
@@ -2360,8 +2361,8 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
               value={igInput} onChange={e => setIgInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
               style={{
-                flex: 1, padding: '11px 14px', borderRadius: '12px',
-                border: `1.5px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font,
+                flex: 1, padding: '11px 14px', borderRadius: radius.md,
+                border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font,
                 backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -2369,7 +2370,7 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
               onClick={() => igInput.trim() && onAddInstagram(igInput.trim())}
               disabled={!igInput.trim()}
               style={{
-                width: '46px', height: '46px', borderRadius: '50%', border: 'none', flexShrink: 0,
+                width: '46px', height: '46px', borderRadius: radius.circle, border: 'none', flexShrink: 0,
                 backgroundColor: igInput.trim() ? t.successDark : t.borderDark,
                 cursor: igInput.trim() ? 'pointer' : 'not-allowed',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',

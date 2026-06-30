@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { extractFields } from './extractFields';
 import { TIME_OPTIONS, LOCATION_OPTIONS } from './defaultOptions';
+import { radius } from './radius';
 
 const t = {
   primary: '#FF5B1B', primaryLight: '#FAA284', primaryBg: '#FFF0EB',
@@ -14,8 +15,8 @@ const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 
 const Chip = ({ label, selected, onClick }) => (
   <button onClick={onClick} style={{
-    padding: '6px 12px', borderRadius: '999px', cursor: 'pointer',
-    border: selected ? `1.5px solid ${t.primary}` : `1px solid ${t.border}`,
+    padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
+    border: selected ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
     backgroundColor: selected ? t.primaryBg : t.white,
     fontSize: '12px', color: selected ? t.primary : t.textSec,
     fontWeight: selected ? '600' : '400', fontFamily: font,
@@ -31,13 +32,13 @@ const NavButtons = ({ onBack, onNext, nextLabel = 'Next →', nextEnabled = true
   <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', paddingBottom: '8px' }}>
     {onBack && (
       <button onClick={onBack} style={{
-        flex: 1, padding: '13px', borderRadius: '12px', border: `1px solid ${t.border}`,
+        flex: 1, padding: '13px', borderRadius: radius.md, border: `1px solid ${t.border}`,
         backgroundColor: t.white, cursor: 'pointer', fontSize: '14px',
         color: t.text, fontWeight: '500', fontFamily: font,
       }}>← Back</button>
     )}
     <button onClick={onNext} disabled={!nextEnabled} style={{
-      flex: 2, padding: '13px', borderRadius: '12px', border: 'none',
+      flex: 2, padding: '13px', borderRadius: radius.md, border: 'none',
       backgroundColor: nextEnabled ? (isLast ? t.primary : t.dark) : t.borderDark,
       cursor: nextEnabled ? 'pointer' : 'not-allowed',
       fontSize: '14px', color: '#fff', fontWeight: '700', fontFamily: font,
@@ -54,7 +55,7 @@ const LoadingScreen = ({ message = 'Thinking…', sub }) => (
     <div style={{
       width: '48px', height: '48px',
       border: `3px solid ${t.border}`, borderTop: `3px solid ${t.primary}`,
-      borderRadius: '50%', animation: 'spin 0.8s linear infinite',
+      borderRadius: radius.circle, animation: 'spin 0.8s linear infinite',
     }} />
     <div style={{ textAlign: 'center' }}>
       <p style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: '600', color: t.dark, fontFamily: font }}>{message}</p>
@@ -70,7 +71,7 @@ const StepHeader = ({ title, sub, step, total, onExit }) => (
         <div style={{ display: 'flex', gap: '4px', marginBottom: '14px', flex: 1 }}>
           {Array.from({ length: total }).map((_, i) => (
             <div key={i} style={{
-              flex: 1, height: '3px', borderRadius: '2px',
+              flex: 1, height: '3px', borderRadius: radius.xs,
               backgroundColor: i < step ? t.primary : t.border,
               transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
             }} />
@@ -204,7 +205,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         alignItems: 'center', justifyContent: 'center', gap: '24px',
       }}>
         <span style={{
-          fontSize: '11px', padding: '5px 12px', borderRadius: '999px',
+          fontSize: '11px', padding: '5px 12px', borderRadius: radius.pill,
           backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`,
           fontFamily: font,
         }}>
@@ -224,7 +225,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
 
         <div style={{
           width: '100%', backgroundColor: t.white, border: `1px solid ${t.primaryBorder}`,
-          borderRadius: '16px', padding: '14px 14px 10px',
+          borderRadius: radius.lg, padding: '14px 14px 10px',
           boxShadow: `0 0 0 5px rgba(255,91,27,0.07), 0 0 20px 6px rgba(255,91,27,0.10), 0 1px 4px rgba(29,29,47,0.05)`, position: 'relative',
         }}>
           {!prompt && (
@@ -260,7 +261,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
             disabled={!prompt.trim()}
             style={{
               position: 'absolute', bottom: '12px', right: '12px',
-              width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+              width: '36px', height: '36px', borderRadius: radius.circle, border: 'none',
               backgroundColor: prompt.trim() ? t.primary : t.borderDark,
               color: '#fff', cursor: prompt.trim() ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -296,7 +297,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
                   style={{
                     width: '100%', textAlign: 'left', cursor: 'pointer',
                     backgroundColor: '#FFFFFF', border: '1px solid #EDE8DF',
-                    borderRadius: '14px', padding: '14px',
+                    borderRadius: radius.lg, padding: '14px',
                     boxShadow: '0 1px 3px rgba(29,29,47,0.05)',
                     fontFamily: font,
                   }}
@@ -307,14 +308,14 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
                         {metaParts.map((m, i) => (
                           <span key={i} style={{
                             fontSize: '10px', color: t.textMuted, backgroundColor: t.surface,
-                            borderRadius: '6px', padding: '3px 8px', textTransform: 'capitalize',
+                            borderRadius: radius.sm, padding: '3px 8px', textTransform: 'capitalize',
                           }}>{m}</span>
                         ))}
                       </div>
                     )}
                     <span style={{
                       fontSize: '10px', fontWeight: '700', padding: '3px 9px',
-                      borderRadius: '999px', whiteSpace: 'nowrap', marginLeft: '8px', flexShrink: 0,
+                      borderRadius: radius.pill, whiteSpace: 'nowrap', marginLeft: '8px', flexShrink: 0,
                       color: stateStyle.color, backgroundColor: stateStyle.bg, border: `1px solid ${stateStyle.border}`,
                     }}>{stateStyle.label}</span>
                   </div>
@@ -341,7 +342,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         <div style={{ display: 'flex', gap: '8px' }}>
           {days.map(d => (
             <button key={d.value} onClick={() => setRefined(p => ({ ...p, day: p.day === d.value ? null : d.value }))} style={{
-              flex: 1, padding: '11px 0', borderRadius: '10px', cursor: 'pointer',
+              flex: 1, padding: '11px 0', borderRadius: radius.md, cursor: 'pointer',
               border: refined.day === d.value ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
               backgroundColor: refined.day === d.value ? t.primaryBg : t.white,
               fontSize: '14px', fontWeight: refined.day === d.value ? '700' : '400',
@@ -356,7 +357,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {TIME_OPTIONS.map(opt => (
             <button key={opt.value} onClick={() => setRefined(p => ({ ...p, time: p.time === opt.label ? null : opt.label }))} style={{
-              padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'left',
+              padding: '12px 16px', borderRadius: radius.md, cursor: 'pointer', textAlign: 'left',
               border: refined.time === opt.label ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
               backgroundColor: refined.time === opt.label ? t.primaryBg : t.white,
               fontSize: '14px', color: refined.time === opt.label ? t.primary : t.text,
@@ -394,7 +395,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {LOCATION_OPTIONS.map(loc => (
           <button key={loc.value} onClick={() => setRefined(p => ({ ...p, location: p.location === loc.value ? null : loc.value }))} style={{
-            padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'left',
+            padding: '12px 16px', borderRadius: radius.md, cursor: 'pointer', textAlign: 'left',
             border: refined.location === loc.value ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
             backgroundColor: refined.location === loc.value ? t.primaryBg : t.white,
             fontSize: '14px', color: refined.location === loc.value ? t.primary : t.text,
@@ -419,7 +420,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         placeholder="e.g. I was wearing a red jacket, short brown hair, was with two friends near the bar…"
         style={{
           width: '100%', minHeight: '120px', padding: '12px 14px',
-          borderRadius: '12px', border: `1px solid ${t.border}`,
+          borderRadius: radius.md, border: `1px solid ${t.border}`,
           fontSize: '14px', fontFamily: font, color: t.dark,
           backgroundColor: t.white, resize: 'none', outline: 'none',
           lineHeight: '1.55', boxSizing: 'border-box',
@@ -440,7 +441,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '65vh', gap: '24px', textAlign: 'center' }}>
       <div style={{
-        width: '80px', height: '80px', borderRadius: '24px',
+        width: '80px', height: '80px', borderRadius: radius.xxl,
         backgroundColor: t.successBg, border: `2px solid ${t.successBorder}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
@@ -461,24 +462,24 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', maxWidth: '300px' }}>
         {refined.artist && (
-          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: '999px', backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`, fontFamily: font, fontWeight: '600' }}>
+          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: radius.pill, backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`, fontFamily: font, fontWeight: '600' }}>
             {refined.artist}
           </span>
         )}
         {refined.time && (
-          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: '999px', backgroundColor: t.surface, color: t.textSec, border: `1px solid ${t.border}`, fontFamily: font }}>
+          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: radius.pill, backgroundColor: t.surface, color: t.textSec, border: `1px solid ${t.border}`, fontFamily: font }}>
             {refined.time}
           </span>
         )}
         {refined.location && (
-          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: '999px', backgroundColor: t.surface, color: t.textSec, border: `1px solid ${t.border}`, fontFamily: font }}>
+          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: radius.pill, backgroundColor: t.surface, color: t.textSec, border: `1px solid ${t.border}`, fontFamily: font }}>
             {refined.location.replace(/_/g, ' ')}
           </span>
         )}
       </div>
 
       <button onClick={handleReset} style={{
-        padding: '13px 32px', borderRadius: '12px', border: `1px solid ${t.border}`,
+        padding: '13px 32px', borderRadius: radius.md, border: `1px solid ${t.border}`,
         backgroundColor: t.white, cursor: 'pointer', fontSize: '14px',
         color: t.text, fontWeight: '500', fontFamily: font,
       }}>+ New search</button>

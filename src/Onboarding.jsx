@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { radius } from './radius';
 
 const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 const healFont = "'HealTheWeb', system-ui, sans-serif";
@@ -45,7 +46,7 @@ const BlobBg = ({ blobs }) => (
         left: b.x, top: b.y,
         width: b.w, height: b.h,
         backgroundColor: b.color,
-        borderRadius: '50%',
+        borderRadius: radius.circle,
         filter: 'blur(52px)',
         transform: 'translate(-50%, -50%)',
         opacity: b.opacity ?? 1,
@@ -85,7 +86,7 @@ export default function Onboarding({ onComplete }) {
         <button onClick={onComplete} style={{
           position: 'absolute', top: '52px', right: '20px',
           background: 'rgba(255,255,255,0.25)', border: 'none',
-          borderRadius: '20px', padding: '6px 14px',
+          borderRadius: radius.xl, padding: '6px 14px',
           color: 'rgba(30,20,10,0.55)', fontSize: '13px',
           fontWeight: '500', cursor: 'pointer', fontFamily: font,
           backdropFilter: 'blur(8px)', zIndex: 10,
@@ -103,7 +104,7 @@ export default function Onboarding({ onComplete }) {
             <div key={i} style={{
               height: '4px',
               width: i === current ? '28px' : '8px',
-              borderRadius: '2px',
+              borderRadius: radius.xs,
               backgroundColor: i === current ? '#FF5B1B' : 'rgba(29,29,47,0.20)',
               transition: 'width 0.3s cubic-bezier(0.23, 1, 0.32, 1), background-color 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
             }} />
@@ -127,7 +128,7 @@ export default function Onboarding({ onComplete }) {
         {/* CTA */}
         <button onClick={next} style={{
           width: '100%', padding: '16px', border: 'none',
-          backgroundColor: '#1D1D2F', borderRadius: '14px',
+          backgroundColor: '#1D1D2F', borderRadius: radius.lg,
           color: '#FFFFFF', fontSize: '16px', fontWeight: '700',
           cursor: 'pointer', fontFamily: font,
         }}>
