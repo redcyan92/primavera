@@ -187,6 +187,7 @@ const PrimaveraApp = () => {
   const [resendCountdown, setResendCountdown] = useState(0);
   const [ageChecked, setAgeChecked]         = useState(false);
   const [termsChecked, setTermsChecked]     = useState(false);
+  const [userName, setUserName]             = useState(() => localStorage.getItem('fulmi_user_name') || '');
   const [isModalOpen, setIsModalOpen]       = useState(false);
   const [vibeCreating, setVibeCreating]     = useState(false);
   const [vibeStep, setVibeStep]             = useState(0);
@@ -443,6 +444,7 @@ const PrimaveraApp = () => {
     setLoading(true);
     try {
       await supabase.confirmAge(userId);
+      if (userName.trim()) localStorage.setItem('fulmi_user_name', userName.trim());
       setAuthStep(null);
       if (activeFestivalId) await loadData(userId, activeFestivalId);
     } catch (err) {
@@ -888,11 +890,26 @@ const PrimaveraApp = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px 48px', gap: '28px' }}>
           <div>
             <h1 style={{ fontSize: '26px', fontWeight: '700', color: t.dark, margin: '0 0 8px', letterSpacing: '0.01em', fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1.3' }}>
-              Quick check
+              Almost there
             </h1>
             <p style={{ margin: 0, fontSize: '14px', color: t.textSec, lineHeight: '1.5' }}>
               Confirm the following to get started.
             </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: t.textMuted, fontFamily: font, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Your name</label>
+            <input
+              type="text"
+              placeholder="How should we call you?"
+              value={userName}
+              onChange={e => setUserName(e.target.value)}
+              style={{
+                height: '48px', padding: '0 14px', borderRadius: radius.lg,
+                border: `1px solid ${t.border}`, fontSize: '15px',
+                backgroundColor: t.white, color: t.dark,
+                outline: 'none', fontFamily: font, boxSizing: 'border-box', width: '100%',
+              }}
+            />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
@@ -984,15 +1001,15 @@ const PrimaveraApp = () => {
   // ── Main app ──────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: tab === 'home' ? '#EEE1FD' : t.bg, fontFamily: font, position: 'relative' }}>
+    <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: t.bg, fontFamily: font, position: 'relative' }}>
 
       {/* Top header — floating/transparent on home, solid on other tabs */}
       <div style={{
         padding: '12px 16px',
-        position: tab === 'home' ? 'absolute' : 'sticky',
+        position: 'sticky',
         top: 0, left: 0, right: 0, zIndex: 10,
-        backgroundColor: tab === 'home' ? 'transparent' : t.white,
-        borderBottom: tab === 'home' ? 'none' : `1px solid ${t.border}`,
+        backgroundColor: t.white,
+        borderBottom: `1px solid ${t.border}`,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <OtraLogoMark color={t.primary} size={22} />
@@ -1012,18 +1029,15 @@ const PrimaveraApp = () => {
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: tab === 'home' ? '0' : '16px', paddingBottom: '88px', backgroundColor: tab === 'home' ? 'transparent' : t.bg }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px', paddingBottom: '88px', backgroundColor: t.bg }}>
 
         {/* ── TAB: HOME ── */}
         {tab === 'home' && (
-          <div style={{ minHeight: '100svh', position: 'relative', overflow: 'hidden' }}>
-            {/* Background blobs */}
-            <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: '140%', height: '55%', background: 'radial-gradient(ellipse 80% 100% at 50% 10%, rgba(181,11,242,0.45) 0%, rgba(138,0,204,0.3) 50%, transparent 80%)', filter: 'blur(32px)', pointerEvents: 'none' }} />
-
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Greeting */}
-            <div style={{ position: 'relative', zIndex: 1, padding: '70px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <h1 style={{ fontSize: '44px', fontWeight: '400', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.05' }}>
-                Hello, {user?.email?.split('@')[0] || 'there'}!
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h1 style={{ fontSize: '44px', fontWeight: '400', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.05', paddingTop: '8px' }}>
+                Hello, {userName || user?.email?.split('@')[0] || 'there'}!
               </h1>
 
               {/* AI Search card */}
