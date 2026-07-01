@@ -1062,7 +1062,7 @@ const PrimaveraApp = () => {
               Hello, {userName || user?.email?.split('@')[0] || 'there'}!
             </h1>
             {/* Cards pushed to bottom */}
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '30px' }}>
 
               {/* AI Search card */}
               <button onClick={() => navigateTo('notes')} style={{
