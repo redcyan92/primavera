@@ -472,7 +472,7 @@ const PrimaveraApp = () => {
       if (authStep === 'otp')        { setAuthStep('email'); setOtpCode(''); setOtpError(''); }
       else if (authStep === 'email') { setAuthStep('onboarding'); }
       else if (authStep === 'onboarding') { setAuthStep('splash'); }
-      else if (authStep === 'age')   { /* can't go back — already logged in */ history.pushState({ authStep: 'age' }, ''); }
+      else if (authStep === 'age')   { setAuthStep('email'); }
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -760,15 +760,19 @@ const PrimaveraApp = () => {
 
   if (authStep === 'onboarding') {
     return (
-      <Onboarding onComplete={() => setAuthStep('email')} />
+      <Onboarding onComplete={() => setAuthStep('email')} onBack={() => setAuthStep('splash')} />
     );
   }
 
   // ── Email entry ───────────────────────────────────────────────────────────
 
   if (authStep === 'email') {
+    const emailSwipeRef = { start: null };
     return (
-      <div style={{
+      <div
+        onTouchStart={e => { emailSwipeRef.start = e.touches[0].clientX; }}
+        onTouchEnd={e => { if (emailSwipeRef.start !== null && e.changedTouches[0].clientX - emailSwipeRef.start > 50) { setAuthStep('onboarding'); } emailSwipeRef.start = null; }}
+        style={{
         maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
         backgroundColor: t.primary, fontFamily: font,
         display: 'flex', flexDirection: 'column',
@@ -894,8 +898,12 @@ const PrimaveraApp = () => {
   // ── Age + Terms ───────────────────────────────────────────────────────────
 
   if (authStep === 'age') {
+    const ageSwipeRef = { start: null };
     return (
-      <div style={{
+      <div
+        onTouchStart={e => { ageSwipeRef.start = e.touches[0].clientX; }}
+        onTouchEnd={e => { if (ageSwipeRef.start !== null && e.changedTouches[0].clientX - ageSwipeRef.start > 50) { setAuthStep('email'); } ageSwipeRef.start = null; }}
+        style={{
         maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
         backgroundColor: t.bg, fontFamily: font,
         display: 'flex', flexDirection: 'column',

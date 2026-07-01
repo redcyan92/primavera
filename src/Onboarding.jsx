@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { radius } from './radius';
 
 const font = "'Plus Jakarta Sans', system-ui, sans-serif";
@@ -19,8 +19,9 @@ const SLIDES = [
   },
 ];
 
-export default function Onboarding({ onComplete }) {
+export default function Onboarding({ onComplete, onBack }) {
   const [current, setCurrent] = useState(0);
+  const touchStartX = useRef(null);
   const slide = SLIDES[current];
   const isLast = current === SLIDES.length - 1;
 
@@ -29,20 +30,38 @@ export default function Onboarding({ onComplete }) {
     else setCurrent(c => c + 1);
   };
 
+  const prev = () => {
+    if (current > 0) setCurrent(c => c - 1);
+    else if (onBack) onBack();
+  };
+
+  const onTouchStart = e => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = e => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (diff > 50) prev();
+    else if (diff < -50) next();
+    touchStartX.current = null;
+  };
+
   return (
-    <div style={{
-      position: 'fixed', inset: 0,
-      backgroundColor: '#F8FAFB',
-      display: 'flex', flexDirection: 'column',
-      fontFamily: font,
-      overflow: 'hidden',
-      maxWidth: '380px', margin: '0 auto',
-    }}>
+    <div
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      style={{
+        position: 'fixed', inset: 0,
+        backgroundColor: '#F8FAFB',
+        display: 'flex', flexDirection: 'column',
+        fontFamily: font,
+        overflow: 'hidden',
+        maxWidth: '380px', margin: '0 auto',
+      }}
+    >
       {/* Skip */}
       {!isLast && (
         <button onClick={onComplete} style={{
           position: 'absolute', top: '52px', right: '20px',
-          background: 'none', border: `1px solid #E6E8EC`,
+          background: 'none', border: '1px solid #E6E8EC',
           borderRadius: radius.xl, padding: '6px 14px',
           color: '#9E9A93', fontSize: '13px',
           fontWeight: '500', cursor: 'pointer', fontFamily: font,
@@ -82,15 +101,25 @@ export default function Onboarding({ onComplete }) {
           color: '#56524E', fontWeight: '400',
         }}>{slide.body}</p>
 
-        {/* CTA */}
-        <button onClick={next} style={{
-          width: '100%', padding: '16px', border: 'none',
-          backgroundColor: '#1D1D2F', borderRadius: radius.lg,
-          color: '#FFFFFF', fontSize: '16px', fontWeight: '700',
-          cursor: 'pointer', fontFamily: font,
-        }}>
-          {isLast ? 'Get Started' : 'Next'}
-        </button>
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {current > 0 && (
+            <button onClick={prev} style={{
+              flex: 1, padding: '16px', border: 'none',
+              backgroundColor: '#F2F3F6', borderRadius: radius.lg,
+              color: '#1D1D2F', fontSize: '16px', fontWeight: '600',
+              cursor: 'pointer', fontFamily: font,
+            }}>← Back</button>
+          )}
+          <button onClick={next} style={{
+            flex: current > 0 ? 2 : 1, padding: '16px', border: 'none',
+            backgroundColor: '#1D1D2F', borderRadius: radius.lg,
+            color: '#FFFFFF', fontSize: '16px', fontWeight: '700',
+            cursor: 'pointer', fontFamily: font,
+          }}>
+            {isLast ? 'Get Started' : 'Next'}
+          </button>
+        </div>
       </div>
     </div>
   );
