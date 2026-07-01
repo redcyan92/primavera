@@ -701,21 +701,36 @@ const PrimaveraApp = () => {
     return (
       <div style={{
         maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
-        backgroundColor: '#B50BF2', fontFamily: font,
+        backgroundColor: '#F1F9B5', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
       }}>
-        {/* Lime blob at bottom */}
-        <div style={{
-          position: 'absolute', bottom: '-10%', left: '50%',
-          transform: 'translateX(-50%)',
-          width: '130%', height: '55%',
-          background: 'radial-gradient(ellipse 80% 80% at 50% 90%, #C8F000 0%, #A0CC00 40%, transparent 75%)',
-          filter: 'blur(36px)', pointerEvents: 'none',
-        }} />
-        {/* Full wordmark centered at top */}
-        <div style={{ position: 'relative', zIndex: 1, padding: '52px 24px 0', display: 'flex', justifyContent: 'center' }}>
-          <OtraLogo color='#FFFFFF' style={{ width: '120px', height: 'auto' }} />
+        {/* Background from SVG asset */}
+        <svg viewBox="0 0 375 812" preserveAspectRatio="xMidYMid slice"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+          xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="splash-blur" x="-102" y="-152" width="576" height="1199" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+              <feFlood floodOpacity="0" result="BackgroundImageFix"/>
+              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+              <feGaussianBlur stdDeviation="30" result="effect1_foregroundBlur"/>
+            </filter>
+            <clipPath id="splash-clip">
+              <rect width="375" height="812"/>
+            </clipPath>
+          </defs>
+          <g clipPath="url(#splash-clip)">
+            <rect width="375" height="812" fill="#F1F9B5"/>
+            <g filter="url(#splash-blur)">
+              <rect x="0.5" y="0.5" width="375" height="811" fill="#B0E817" stroke="#B0E817"/>
+              <path d="M-38 551V987H414V551C387.412 570.069 325.043 608.206 181.957 608.206C38.8719 608.206 -15.4403 570.069 -38 551Z" fill="#F9F9F9"/>
+              <path d="M410 -92V343.957C410 343.957 342.681 511 184 511C25.3192 511 -42 343.957 -42 343.957V-92H410Z" fill="#B50BF2"/>
+            </g>
+          </g>
+        </svg>
+        {/* Full-width wordmark, equal padding top and sides */}
+        <div style={{ position: 'relative', zIndex: 1, padding: '20px 20px 0' }}>
+          <OtraLogo color='#FFFFFF' style={{ width: '100%', height: 'auto', display: 'block' }} />
         </div>
         <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px' }}>
           <h1 style={{
