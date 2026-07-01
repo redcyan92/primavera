@@ -98,19 +98,19 @@ const toCamelCase = (note) => ({
 
 // ─── Shared style tokens ───────────────────────────────────────────────────
 const t = {
-  primary:       '#FF5B1B',
-  primaryLight:  '#FAA284',
-  primaryBg:     '#FFF0EB',
-  primaryBorder: '#FABB96',
-  bg:            '#FEFBF6',
+  primary:       '#B50BF2',
+  primaryLight:  '#D076F7',
+  primaryBg:     '#F3E5FD',
+  primaryBorder: '#CC88F5',
+  bg:            '#F8FAFB',
   white:         '#FFFFFF',
-  surface:       '#F7F5F2',
+  surface:       '#F2F3F6',
   dark:          '#1D1D2F',
   darkBlue:      '#24223B',
-  third:         '#DDA488',
-  thirdLight:    '#F5E8DF',
-  border:        '#EDE8DF',
-  borderDark:    '#DDD9D1',
+  third:         '#C970F5',
+  thirdLight:    '#EBD5FC',
+  border:        '#E6E8EC',
+  borderDark:    '#D0D3DA',
   text:          '#1D1D2F',
   textSec:       '#56524E',
   textMuted:     '#9E9A93',
@@ -124,12 +124,26 @@ const t = {
 
 const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 
-const OtraLogo = ({ color = '#FFFFFF', style }) => (
-  <svg viewBox="0 0 82 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={style}>
-    <path d="M78.5149 24V20.4051L71.9757 16.5706L67.5934 24H64.3066L78.4122 0.0343018H81.3565V24H78.5149ZM73.3794 14.1398L78.5149 17.1184V5.40946L73.3794 14.1398Z" fill={color}/>
-    <path d="M46.499 24V0.0343018H56.7016C60.3991 0.0343018 63.4119 3.04713 63.4119 6.74469C63.4119 10.4423 60.3991 13.4208 56.7016 13.4208H50.1624L63.4462 21.6034L61.974 24L49.3064 16.2283V24H46.499ZM49.3064 10.6134H56.7016C58.8585 10.6134 60.6045 8.86737 60.6045 6.74469C60.6045 4.58778 58.8585 2.84171 56.7016 2.84171H49.3064V10.6134Z" fill={color}/>
-    <path d="M32.9014 23.9999V2.80741H28.6903V9.86017H25.8486V0H42.7616V9.86017H39.9541V2.80741H35.7088V23.9999H32.9014Z" fill={color}/>
-    <path d="M11.9828 24C8.80519 24 5.7562 22.7377 3.50926 20.4907C1.26232 18.2438 0 15.1948 0 12.0171C0 8.83949 1.26232 5.7905 3.50926 3.54356C5.7562 1.29662 8.80519 0.0343018 11.9828 0.0343018C15.1605 0.0343018 18.2095 1.29662 20.4564 3.54356C22.7034 5.7905 23.9657 8.83949 23.9657 12.0171C23.9657 15.1948 22.7034 18.2438 20.4564 20.4907C18.2095 22.7377 15.1605 24 11.9828 24ZM2.84165 12.0171C2.84165 14.4329 3.79732 16.7792 5.50004 18.4929C7.21704 20.2209 9.55391 21.1926 11.9899 21.1926C14.4177 21.1926 16.751 20.2247 18.4677 18.508C20.1882 16.7874 21.1583 14.4504 21.1583 12.0171C21.1583 9.58387 20.1882 7.24684 18.4677 5.52626C16.751 3.80955 14.4177 2.84171 11.9899 2.84171C9.55391 2.84171 7.21704 3.81343 5.50004 5.54144C3.79732 7.25508 2.84165 9.6014 2.84165 12.0171Z" fill={color}/>
+// Reduced circular mark — used in navbars
+const OtraLogoMark = ({ color = '#B50BF2', size = 22, style }) => (
+  <svg viewBox="0 0 8.4 8.4" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style}>
+    <path fill={color} d="M6.89,1h1.03V0h-3.72C1.89,0,0,1.89,0,4.2c0,1.29.6,2.43,1.51,3.2H.49v1h3.72c2.32,0,4.2-1.89,4.2-4.2,0-1.29-.6-2.43-1.51-3.2ZM4.2,7.4c-1.77,0-3.2-1.43-3.2-3.2s1.43-3.2,3.2-3.2,3.2,1.43,3.2,3.2-1.43,3.2-3.2,3.2Z"/>
+    <circle fill={color} cx="4.2" cy="4.2" r=".88"/>
+  </svg>
+);
+
+// Full wordmark — used on splash / auth screens
+const OtraLogo = ({ color = '#B50BF2', style }) => (
+  <svg viewBox="0 0 27.76 8.41" xmlns="http://www.w3.org/2000/svg" style={style}>
+    <path fill={color} d="M11.8.98h-1.48v2.47h-1V0h5.92v3.45h-.98V.98h-1.49v7.42h-.98V.98Z"/>
+    <path fill={color} d="M26.63.01h1.13v8.4h-1.07v-1.26l-2.29-1.34-1.54,2.6h-1.18L26.63.01ZM26.69,6V1.89l-1.8,3.06,1.8,1.04Z"/>
+    <path fill={color} d="M21.31,7.51l-3.2-2.81h1.44c1.31,0,2.35-1.04,2.35-2.34S20.84.01,19.55.01h-3.13v8.4h.98v-3.02l3.4,2.99.51-.86ZM17.45,1h2.06c.74,0,1.37.61,1.37,1.37s-.62,1.36-1.37,1.36h-2.06V1Z"/>
+    <g>
+      <path fill={color} d="M4.2,1.01c1.77,0,3.2,1.43,3.2,3.2s-1.43,3.2-3.2,3.2-3.2-1.43-3.2-3.2,1.43-3.2,3.2-3.2M4.2,0C1.89,0,0,1.89,0,4.21s1.89,4.2,4.2,4.2,4.2-1.89,4.2-4.2S6.52,0,4.2,0h0Z"/>
+      <rect fill={color} x="4.2" y="0" width="3.72" height="1"/>
+      <rect fill={color} x=".49" y="7.41" width="3.72" height="1"/>
+      <circle fill={color} cx="4.2" cy="4.21" r=".88"/>
+    </g>
   </svg>
 );
 
@@ -600,7 +614,7 @@ const PrimaveraApp = () => {
     return (
       <div style={{
         maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
-        backgroundColor: '#EDE8DF', fontFamily: font,
+        backgroundColor: '#EEE1FD', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
       }}>
@@ -609,21 +623,21 @@ const PrimaveraApp = () => {
           position: 'absolute', top: 0, left: '50%',
           transform: 'translateX(-50%)',
           width: '140%', height: '60svh',
-          background: 'radial-gradient(ellipse 80% 100% at 50% 8%, #FF5B1B 0%, #FF5B1B 42%, rgba(120,195,238,0.6) 70%, transparent 88%)',
+          background: 'radial-gradient(ellipse 80% 100% at 50% 8%, #B50BF2 0%, #8A00CC 42%, rgba(180,100,240,0.5) 70%, transparent 88%)',
           filter: 'blur(22px)', pointerEvents: 'none',
         }} />
 
         {/* Logo */}
         <div style={{ position: 'relative', zIndex: 1, padding: '28px 24px 0' }}>
-          <OtraLogo color='#FFF0EB' style={{ height: '18px', width: 'auto' }} />
+          <OtraLogoMark color='#FFFFFF' size={28} />
         </div>
 
         {/* Headline */}
         <div style={{ position: 'relative', zIndex: 1, padding: '24px 24px 0' }}>
-          <p style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: 'rgba(255,240,235,0.8)', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: font }}>
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.8)', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: font }}>
             Someone shared this with you
           </p>
-          <h1 style={{ margin: '6px 0 0', fontSize: '26px', fontWeight: '700', color: '#FFF0EB', fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1.25', letterSpacing: '0.01em' }}>
+          <h1 style={{ margin: '6px 0 0', fontSize: '26px', fontWeight: '700', color: '#FFFFFF', fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1.25', letterSpacing: '0.01em' }}>
             Do you know this person?
           </h1>
         </div>
@@ -685,7 +699,7 @@ const PrimaveraApp = () => {
     return (
       <div style={{
         maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
-        backgroundColor: '#EDE8DF', fontFamily: font,
+        backgroundColor: '#EEE1FD', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
       }}>
@@ -693,15 +707,15 @@ const PrimaveraApp = () => {
           position: 'absolute', top: 0, left: '50%',
           transform: 'translateX(-50%)',
           width: '140%', height: '82svh',
-          background: 'radial-gradient(ellipse 80% 100% at 50% 8%, #FF5B1B 0%, #FF5B1B 62%, rgba(120,195,238,0.85) 76%, transparent 88%)',
+          background: 'radial-gradient(ellipse 80% 100% at 50% 8%, #B50BF2 0%, #8A00CC 62%, rgba(180,100,240,0.75) 76%, transparent 88%)',
           filter: 'blur(22px)', pointerEvents: 'none',
         }} />
         <div style={{ position: 'relative', zIndex: 1, padding: '24px 24px 0' }}>
-          <OtraLogo color='#FFF0EB' style={{ width: '100%', height: 'auto' }} />
+          <OtraLogoMark color='#FFFFFF' size={32} />
         </div>
         <div style={{ position: 'relative', zIndex: 1, height: '42svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 28px' }}>
           <h1 style={{
-            fontSize: '40px', fontWeight: '500', color: '#FFF0EB',
+            fontSize: '40px', fontWeight: '500', color: '#FFFFFF',
             marginTop: '58px', marginRight: 'auto', marginBottom: 0, marginLeft: 'auto',
             lineHeight: '1.15', textAlign: 'center',
             fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em',
@@ -742,7 +756,7 @@ const PrimaveraApp = () => {
         display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ padding: '24px 24px 0' }}>
-          <OtraLogo style={{ width: '100%', height: 'auto' }} />
+          <OtraLogoMark color='#FFFFFF' size={28} />
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px 48px', gap: '20px' }}>
           <div>
@@ -792,7 +806,7 @@ const PrimaveraApp = () => {
         display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ padding: '24px 24px 0' }}>
-          <OtraLogo style={{ width: '100%', height: 'auto' }} />
+          <OtraLogoMark color='#FFFFFF' size={28} />
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px 48px', gap: '20px' }}>
           <div>
@@ -869,7 +883,7 @@ const PrimaveraApp = () => {
         display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ padding: '24px 24px 0' }}>
-          <OtraLogo color={t.primary} style={{ width: '100%', height: 'auto' }} />
+          <OtraLogoMark color={t.primary} size={28} />
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px 48px', gap: '28px' }}>
           <div>
@@ -927,18 +941,18 @@ const PrimaveraApp = () => {
 
   if (!activeFestivalId) {
     return (
-      <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#EDE8DF', fontFamily: font, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#EEE1FD', fontFamily: font, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         {/* Blurred blobs */}
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
           {[
-            { color: '#FF5B1B', x: '18%',  y: '12%', w: '65%', h: '48%' },
-            { color: '#FF6A40', x: '78%',  y: '8%',  w: '60%', h: '44%' },
-            { color: '#C090C8', x: '45%',  y: '40%', w: '50%', h: '38%' },
-            { color: '#E8B0A0', x: '30%',  y: '55%', w: '40%', h: '30%' },
+            { color: '#B50BF2', x: '18%',  y: '12%', w: '65%', h: '48%' },
+            { color: '#8A00CC', x: '78%',  y: '8%',  w: '60%', h: '44%' },
+            { color: '#CC70F0', x: '45%',  y: '40%', w: '50%', h: '38%' },
+            { color: '#D4A0F5', x: '30%',  y: '55%', w: '40%', h: '30%' },
           ].map((b, i) => (
             <div key={i} style={{ position: 'absolute', left: b.x, top: b.y, width: b.w, height: b.h, backgroundColor: b.color, borderRadius: radius.circle, filter: 'blur(52px)', transform: 'translate(-50%, -50%)' }} />
           ))}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 35%, #EDE8DF 68%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 35%, #EEE1FD 68%)' }} />
         </div>
         {/* Content anchored to bottom */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 24px 48px', zIndex: 5 }}>
@@ -970,23 +984,27 @@ const PrimaveraApp = () => {
   // ── Main app ──────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: t.bg, fontFamily: font }}>
+    <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: tab === 'home' ? '#EEE1FD' : t.bg, fontFamily: font, position: 'relative' }}>
 
-      {/* Top header */}
-      <div style={{ backgroundColor: t.white, borderBottom: `1px solid ${t.border}`, padding: '12px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
+      {/* Top header — floating/transparent on home, solid on other tabs */}
+      <div style={{
+        padding: '12px 16px',
+        position: tab === 'home' ? 'absolute' : 'sticky',
+        top: 0, left: 0, right: 0, zIndex: 10,
+        backgroundColor: tab === 'home' ? 'transparent' : t.white,
+        borderBottom: tab === 'home' ? 'none' : `1px solid ${t.border}`,
+      }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <OtraLogo color={t.primary} style={{ height: '22px', width: 'auto' }} />
-          </div>
-          {/* Festival pill */}
+          <OtraLogoMark color={t.primary} size={22} />
+          {/* Festival selector — fully rounded pill */}
           <button onClick={() => setFestivalSwitcherOpen(true)} style={{
-            display: 'flex', alignItems: 'center', gap: '5px',
-            backgroundColor: t.surface, border: `1px solid ${t.border}`,
-            borderRadius: radius.sm, padding: '7px 10px 7px 12px',
-            cursor: 'pointer', color: t.textMuted,
+            display: 'flex', alignItems: 'center', gap: '6px',
+            backgroundColor: t.white, border: 'none',
+            borderRadius: radius.xxl, padding: '7px 10px 7px 14px',
+            cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
           }}>
-            <span style={{ fontSize: '11px', fontWeight: '500', fontFamily: font, letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>{activeFestival?.fullName || 'Select festival'}</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+            <span style={{ fontSize: '11px', fontWeight: '500', fontFamily: font, color: t.textMuted, whiteSpace: 'nowrap' }}>{activeFestival?.fullName || 'Select festival'}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </button>
@@ -994,56 +1012,65 @@ const PrimaveraApp = () => {
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px', backgroundColor: '#FFFFFF' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: tab === 'home' ? '0' : '16px', paddingBottom: '88px', backgroundColor: tab === 'home' ? 'transparent' : t.bg }}>
 
         {/* ── TAB: HOME ── */}
         {tab === 'home' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '4px', height: 'calc(100svh - 174px)', boxSizing: 'border-box' }}>
-            <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 20px', color: t.dark, letterSpacing: '0.01em', fontFamily: "'HealTheWeb', system-ui, sans-serif" }}>
-              What are you looking for?
-            </h1>
+          <div style={{ minHeight: '100svh', position: 'relative', overflow: 'hidden' }}>
+            {/* Background blobs */}
+            <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: '140%', height: '55%', background: 'radial-gradient(ellipse 80% 100% at 50% 10%, rgba(181,11,242,0.45) 0%, rgba(138,0,204,0.3) 50%, transparent 80%)', filter: 'blur(32px)', pointerEvents: 'none' }} />
 
-            {/* Card 1 — Find Someone */}
-            <button onClick={() => navigateTo('notes')} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-              flex: 1, width: '100%', padding: '28px 24px', borderRadius: radius.xl,
-              border: `2px solid ${t.primaryBorder}`, backgroundColor: t.primaryBg,
-              cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
-              boxShadow: '0 2px 12px rgba(255,91,27,0.10)',
-            }}>
-              {/* Icon row + pill */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', marginBottom: '40px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {/* Greeting */}
+            <div style={{ position: 'relative', zIndex: 1, padding: '70px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h1 style={{ fontSize: '44px', fontWeight: '400', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.05' }}>
+                Hello, {user?.email?.split('@')[0] || 'there'}!
+              </h1>
+
+              {/* AI Search card */}
+              <button onClick={() => navigateTo('notes')} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                width: '100%', padding: '24px', borderRadius: radius.lg,
+                border: 'none', backgroundColor: t.white,
+                cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
+                boxShadow: '0 2px 16px rgba(181,11,242,0.08)', position: 'relative',
+              }}>
+                {/* Badge */}
+                <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(181,11,242,0.10)', borderRadius: radius.pill, padding: '5px 10px' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                  <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font }}>Compatible only</span>
+                </div>
+                {/* Icon + title */}
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '15px', marginBottom: '8px', paddingBottom: '40px' }}>
                   <svg width="22" height="23" viewBox="0 0 23 24" fill="none">
                     <path d="M9.29037 2.32259C9.71812 2.32259 10.0646 2.67 10.0646 3.09678C10.0646 3.52453 9.71812 3.87097 9.29037 3.87097C5.01483 3.87097 1.54842 7.33737 1.54842 11.6129C1.54842 15.8894 5.01483 19.3548 9.29037 19.3548C12.9698 19.3548 16.05 16.7875 16.8368 13.3461C16.9327 12.929 17.3488 12.6687 17.7659 12.7645C18.182 12.8593 18.4423 13.2745 18.3475 13.6906C17.9236 15.5448 16.9433 17.187 15.5943 18.4344L19.175 22.7302C19.4479 23.0583 19.4043 23.547 19.0763 23.8208C18.7482 24.0938 18.2604 24.0502 17.9866 23.7221L14.374 19.3867C12.9137 20.3447 11.168 20.9031 9.29034 20.9031C4.15935 20.9031 0 16.7438 0 11.6128C0 6.4828 4.15938 2.32259 9.29037 2.32259Z" fill={t.primary}/>
                     <path d="M17.552 0.211931C17.6032 -0.0706435 18.0097 -0.0706435 18.0591 0.211931C18.4307 2.34677 20.102 4.01997 22.2387 4.39158C22.5223 4.4419 22.5223 4.84837 22.2387 4.89772C20.1029 5.2703 18.4307 6.94255 18.0591 9.07737C18.0107 9.36091 17.6023 9.36091 17.552 9.07737C17.1803 6.94253 15.509 5.27032 13.3743 4.89772C13.0907 4.84836 13.0907 4.44192 13.3743 4.39158C15.5091 4.01997 17.1803 2.34675 17.552 0.211931Z" fill={t.primary}/>
                   </svg>
+                  <span style={{ fontSize: '25px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1' }}>AI Search</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(255,91,27,0.08)', borderRadius: radius.pill, padding: '5px 10px' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                  <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font, whiteSpace: 'nowrap' }}>Compatible only</span>
-                </div>
-              </div>
-              <div style={{ marginTop: 'auto' }}>
-                <p style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: '700', color: t.dark, fontFamily: font, lineHeight: '1.3' }}>Find your missed connection</p>
-                <p style={{ margin: 0, fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6' }}>
+                <p style={{ margin: '0 0 32px', fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6' }}>
                   Describe who you're looking for. Our AI finds them quietly — nothing posted publicly.
                 </p>
-              </div>
-            </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '700', color: t.dark, fontFamily: font }}>Find your missed connection</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.dark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </button>
 
-            {/* Card 2 — Share a Moment */}
-            <button onClick={() => navigateTo('public')} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-              flex: 1, width: '100%', padding: '28px 24px', borderRadius: radius.xl,
-              border: `1px solid ${t.border}`, backgroundColor: t.surface,
-              cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
-            }}>
-              {/* Icon row + pill */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', marginBottom: '40px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {/* Crowd card */}
+              <button onClick={() => navigateTo('public')} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                width: '100%', padding: '24px', borderRadius: radius.lg,
+                border: 'none', backgroundColor: t.white,
+                cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)', position: 'relative',
+              }}>
+                {/* Badge */}
+                <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(176,232,23,0.10)', borderRadius: radius.pill, padding: '5px 10px' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#759f05" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  <span style={{ fontSize: '11px', fontWeight: '600', color: '#759f05', fontFamily: font }}>Public</span>
+                </div>
+                {/* Icon + title */}
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '15px', marginBottom: '8px', paddingBottom: '40px' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill={t.dark}/>
                     <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill={t.dark}/>
@@ -1051,22 +1078,17 @@ const PrimaveraApp = () => {
                     <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill={t.dark}/>
                     <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill={t.dark}/>
                   </svg>
+                  <span style={{ fontSize: '25px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1' }}>Crowd</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(29,29,47,0.07)', borderRadius: radius.pill, padding: '5px 10px' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={t.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  </svg>
-                  <span style={{ fontSize: '11px', fontWeight: '600', color: t.textSec, fontFamily: font, whiteSpace: 'nowrap' }}>Public</span>
-                </div>
-              </div>
-              <div style={{ marginTop: 'auto' }}>
-                <p style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: '700', color: t.dark, fontFamily: font, lineHeight: '1.3' }}>Share a moment with the crowd</p>
-                <p style={{ margin: 0, fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6' }}>
+                <p style={{ margin: '0 0 32px', fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6' }}>
                   Post to the Crowd wall. Anyone at the festival can see it and reach out to you.
                 </p>
-              </div>
-            </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '700', color: t.dark, fontFamily: font }}>Find your missed connection</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.dark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </button>
+          </div>
           </div>
         )}
 
@@ -1571,11 +1593,14 @@ const PrimaveraApp = () => {
         </div>
       )}
 
-      {/* Bottom Navigation — icon only */}
+      {/* Bottom Navigation — floating pill */}
       <div style={{
-        backgroundColor: t.white, borderTop: `1px solid ${t.border}`,
+        position: 'fixed', bottom: '12px', left: '50%', transform: 'translateX(-50%)',
+        width: 'calc(100% - 32px)', maxWidth: '348px',
+        backgroundColor: t.white, borderRadius: radius.lg,
         display: 'flex', alignItems: 'flex-end',
-        padding: '6px 8px 10px', position: 'sticky', bottom: 0, gap: '4px',
+        padding: '6px 8px 10px', gap: '4px', zIndex: 20,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
       }}>
         {/* Home */}
         <button onClick={() => navigateTo('home')} style={{
@@ -1646,26 +1671,26 @@ const PrimaveraApp = () => {
 // ─── Shared card + button styles ───────────────────────────────────────────
 
 const cardStyle = {
-  backgroundColor: '#FFFFFF', border: '1px solid #EDE8DF',
+  backgroundColor: '#FFFFFF', border: `1px solid ${t.border}`,
   borderRadius: radius.lg, padding: '14px',
   boxShadow: '0 1px 3px rgba(29,29,47,0.05)',
 };
 
 const btnPrimary = {
   flex: 1, padding: '9px', border: 'none',
-  backgroundColor: '#FF5B1B', borderRadius: radius.md,
+  backgroundColor: t.primary, borderRadius: radius.md,
   cursor: 'pointer', fontSize: '13px', color: '#FFFFFF',
   fontWeight: '600', fontFamily: font,
 };
 
 const btnOutline = {
-  flex: 1, padding: '9px', border: '1px solid #EDE8DF', backgroundColor: '#F7F5F2',
+  flex: 1, padding: '9px', border: `1px solid ${t.border}`, backgroundColor: t.surface,
   borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', color: '#1D1D2F',
   fontWeight: '500', fontFamily: font,
 };
 
 const btnGhost = {
-  flex: 1, padding: '9px', border: '1px solid #EDE8DF', backgroundColor: '#FFFFFF',
+  flex: 1, padding: '9px', border: `1px solid ${t.border}`, backgroundColor: '#FFFFFF',
   borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', color: '#9E9A93',
   fontFamily: font,
 };
