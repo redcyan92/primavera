@@ -4,10 +4,10 @@ import { TIME_OPTIONS, LOCATION_OPTIONS } from './defaultOptions';
 import { radius } from './radius';
 
 const t = {
-  primary: '#FF5B1B', primaryLight: '#FAA284', primaryBg: '#FFF0EB',
-  primaryBorder: '#FABB96', bg: '#FEFBF6', white: '#FFFFFF',
-  surface: '#F7F5F2', dark: '#1D1D2F', border: '#EDE8DF',
-  borderDark: '#DDD9D1', text: '#1D1D2F', textSec: '#56524E',
+  primary: '#B50BF2', primaryLight: '#D076F7', primaryBg: '#F3E5FD',
+  primaryBorder: '#CC88F5', bg: '#F8FAFB', white: '#FFFFFF',
+  surface: '#F2F3F6', dark: '#1D1D2F', border: '#E6E8EC',
+  borderDark: '#D0D3DA', text: '#1D1D2F', textSec: '#56524E',
   textMuted: '#9E9A93', success: '#05C270', successBg: '#E6FAF2',
   successBorder: '#A8E6CF', successDark: '#036B42',
 };
@@ -226,7 +226,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         <div style={{
           width: '100%', backgroundColor: t.white, border: `1px solid ${t.primaryBorder}`,
           borderRadius: radius.lg, padding: '14px 14px 10px',
-          boxShadow: `0 0 0 5px rgba(255,91,27,0.07), 0 0 20px 6px rgba(255,91,27,0.10), 0 1px 4px rgba(29,29,47,0.05)`, position: 'relative',
+          boxShadow: `0 0 0 5px rgba(181,11,242,0.07), 0 0 20px 6px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.05)`, position: 'relative',
         }}>
           {!prompt && (
             <div style={{

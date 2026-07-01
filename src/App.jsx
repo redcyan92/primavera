@@ -701,31 +701,32 @@ const PrimaveraApp = () => {
     return (
       <div style={{
         maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
-        backgroundColor: '#EEE1FD', fontFamily: font,
+        backgroundColor: '#B50BF2', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
       }}>
+        {/* Lime blob at bottom */}
         <div style={{
-          position: 'absolute', top: 0, left: '50%',
+          position: 'absolute', bottom: '-10%', left: '50%',
           transform: 'translateX(-50%)',
-          width: '140%', height: '82svh',
-          background: 'radial-gradient(ellipse 80% 100% at 50% 8%, #B50BF2 0%, #8A00CC 62%, rgba(180,100,240,0.75) 76%, transparent 88%)',
-          filter: 'blur(22px)', pointerEvents: 'none',
+          width: '130%', height: '55%',
+          background: 'radial-gradient(ellipse 80% 80% at 50% 90%, #C8F000 0%, #A0CC00 40%, transparent 75%)',
+          filter: 'blur(36px)', pointerEvents: 'none',
         }} />
-        <div style={{ position: 'relative', zIndex: 1, padding: '24px 24px 0' }}>
-          <OtraLogoMark color='#FFFFFF' size={32} />
+        {/* Full wordmark centered at top */}
+        <div style={{ position: 'relative', zIndex: 1, padding: '52px 24px 0', display: 'flex', justifyContent: 'center' }}>
+          <OtraLogo color='#FFFFFF' style={{ width: '120px', height: 'auto' }} />
         </div>
-        <div style={{ position: 'relative', zIndex: 1, height: '42svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 28px' }}>
+        <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px' }}>
           <h1 style={{
-            fontSize: '40px', fontWeight: '500', color: '#FFFFFF',
-            marginTop: '58px', marginRight: 'auto', marginBottom: 0, marginLeft: 'auto',
-            lineHeight: '1.15', textAlign: 'center',
+            fontSize: '42px', fontWeight: '500', color: '#FFFFFF',
+            margin: 0, lineHeight: '1.15', textAlign: 'center',
             fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em',
           }}>
             Find the people you vibed with
           </h1>
         </div>
-        <div style={{ position: 'relative', zIndex: 1, marginTop: 'auto', padding: '0 24px 64px' }}>
+        <div style={{ position: 'relative', zIndex: 1, padding: '0 24px 64px' }}>
           <button
             onClick={() => setAuthStep('onboarding')}
             style={{
@@ -1036,70 +1037,68 @@ const PrimaveraApp = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Greeting */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <h1 style={{ fontSize: '44px', fontWeight: '400', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.05', paddingTop: '8px' }}>
+              <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.2' }}>
                 Hello, {userName || user?.email?.split('@')[0] || 'there'}!
               </h1>
 
               {/* AI Search card */}
               <button onClick={() => navigateTo('notes')} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                width: '100%', padding: '24px', borderRadius: radius.lg,
+                width: '100%', padding: '20px', borderRadius: radius.lg,
                 border: 'none', backgroundColor: t.white,
                 cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
-                boxShadow: '0 2px 16px rgba(181,11,242,0.08)', position: 'relative',
+                boxShadow: '0 2px 16px rgba(181,11,242,0.08)',
               }}>
-                {/* Badge */}
-                <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(181,11,242,0.10)', borderRadius: radius.pill, padding: '5px 10px' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                  <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font }}>Compatible only</span>
-                </div>
-                {/* Icon + title */}
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '15px', marginBottom: '8px', paddingBottom: '40px' }}>
-                  <svg width="22" height="23" viewBox="0 0 23 24" fill="none">
+                {/* Icon + title + badge in one row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', marginBottom: '10px' }}>
+                  <svg width="20" height="21" viewBox="0 0 23 24" fill="none" style={{ flexShrink: 0 }}>
                     <path d="M9.29037 2.32259C9.71812 2.32259 10.0646 2.67 10.0646 3.09678C10.0646 3.52453 9.71812 3.87097 9.29037 3.87097C5.01483 3.87097 1.54842 7.33737 1.54842 11.6129C1.54842 15.8894 5.01483 19.3548 9.29037 19.3548C12.9698 19.3548 16.05 16.7875 16.8368 13.3461C16.9327 12.929 17.3488 12.6687 17.7659 12.7645C18.182 12.8593 18.4423 13.2745 18.3475 13.6906C17.9236 15.5448 16.9433 17.187 15.5943 18.4344L19.175 22.7302C19.4479 23.0583 19.4043 23.547 19.0763 23.8208C18.7482 24.0938 18.2604 24.0502 17.9866 23.7221L14.374 19.3867C12.9137 20.3447 11.168 20.9031 9.29034 20.9031C4.15935 20.9031 0 16.7438 0 11.6128C0 6.4828 4.15938 2.32259 9.29037 2.32259Z" fill={t.primary}/>
                     <path d="M17.552 0.211931C17.6032 -0.0706435 18.0097 -0.0706435 18.0591 0.211931C18.4307 2.34677 20.102 4.01997 22.2387 4.39158C22.5223 4.4419 22.5223 4.84837 22.2387 4.89772C20.1029 5.2703 18.4307 6.94255 18.0591 9.07737C18.0107 9.36091 17.6023 9.36091 17.552 9.07737C17.1803 6.94253 15.509 5.27032 13.3743 4.89772C13.0907 4.84836 13.0907 4.44192 13.3743 4.39158C15.5091 4.01997 17.1803 2.34675 17.552 0.211931Z" fill={t.primary}/>
                   </svg>
-                  <span style={{ fontSize: '25px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1' }}>AI Search</span>
+                  <span style={{ fontSize: '18px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>AI Search</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(181,11,242,0.10)', borderRadius: radius.pill, padding: '4px 9px', flexShrink: 0 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font }}>Compatible only</span>
+                  </div>
                 </div>
-                <p style={{ margin: '0 0 32px', fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6' }}>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
                   Describe who you're looking for. Our AI finds them quietly — nothing posted publicly.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '700', color: t.dark, fontFamily: font }}>Find your missed connection</span>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.dark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: t.dark, fontFamily: font }}>Find your missed connection</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.dark} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </div>
               </button>
 
               {/* Crowd card */}
               <button onClick={() => navigateTo('public')} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                width: '100%', padding: '24px', borderRadius: radius.lg,
-                border: 'none', backgroundColor: t.white,
+                width: '100%', padding: '20px', borderRadius: radius.lg,
+                border: 'none', backgroundColor: t.bg,
                 cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)', position: 'relative',
+                boxShadow: 'none',
               }}>
-                {/* Badge */}
-                <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(176,232,23,0.10)', borderRadius: radius.pill, padding: '5px 10px' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#759f05" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                  <span style={{ fontSize: '11px', fontWeight: '600', color: '#759f05', fontFamily: font }}>Public</span>
-                </div>
-                {/* Icon + title */}
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '15px', marginBottom: '8px', paddingBottom: '40px' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                {/* Icon + title + badge in one row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', marginBottom: '10px' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
                     <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill={t.dark}/>
                     <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill={t.dark}/>
                     <path d="M1.20035 9.60046C1.86295 9.60046 2.40069 10.1371 2.40069 10.7997V13.2003C2.40069 13.863 1.86295 14.3996 1.20035 14.3996C0.537736 14.3996 0 13.863 0 13.2003V10.7997C0 10.1371 0.537736 9.60046 1.20035 9.60046Z" fill={t.dark}/>
                     <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill={t.dark}/>
                     <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill={t.dark}/>
                   </svg>
-                  <span style={{ fontSize: '25px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1' }}>Crowd</span>
+                  <span style={{ fontSize: '18px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>Crowd</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(176,232,23,0.15)', borderRadius: radius.pill, padding: '4px 9px', flexShrink: 0 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5d8000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color: '#5d8000', fontFamily: font }}>Public</span>
+                  </div>
                 </div>
-                <p style={{ margin: '0 0 32px', fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6' }}>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
                   Post to the Crowd wall. Anyone at the festival can see it and reach out to you.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '700', color: t.dark, fontFamily: font }}>Find your missed connection</span>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.dark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: t.dark, fontFamily: font }}>See what people are sharing</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.dark} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </div>
               </button>
           </div>
@@ -1316,7 +1315,7 @@ const PrimaveraApp = () => {
                 width: '38px', height: '38px', backgroundColor: t.primary,
                 border: 'none', borderRadius: radius.md, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 3px 10px rgba(247,96,46,0.35)',
+                boxShadow: '0 3px 10px rgba(181,11,242,0.30)',
               }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -2004,7 +2003,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
   }, [openMenuId]);
 
   return (
-    <div style={{ backgroundColor: t.white }}>
+    <div style={{ backgroundColor: t.bg }}>
       {notes.map((note, idx) => {
         const chips = [
           note.location && note.location.replace(/_/g, ' '),
