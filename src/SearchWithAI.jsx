@@ -16,7 +16,7 @@ const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 const Chip = ({ label, selected, onClick }) => (
   <button onClick={onClick} style={{
     padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
-    border: selected ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
+    border: selected ? `2px solid ${t.primary}` : 'none',
     backgroundColor: selected ? t.primaryBg : t.white,
     fontSize: '12px', color: selected ? t.primary : t.textSec,
     fontWeight: selected ? '600' : '400', fontFamily: font,

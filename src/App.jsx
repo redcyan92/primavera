@@ -1049,12 +1049,12 @@ const PrimaveraApp = () => {
 
         {/* ── TAB: HOME ── */}
         {tab === 'home' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Greeting */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.2' }}>
-                Hello, {userName || user?.email?.split('@')[0] || 'there'}!
-              </h1>
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100svh - 130px)' }}>
+            <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.2' }}>
+              Hello, {userName || user?.email?.split('@')[0] || 'there'}!
+            </h1>
+            {/* Cards pushed to bottom */}
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
               {/* AI Search card */}
               <button onClick={() => navigateTo('notes')} style={{
@@ -1089,18 +1089,18 @@ const PrimaveraApp = () => {
               <button onClick={() => navigateTo('public')} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
                 width: '100%', padding: '20px', borderRadius: radius.lg,
-                border: 'none', backgroundColor: t.bg,
+                border: 'none', backgroundColor: t.white,
                 cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
-                boxShadow: 'none',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               }}>
                 {/* Icon + title + badge in one row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', marginBottom: '10px' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                    <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill={t.dark}/>
-                    <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill={t.dark}/>
-                    <path d="M1.20035 9.60046C1.86295 9.60046 2.40069 10.1371 2.40069 10.7997V13.2003C2.40069 13.863 1.86295 14.3996 1.20035 14.3996C0.537736 14.3996 0 13.863 0 13.2003V10.7997C0 10.1371 0.537736 9.60046 1.20035 9.60046Z" fill={t.dark}/>
-                    <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill={t.dark}/>
-                    <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill={t.dark}/>
+                    <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill="#5d8000"/>
+                    <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill="#5d8000"/>
+                    <path d="M1.20035 9.60046C1.86295 9.60046 2.40069 10.1371 2.40069 10.7997V13.2003C2.40069 13.863 1.86295 14.3996 1.20035 14.3996C0.537736 14.3996 0 13.863 0 13.2003V10.7997C0 10.1371 0.537736 9.60046 1.20035 9.60046Z" fill="#5d8000"/>
+                    <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill="#5d8000"/>
+                    <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill="#5d8000"/>
                   </svg>
                   <span style={{ fontSize: '18px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>Crowd</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(176,232,23,0.15)', borderRadius: radius.pill, padding: '4px 9px', flexShrink: 0 }}>
@@ -1287,7 +1287,19 @@ const PrimaveraApp = () => {
             {matchSubTab === 'requests' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {receivedRequests.length === 0 ? (
-                  <SearchingCard text="No pending requests" sub="When someone reaches out through a post, they'll appear here." />
+                  <div style={{
+                    backgroundColor: t.surface, borderRadius: radius.xl, padding: '24px 20px',
+                    minHeight: '360px', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center',
+                  }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <div>
+                      <p style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: '700', color: t.dark, fontFamily: font }}>No requests yet</p>
+                      <p style={{ margin: 0, fontSize: '13px', color: t.textMuted, fontFamily: font, lineHeight: '1.5' }}>When someone reaches out through a post, they'll appear here.</p>
+                    </div>
+                  </div>
                 ) : (
                   receivedRequests.map(req => {
                     const isAccepted = acceptedRequestIds.has(req.matchId);
@@ -1699,9 +1711,9 @@ const PrimaveraApp = () => {
 // ─── Shared card + button styles ───────────────────────────────────────────
 
 const cardStyle = {
-  backgroundColor: '#FFFFFF', border: `1px solid ${t.border}`,
+  backgroundColor: '#FFFFFF',
   borderRadius: radius.lg, padding: '14px',
-  boxShadow: '0 1px 3px rgba(29,29,47,0.05)',
+  boxShadow: '0 1px 6px rgba(29,29,47,0.07)',
 };
 
 const btnPrimary = {
@@ -1735,7 +1747,7 @@ const HourglassIcon = ({ size = 16, color }) => (
 // ─── NoSearchCard ──────────────────────────────────────────────────────────
 const NoSearchCard = ({ onCreateSearch }) => (
   <div style={{
-    backgroundColor: t.surface, border: `1px solid ${t.border}`,
+    backgroundColor: t.surface,
     borderRadius: radius.xl, padding: '24px 20px',
     minHeight: '360px', display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center',
@@ -1760,7 +1772,6 @@ const NoSearchCard = ({ onCreateSearch }) => (
 const SearchingCard = ({ text, sub } = {}) => (
   <div style={{
     backgroundColor: text ? t.surface : t.primaryBg,
-    border: `1px solid ${text ? t.border : t.primaryBorder}`,
     borderRadius: radius.xl, padding: '24px 20px',
     minHeight: '360px', display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: '14px', textAlign: 'center',
