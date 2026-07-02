@@ -200,6 +200,7 @@ const PrimaveraApp = () => {
   // searchCards: [{ note, matches: [...] }] — one entry per targeted note
   const [searchCards, setSearchCards]           = useState([]);
   const [receivedRequests, setReceivedRequests] = useState([]);
+  const [sentRequests, setSentRequests]         = useState([]);
   const [confirmedMatches, setConfirmedMatches] = useState([]);
   const [boardSubTab, setBoardSubTab]           = useState('everyone');
   const [matchSubTab, setMatchSubTab]           = useState('ai');
@@ -210,6 +211,7 @@ const PrimaveraApp = () => {
   // ── Load / refresh all data from DB ──────────────────────────────────────
   const lastRefresh = useRef(0);
   const touchStartX = useRef(null);
+  const acceptedRequestIdsRef = useRef(new Set());
 
   const loadData = useCallback(async (uid, festivalId) => {
     if (!uid) return;
@@ -281,7 +283,36 @@ const PrimaveraApp = () => {
             const userRes = await supabase.getUserById(r.user_1_id);
             return { matchId: r.id, myVibeNote, createdAt: r.created_at, authorName: userRes?.[0]?.email?.split('@')[0] || '', message: r.message || null };
           }))).filter(Boolean);
-          setReceivedRequests(received);
+          setReceivedRequests(prev => {
+            const keptAccepted = prev.filter(r => acceptedRequestIdsRef.current.has(r.matchId));
+            const newIds = new Set(received.map(r => r.matchId));
+            return [...received, ...keptAccepted.filter(r => !newIds.has(r.matchId))];
+          });
+
+          // Sent requests — where this user reached out on someone else's public post
+          const sentRaw = existingMatches.filter(r =>
+            r.user_1_id === uid && r.user_1_response === 'yes'
+          );
+          const sentVibes = sentRaw.filter(r => {
+            const targetNote = camelAll.find(n => n.id === r.note_2_id);
+            return targetNote?.visibility === 'public';
+          });
+          const sent = (await Promise.all(sentVibes.map(async r => {
+            const theirVibeNote = camelAll.find(n => n.id === r.note_2_id) || null;
+            const myNote = camelAll.find(n => n.id === r.note_1_id) || null;
+            const userRes = await supabase.getUserById(r.user_2_id);
+            const confirmed = r.revealed;
+            return {
+              matchId: r.id,
+              theirVibeNote,
+              myNote,
+              authorName: userRes?.[0]?.email?.split('@')[0] || '',
+              message: r.message || null,
+              confirmed,
+              theirResponse: r.user_2_response || null,
+            };
+          }))).filter(Boolean);
+          setSentRequests(sent);
 
           // Confirmed matches — only keep if the note still exists
           const confirmedRaw = existingMatches.filter(r => r.revealed);
@@ -297,6 +328,7 @@ const PrimaveraApp = () => {
           setConfirmedMatches(confirmed);
         } else {
           setReceivedRequests([]);
+          setSentRequests([]);
           setConfirmedMatches([]);
         }
 
@@ -577,7 +609,11 @@ const PrimaveraApp = () => {
 
   const handleRequestResponse = async (matchId, accept) => {
     if (accept) {
-      setAcceptedRequestIds(prev => new Set([...prev, matchId]));
+      setAcceptedRequestIds(prev => {
+        const next = new Set([...prev, matchId]);
+        acceptedRequestIdsRef.current = next;
+        return next;
+      });
     } else {
       setReceivedRequests(prev => prev.filter(r => r.matchId !== matchId));
     }
@@ -1165,7 +1201,7 @@ const PrimaveraApp = () => {
                   transition: 'left 0.22s cubic-bezier(0.23, 1, 0.32, 1)',
                   pointerEvents: 'none',
                 }} />
-                {[{ id: 'ai', label: 'AI Found' }, { id: 'requests', label: 'Requests' }].map(st => (
+                {[{ id: 'ai', label: 'AI Search' }, { id: 'requests', label: 'Crowd' }].map(st => (
                   <button key={st.id} onClick={() => setMatchSubTab(st.id)} style={{
                     position: 'relative', zIndex: 1,
                     width: '110px', padding: '6px 0', borderRadius: radius.sm, cursor: 'pointer',
@@ -1176,7 +1212,7 @@ const PrimaveraApp = () => {
                     transition: 'color 0.18s cubic-bezier(0.23, 1, 0.32, 1)', whiteSpace: 'nowrap',
                   }}>
                     {st.label}
-                    {st.id === 'requests' && receivedRequests.length > 0 && (
+                    {st.id === 'requests' && (receivedRequests.length + sentRequests.length) > 0 && (
                       <span style={{
                         marginLeft: '5px',
                         backgroundColor: matchSubTab === 'requests' ? 'rgba(255,255,255,0.35)' : t.primary,
@@ -1184,7 +1220,7 @@ const PrimaveraApp = () => {
                         fontSize: '9px', fontWeight: '700',
                         borderRadius: radius.pill, padding: '1px 5px', fontFamily: font,
                         verticalAlign: 'middle',
-                      }}>{receivedRequests.length}</span>
+                      }}>{receivedRequests.length + sentRequests.length}</span>
                     )}
                   </button>
                 ))}
@@ -1291,53 +1327,103 @@ const PrimaveraApp = () => {
               </div>
             )}
 
-            {/* ── SUB-TAB: REQUESTS ── */}
-            {matchSubTab === 'requests' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {receivedRequests.length === 0 ? (
-                  <div style={{
-                    backgroundColor: t.surface, borderRadius: radius.xl, padding: '24px 20px',
-                    minHeight: '360px', display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center',
-                  }}>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                    </svg>
-                    <div>
-                      <p style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: '700', color: t.dark, fontFamily: font }}>No requests yet</p>
-                      <p style={{ margin: 0, fontSize: '13px', color: t.textMuted, fontFamily: font, lineHeight: '1.5' }}>When someone reaches out through a post, they'll appear here.</p>
-                    </div>
-                  </div>
-                ) : (
-                  receivedRequests.map(req => {
-                    const isAccepted = acceptedRequestIds.has(req.matchId);
-                    const myVibeNote = req.myVibeNote;
-                    const chips = [
-                      myVibeNote?.location && myVibeNote.location.replace(/_/g, ' '),
-                      myVibeNote?.time,
-                      myVibeNote?.artist && myVibeNote.artist !== 'Otro' ? myVibeNote.artist : null,
-                    ].filter(Boolean);
+            {/* ── SUB-TAB: CROWD ── */}
+            {matchSubTab === 'requests' && (() => {
+              const allCrowd = [
+                ...receivedRequests.map(r => ({ ...r, direction: 'received' })),
+                ...sentRequests.map(r => ({ ...r, direction: 'sent' })),
+              ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-                    return (
-                      <RequestCard
-                        key={req.matchId}
-                        req={req}
-                        chips={chips}
-                        isAccepted={isAccepted}
-                        myVibeNote={myVibeNote}
-                        onDecline={() => handleRequestResponse(req.matchId, false)}
-                        onAccept={() => handleRequestResponse(req.matchId, true)}
-                        onAddInstagram={async (ig) => {
-                          if (!myVibeNote) return;
-                          await supabase.updateNote(myVibeNote.id, { instagram: ig });
-                          setMyNotes(prev => prev.map(n => n.id === myVibeNote.id ? { ...n, instagram: ig } : n));
-                        }}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            )}
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {allCrowd.length === 0 ? (
+                    <div style={{
+                      backgroundColor: t.surface, borderRadius: radius.xl, padding: '24px 20px',
+                      minHeight: '360px', display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center',
+                    }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill={t.textMuted}/>
+                        <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill={t.textMuted}/>
+                        <path d="M1.20035 9.60046C1.86295 9.60046 2.40069 10.1371 2.40069 10.7997V13.2003C2.40069 13.863 1.86295 14.3996 1.20035 14.3996C0.537736 14.3996 0 13.863 0 13.2003V10.7997C0 10.1371 0.537736 9.60046 1.20035 9.60046Z" fill={t.textMuted}/>
+                        <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill={t.textMuted}/>
+                        <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill={t.textMuted}/>
+                      </svg>
+                      <div>
+                        <p style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: '700', color: t.dark, fontFamily: font }}>No crowd connections yet</p>
+                        <p style={{ margin: '0 0 20px', fontSize: '13px', color: t.textMuted, fontFamily: font, lineHeight: '1.5' }}>Interact with the Crowd to create connections</p>
+                      </div>
+                      <button onClick={() => navigateTo('public')} style={{
+                        padding: '12px 24px', borderRadius: radius.md, border: 'none',
+                        backgroundColor: t.primary, color: '#fff', cursor: 'pointer',
+                        fontSize: '14px', fontWeight: '700', fontFamily: font,
+                      }}>Check the Crowd →</button>
+                    </div>
+                  ) : allCrowd.map(item => {
+                    if (item.direction === 'received') {
+                      const req = item;
+                      const isAccepted = acceptedRequestIds.has(req.matchId);
+                      const myVibeNote = req.myVibeNote;
+                      const chips = [
+                        myVibeNote?.location && myVibeNote.location.replace(/_/g, ' '),
+                        myVibeNote?.time,
+                        myVibeNote?.artist && myVibeNote.artist !== 'Otro' ? myVibeNote.artist : null,
+                      ].filter(Boolean);
+                      return (
+                        <RequestCard
+                          key={req.matchId}
+                          direction="received"
+                          req={req}
+                          chips={chips}
+                          isAccepted={isAccepted}
+                          myVibeNote={myVibeNote}
+                          onDecline={() => handleRequestResponse(req.matchId, false)}
+                          onAccept={() => handleRequestResponse(req.matchId, true)}
+                          onAddInstagram={async (ig) => {
+                            if (!myVibeNote) return;
+                            await supabase.updateNote(myVibeNote.id, { instagram: ig });
+                            setMyNotes(prev => prev.map(n => n.id === myVibeNote.id ? { ...n, instagram: ig } : n));
+                            setReceivedRequests(prev => prev.map(r =>
+                              r.myVibeNote?.id === myVibeNote.id
+                                ? { ...r, myVibeNote: { ...r.myVibeNote, instagram: ig } }
+                                : r
+                            ));
+                          }}
+                        />
+                      );
+                    } else {
+                      const req = item;
+                      const chips = [
+                        req.theirVibeNote?.location && req.theirVibeNote.location.replace(/_/g, ' '),
+                        req.theirVibeNote?.time,
+                        req.theirVibeNote?.artist && req.theirVibeNote.artist !== 'Otro' ? req.theirVibeNote.artist : null,
+                      ].filter(Boolean);
+                      return (
+                        <RequestCard
+                          key={req.matchId}
+                          direction="sent"
+                          req={req}
+                          chips={chips}
+                          isAccepted={req.confirmed}
+                          myVibeNote={req.myNote}
+                          theirVibeNote={req.theirVibeNote}
+                          onAddInstagram={async (ig) => {
+                            if (!req.myNote) return;
+                            await supabase.updateNote(req.myNote.id, { instagram: ig });
+                            setMyNotes(prev => prev.map(n => n.id === req.myNote.id ? { ...n, instagram: ig } : n));
+                            setSentRequests(prev => prev.map(r =>
+                              r.matchId === req.matchId
+                                ? { ...r, myNote: { ...r.myNote, instagram: ig } }
+                                : r
+                            ));
+                          }}
+                        />
+                      );
+                    }
+                  })}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -1367,17 +1453,17 @@ const PrimaveraApp = () => {
                 <div style={{
                   position: 'absolute', top: '4px', bottom: '4px',
                   left: boardSubTab === 'everyone' ? '4px' : '68px',
-                  width: '64px',
+                  width: boardSubTab === 'everyone' ? '64px' : '88px',
                   backgroundColor: t.white,
                   borderRadius: radius.sm,
                   boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                   transition: 'left 0.22s cubic-bezier(0.23, 1, 0.32, 1)',
                   pointerEvents: 'none',
                 }} />
-                {[{ id: 'everyone', label: 'All' }, { id: 'mine', label: 'Mine' }].map(st => (
+                {[{ id: 'everyone', label: 'All', w: '64px' }, { id: 'mine', label: 'My posts', w: '88px' }].map(st => (
                   <button key={st.id} onClick={() => setBoardSubTab(st.id)} style={{
                     position: 'relative', zIndex: 1,
-                    width: '64px', padding: '6px 0', borderRadius: radius.sm, cursor: 'pointer',
+                    width: st.w, padding: '6px 0', borderRadius: radius.sm, cursor: 'pointer',
                     border: 'none', background: 'transparent', textAlign: 'center',
                     color: boardSubTab === st.id ? t.dark : t.textSec,
                     fontSize: '12px', fontWeight: boardSubTab === st.id ? '700' : '400',
@@ -1392,7 +1478,28 @@ const PrimaveraApp = () => {
               const myPublic = myNotes.filter(n => n.visibility === 'public');
               return myPublic.length === 0 ? (
                 <div style={{ padding: '0 16px' }}>
-                  <EmptyState text="No vibes yet." sub="Share a festival moment. ⚡" />
+                  <div style={{
+                    backgroundColor: t.surface, borderRadius: radius.xl, padding: '24px 20px',
+                    minHeight: '360px', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center',
+                  }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                      <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill={t.textMuted}/>
+                      <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill={t.textMuted}/>
+                      <path d="M1.20035 9.60046C1.86295 9.60046 2.40069 10.1371 2.40069 10.7997V13.2003C2.40069 13.863 1.86295 14.3996 1.20035 14.3996C0.537736 14.3996 0 13.863 0 13.2003V10.7997C0 10.1371 0.537736 9.60046 1.20035 9.60046Z" fill={t.textMuted}/>
+                      <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill={t.textMuted}/>
+                      <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill={t.textMuted}/>
+                    </svg>
+                    <div>
+                      <p style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: '700', color: t.dark, fontFamily: font }}>No posts yet</p>
+                      <p style={{ margin: '0 0 20px', fontSize: '13px', color: t.textMuted, fontFamily: font, lineHeight: '1.5' }}>Share a moment with the crowd to start creating connections</p>
+                    </div>
+                    <button onClick={() => { setVibeCreating(true); setVibeStep(0); setVibeText(''); setVibeArtist(null); }} style={{
+                      padding: '12px 24px', borderRadius: radius.md, border: 'none',
+                      backgroundColor: t.primary, color: '#fff', cursor: 'pointer',
+                      fontSize: '14px', fontWeight: '700', fontFamily: font,
+                    }}>Create a post →</button>
+                  </div>
                 </div>
               ) : (
                 <div style={{ padding: '0 16px 24px' }}>
@@ -1409,7 +1516,7 @@ const PrimaveraApp = () => {
             })()}
 
             {boardSubTab === 'everyone' && (
-              <div style={{ padding: '0 16px 24px' }}>
+              <div style={{ padding: '0 0 24px' }}>
                 <VibesFeed
                   notes={publicNotes}
                   noteAuthors={noteAuthors}
@@ -1417,6 +1524,7 @@ const PrimaveraApp = () => {
                   onLike={handleLikePublic}
                   onDelete={handleDeleteNote}
                   myUserId={userId}
+                  onCreatePost={() => { setVibeCreating(true); setVibeStep(0); setVibeText(''); setVibeArtist(null); }}
                 />
               </div>
             )}
@@ -1575,7 +1683,7 @@ const PrimaveraApp = () => {
 
               {/* Sign out */}
               <button
-                onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setAuthStep('splash'); }}
+                onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]); setAuthStep('splash'); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   background: 'none', border: `1px solid ${t.border}`, borderRadius: radius.md,
@@ -1617,7 +1725,7 @@ const PrimaveraApp = () => {
                 setActiveFestivalId(f.id);
                 setFestivalSwitcherOpen(false);
                 lastRefresh.current = 0;
-                setMyNotes([]); setPublicNotes([]); setSuggestedMatches([]); setConfirmedMatches([]); setReceivedRequests([]);
+                setMyNotes([]); setPublicNotes([]); setSuggestedMatches([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]);
                 loadData(userId, f.id);
               }} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -2003,14 +2111,39 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
 
 // ─── VibesFeed ─────────────────────────────────────────────────────────────
 
-const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDelete }) => {
+const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDelete, onCreatePost }) => {
   const [shareNote, setShareNote] = useState(null);
   const [connectNote, setConnectNote] = useState(null);
   const [connectComment, setConnectComment] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null);
 
   if (notes.length === 0) {
-    return <EmptyState text="No vibes yet." sub="Be the first to share your moment! ⚡" />;
+    return (
+      <div style={{
+        backgroundColor: t.surface, borderRadius: radius.xl, padding: '24px 20px', margin: '0 16px',
+        minHeight: '360px', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center',
+      }}>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+          <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill={t.textMuted}/>
+          <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill={t.textMuted}/>
+          <path d="M1.20035 9.60046C1.86295 9.60046 2.40069 10.1371 2.40069 10.7997V13.2003C2.40069 13.863 1.86295 14.3996 1.20035 14.3996C0.537736 14.3996 0 13.863 0 13.2003V10.7997C0 10.1371 0.537736 9.60046 1.20035 9.60046Z" fill={t.textMuted}/>
+          <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill={t.textMuted}/>
+          <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill={t.textMuted}/>
+        </svg>
+        <div>
+          <p style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: '700', color: t.dark, fontFamily: font }}>The Crowd is still silent</p>
+          <p style={{ margin: '0 0 20px', fontSize: '13px', color: t.textMuted, fontFamily: font, lineHeight: '1.5' }}>Be the first to share a festival moment and create connections</p>
+        </div>
+        {onCreatePost && (
+          <button onClick={onCreatePost} style={{
+            padding: '12px 24px', borderRadius: radius.md, border: 'none',
+            backgroundColor: t.primary, color: '#fff', cursor: 'pointer',
+            fontSize: '14px', fontWeight: '700', fontFamily: font,
+          }}>Create a post →</button>
+        )}
+      </div>
+    );
   }
 
   const handleShare = (note) => {
@@ -2323,9 +2456,20 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
 };
 
 // ─── RequestCard ───────────────────────────────────────────────────────────
-const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, onAddInstagram }) => {
+const RequestCard = ({ direction = 'received', req, chips, isAccepted, myVibeNote, theirVibeNote, onDecline, onAccept, onAddInstagram }) => {
   const [igInput, setIgInput] = React.useState('');
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const isSent = direction === 'sent';
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuOpen]);
   const iHaveIg = !!myVibeNote?.instagram;
+  const theyHaveIg = !!theirVibeNote?.instagram;
+  const quotedNote = isSent ? theirVibeNote : myVibeNote;
 
   return (
     <div style={{
@@ -2348,31 +2492,65 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
             {req.authorName || 'Someone'}
           </span>
         </div>
-        {isAccepted
-          ? <Badge label="Mutual match" color={t.successDark} bg={t.successBg} border={t.successBorder} />
-          : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>wants to connect</span>
-              <button
-                onClick={() => {
-                  const subject = encodeURIComponent(`Report: connection request ${req.matchId}`);
-                  const body = encodeURIComponent(`I'd like to report this connection request:\n\nFrom: ${req.authorName || 'Unknown'}\nMessage: ${req.message || '(no message)'}\n\nReason:`);
-                  window.location.href = `mailto:safety@otra.social?subject=${subject}&body=${body}`;
-                }}
-                title="Report this request"
-                style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', color: t.textMuted, display: 'flex', alignItems: 'center' }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                  <line x1="4" y1="22" x2="4" y2="15"/>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Sent / Received directional badge */}
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '4px',
+            fontSize: '10px', fontWeight: '600', fontFamily: font,
+            color: t.textMuted,
+            backgroundColor: t.surface,
+            border: `1px solid ${t.border}`,
+            borderRadius: radius.pill, padding: '2px 8px',
+          }}>
+            {isSent ? (
+              <>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                 </svg>
+                Sent
+              </>
+            ) : (
+              <>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Received
+              </>
+            )}
+          </span>
+          {isAccepted && <Badge label="Mutual match" color={t.successDark} bg={t.successBg} border={t.successBorder} />}
+          {!isSent && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', color: t.textMuted, display: 'flex', alignItems: 'center' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
               </button>
+              {menuOpen && (
+                <div
+                  style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, backgroundColor: t.white, borderRadius: radius.md, border: `1px solid ${t.border}`, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', minWidth: '120px', overflow: 'hidden' }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      const subject = encodeURIComponent(`Report: connection request ${req.matchId}`);
+                      const body = encodeURIComponent(`I'd like to report this connection request:\n\nFrom: ${req.authorName || 'Unknown'}\nMessage: ${req.message || '(no message)'}\n\nReason:`);
+                      window.location.href = `mailto:safety@otra.social?subject=${subject}&body=${body}`;
+                    }}
+                    style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '14px', color: t.textSec, cursor: 'pointer', fontFamily: font }}
+                  >
+                    Report
+                  </button>
+                </div>
+              )}
             </div>
-          )
-        }
+          )}
+        </div>
       </div>
 
-      {/* Context chips from User A's own Vibe */}
+      {/* Context chips */}
       {chips.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
           {chips.map((chip, i) => (
@@ -2384,8 +2562,8 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
         </div>
       )}
 
-      {/* User A's original Vibe — quoted context */}
-      {myVibeNote?.description && (
+      {/* Quoted post */}
+      {quotedNote?.description && (
         <div style={{
           backgroundColor: isAccepted ? 'rgba(5,194,112,0.08)' : t.surface,
           borderRadius: radius.md, padding: '10px 12px',
@@ -2393,15 +2571,15 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
           borderLeft: `3px solid ${isAccepted ? t.successBorder : t.primaryBorder}`,
         }}>
           <p style={{ margin: '0 0 2px', fontSize: '9px', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', color: isAccepted ? t.successDark : t.textMuted, fontFamily: font }}>
-            Your post
+            {isSent ? 'Their post' : 'Your post'}
           </p>
           <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.5', color: t.textSec, fontFamily: font, fontStyle: 'italic' }}>
-            "{myVibeNote.description.substring(0, 100)}{myVibeNote.description.length > 100 ? '…' : ''}"
+            "{quotedNote.description.substring(0, 100)}{quotedNote.description.length > 100 ? '…' : ''}"
           </p>
         </div>
       )}
 
-      {/* User B's reply message — shown below the quoted post */}
+      {/* Message */}
       {req.message && (
         <p style={{ fontSize: '14px', lineHeight: '1.6', color: t.text, margin: '0 0 12px', fontFamily: font, flex: 1 }}>
           {req.message}
@@ -2409,51 +2587,86 @@ const RequestCard = ({ req, chips, isAccepted, myVibeNote, onDecline, onAccept, 
       )}
 
       {/* Bottom action */}
-      {!isAccepted ? (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={onDecline} style={{ ...btnGhost, flex: 1, fontSize: '12px' }}>Decline</button>
-          <button onClick={onAccept} style={{ ...btnPrimary, flex: 1, fontSize: '12px' }}>Accept</button>
-        </div>
-      ) : iHaveIg ? (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px',
-        }}>
-          <HourglassIcon size={16} color={t.successDark} />
-          <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Contact shared — waiting for theirs</span>
-        </div>
-      ) : (
-        <div>
-          <p style={{ margin: '0 0 10px', fontSize: '13px', color: t.successDark, fontWeight: '600', fontFamily: font }}>
-            You connected! Add your Instagram to share it ↓
-          </p>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type="text" placeholder="@your_instagram"
-              value={igInput} onChange={e => setIgInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
-              style={{
-                flex: 1, padding: '11px 14px', borderRadius: radius.md,
-                border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font,
-                backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-            <button
-              onClick={() => igInput.trim() && onAddInstagram(igInput.trim())}
-              disabled={!igInput.trim()}
-              style={{
-                width: '46px', height: '46px', borderRadius: radius.circle, border: 'none', flexShrink: 0,
-                backgroundColor: igInput.trim() ? t.successDark : t.borderDark,
-                cursor: igInput.trim() ? 'pointer' : 'not-allowed',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-            </button>
+      {isSent ? (
+        // Outgoing card states
+        !isAccepted ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            backgroundColor: t.surface, borderRadius: radius.md, padding: '13px',
+          }}>
+            <HourglassIcon size={16} color={t.textMuted} />
+            <span style={{ fontSize: '13px', fontWeight: '600', color: t.textMuted, fontFamily: font }}>Waiting for their reply</span>
           </div>
-        </div>
+        ) : theyHaveIg ? (
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: '10px',
+            backgroundColor: 'rgba(5,194,112,0.08)', borderRadius: radius.md, padding: '13px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.successDark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.57 1.2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.74a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/>
+              </svg>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: t.successDark, fontFamily: font }}>@{theirVibeNote.instagram}</span>
+            </div>
+            {!iHaveIg && onAddInstagram && (
+              <div>
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: t.successDark, fontWeight: '600', fontFamily: font }}>Share yours back ↓</p>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text" placeholder="@your_instagram"
+                    value={igInput} onChange={e => setIgInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
+                    style={{ flex: 1, padding: '10px 12px', borderRadius: radius.md, border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font, backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                  <button onClick={() => igInput.trim() && onAddInstagram(igInput.trim())} disabled={!igInput.trim()} style={{ width: '42px', height: '42px', borderRadius: radius.circle, border: 'none', flexShrink: 0, backgroundColor: igInput.trim() ? t.successDark : t.borderDark, cursor: igInput.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px' }}>
+            <HourglassIcon size={16} color={t.successDark} />
+            <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Connected — waiting for their Instagram</span>
+          </div>
+        )
+      ) : (
+        // Incoming card states
+        !isAccepted ? (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={onDecline} style={{ ...btnGhost, flex: 1, fontSize: '12px' }}>Decline</button>
+            <button onClick={onAccept} style={{ ...btnPrimary, flex: 1, fontSize: '12px' }}>Accept</button>
+          </div>
+        ) : iHaveIg ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px' }}>
+            <HourglassIcon size={16} color={t.successDark} />
+            <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Contact shared — waiting for theirs</span>
+          </div>
+        ) : (
+          <div>
+            <p style={{ margin: '0 0 10px', fontSize: '13px', color: t.successDark, fontWeight: '600', fontFamily: font }}>
+              You connected! Add your Instagram to share it ↓
+            </p>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text" placeholder="@your_instagram"
+                value={igInput} onChange={e => setIgInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
+                style={{ flex: 1, padding: '11px 14px', borderRadius: radius.md, border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font, backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box' }}
+              />
+              <button
+                onClick={() => igInput.trim() && onAddInstagram(igInput.trim())}
+                disabled={!igInput.trim()}
+                style={{ width: '46px', height: '46px', borderRadius: radius.circle, border: 'none', flexShrink: 0, backgroundColor: igInput.trim() ? t.successDark : t.borderDark, cursor: igInput.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        )
       )}
     </div>
   );
