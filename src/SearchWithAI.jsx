@@ -16,7 +16,7 @@ const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 const Chip = ({ label, selected, onClick }) => (
   <button onClick={onClick} style={{
     padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
-    border: selected ? `2px solid ${t.primary}` : 'none',
+    border: 'none',
     backgroundColor: selected ? t.primaryBg : t.white,
     fontSize: '12px', color: selected ? t.primary : t.textSec,
     fontWeight: selected ? '600' : '400', fontFamily: font,
@@ -32,7 +32,7 @@ const NavButtons = ({ onBack, onNext, nextLabel = 'Next →', nextEnabled = true
   <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', paddingBottom: '8px' }}>
     {onBack && (
       <button onClick={onBack} style={{
-        flex: 1, padding: '13px', borderRadius: radius.md, border: `1px solid ${t.border}`,
+        flex: 1, padding: '13px', borderRadius: radius.md, border: 'none',
         backgroundColor: t.white, cursor: 'pointer', fontSize: '14px',
         color: t.text, fontWeight: '500', fontFamily: font,
       }}>← Back</button>
@@ -206,7 +206,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
       }}>
         <span style={{
           fontSize: '11px', padding: '5px 12px', borderRadius: radius.pill,
-          backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`,
+          backgroundColor: t.primaryBg, color: t.primary,
           fontFamily: font,
         }}>
           <span style={{ fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase' }}>AI Search</span>
@@ -224,9 +224,9 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         </div>
 
         <div style={{
-          width: '100%', backgroundColor: t.white, border: `1px solid ${t.primaryBorder}`,
+          width: '100%', backgroundColor: t.white, border: 'none',
           borderRadius: radius.lg, padding: '14px 14px 10px',
-          boxShadow: `0 0 0 5px rgba(181,11,242,0.07), 0 0 20px 6px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.05)`, position: 'relative',
+          boxShadow: `0 0 18px 4px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.04)`, position: 'relative',
         }}>
           {!prompt && (
             <div style={{
@@ -296,7 +296,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
                   onClick={onNavigateToConnections}
                   style={{
                     width: '100%', textAlign: 'left', cursor: 'pointer',
-                    backgroundColor: '#FFFFFF', border: '1px solid #EDE8DF',
+                    backgroundColor: '#FFFFFF', border: 'none',
                     borderRadius: radius.lg, padding: '14px',
                     boxShadow: '0 1px 3px rgba(29,29,47,0.05)',
                     fontFamily: font,
@@ -316,7 +316,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
                     <span style={{
                       fontSize: '10px', fontWeight: '700', padding: '3px 9px',
                       borderRadius: radius.pill, whiteSpace: 'nowrap', marginLeft: '8px', flexShrink: 0,
-                      color: stateStyle.color, backgroundColor: stateStyle.bg, border: `1px solid ${stateStyle.border}`,
+                      color: stateStyle.color, backgroundColor: stateStyle.bg,
                     }}>{stateStyle.label}</span>
                   </div>
                   <p style={{ fontSize: '14px', color: t.text, margin: 0, lineHeight: '1.6' }}>
@@ -343,7 +343,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
           {days.map(d => (
             <button key={d.value} onClick={() => setRefined(p => ({ ...p, day: p.day === d.value ? null : d.value }))} style={{
               flex: 1, padding: '11px 0', borderRadius: radius.md, cursor: 'pointer',
-              border: refined.day === d.value ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
+              border: 'none',
               backgroundColor: refined.day === d.value ? t.primaryBg : t.white,
               fontSize: '14px', fontWeight: refined.day === d.value ? '700' : '400',
               color: refined.day === d.value ? t.primary : t.text, fontFamily: font,
@@ -358,7 +358,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
           {TIME_OPTIONS.map(opt => (
             <button key={opt.value} onClick={() => setRefined(p => ({ ...p, time: p.time === opt.label ? null : opt.label }))} style={{
               padding: '12px 16px', borderRadius: radius.md, cursor: 'pointer', textAlign: 'left',
-              border: refined.time === opt.label ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
+              border: 'none',
               backgroundColor: refined.time === opt.label ? t.primaryBg : t.white,
               fontSize: '14px', color: refined.time === opt.label ? t.primary : t.text,
               fontWeight: refined.time === opt.label ? '700' : '400', fontFamily: font,
@@ -396,7 +396,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         {LOCATION_OPTIONS.map(loc => (
           <button key={loc.value} onClick={() => setRefined(p => ({ ...p, location: p.location === loc.value ? null : loc.value }))} style={{
             padding: '12px 16px', borderRadius: radius.md, cursor: 'pointer', textAlign: 'left',
-            border: refined.location === loc.value ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
+            border: 'none',
             backgroundColor: refined.location === loc.value ? t.primaryBg : t.white,
             fontSize: '14px', color: refined.location === loc.value ? t.primary : t.text,
             fontWeight: refined.location === loc.value ? '700' : '400', fontFamily: font,
@@ -420,7 +420,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         placeholder="e.g. I was wearing a red jacket, short brown hair, was with two friends near the bar…"
         style={{
           width: '100%', minHeight: '120px', padding: '12px 14px',
-          borderRadius: radius.md, border: `1px solid ${t.border}`,
+          borderRadius: radius.md, border: 'none',
           fontSize: '14px', fontFamily: font, color: t.dark,
           backgroundColor: t.white, resize: 'none', outline: 'none',
           lineHeight: '1.55', boxSizing: 'border-box',
@@ -442,47 +442,26 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '65vh', gap: '24px', textAlign: 'center' }}>
       <div style={{
         width: '80px', height: '80px', borderRadius: radius.xxl,
-        backgroundColor: t.successBg, border: `2px solid ${t.successBorder}`,
+        backgroundColor: t.primaryBg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-          <path d="M20 6L9 17l-5-5" stroke={t.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M20 6L9 17l-5-5" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
 
       <div>
         <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '0 0 8px', color: t.dark, fontFamily: font }}>Your search is live!</h2>
-        <p style={{ margin: '0 0 6px', fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6', maxWidth: '280px' }}>
-          We're watching out for someone who matches your description.
-        </p>
-        <p style={{ margin: 0, fontSize: '13px', color: t.textMuted, fontFamily: font }}>
-          If they're also searching, we'll connect you 🙌
+        <p style={{ margin: 0, fontSize: '14px', color: t.textSec, fontFamily: font, lineHeight: '1.6', maxWidth: '280px' }}>
+          We're watching out for someone who matches your description. If they're also searching, we'll connect you.
         </p>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', maxWidth: '300px' }}>
-        {refined.artist && (
-          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: radius.pill, backgroundColor: t.primaryBg, color: t.primary, border: `1px solid ${t.primaryBorder}`, fontFamily: font, fontWeight: '600' }}>
-            {refined.artist}
-          </span>
-        )}
-        {refined.time && (
-          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: radius.pill, backgroundColor: t.surface, color: t.textSec, border: `1px solid ${t.border}`, fontFamily: font }}>
-            {refined.time}
-          </span>
-        )}
-        {refined.location && (
-          <span style={{ fontSize: '12px', padding: '4px 12px', borderRadius: radius.pill, backgroundColor: t.surface, color: t.textSec, border: `1px solid ${t.border}`, fontFamily: font }}>
-            {refined.location.replace(/_/g, ' ')}
-          </span>
-        )}
-      </div>
-
-      <button onClick={handleReset} style={{
-        padding: '13px 32px', borderRadius: radius.md, border: `1px solid ${t.border}`,
+      <button onClick={onNavigateToConnections} style={{
+        padding: '13px 32px', borderRadius: radius.md, border: 'none',
         backgroundColor: t.white, cursor: 'pointer', fontSize: '14px',
         color: t.text, fontWeight: '500', fontFamily: font,
-      }}>+ New search</button>
+      }}>Check connections</button>
     </div>
   );
 }

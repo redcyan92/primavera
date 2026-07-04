@@ -39,6 +39,8 @@ const supabase = {
   async getUserById(id)           { return this.request('users', 'GET', null, `id=eq.${id}`); },
   async createUser(email)         { return this.request('users', 'POST', { email }); },
   async confirmAge(userId)        { return this.request('users', 'PATCH', { age_confirmed: true }, `id=eq.${userId}`); },
+  async updateUser(userId, data)  { return this.request('users', 'PATCH', data, `id=eq.${userId}`); },
+  async requestFestival(text, userId) { return this.request('festival_requests', 'POST', { text, user_id: userId ?? null }); },
 
   async sendOtp(email) {
     const res = await fetch(`${this.url}/auth/v1/otp`, {
@@ -96,6 +98,18 @@ const toCamelCase = (note) => ({
   embeddingSelf:  note.embedding_self,
 });
 
+const timeAgo = (dateStr) => {
+  if (!dateStr) return null;
+  const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diffSec < 60) return 'now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h`;
+  return `${Math.floor(diffSec / 86400)}d`;
+};
+
+// Display name for a user record: the profile/onboarding name, falling back to the email prefix.
+const displayNameFor = (u) => (u?.name?.trim?.() || u?.email?.split('@')[0] || '');
+
 // ─── Shared style tokens ───────────────────────────────────────────────────
 const t = {
   primary:       '#B50BF2',
@@ -122,13 +136,35 @@ const t = {
   dangerBg:      '#FFF0F0',
 };
 
+// Per-category color schemes for Connections cards.
+// AI Search → purple family; Crowd → green family (the two greens from the home Crowd pill).
+const CATEGORY_THEME = {
+  ai: {
+    accent:     '#B50BF2',                 // primary purple — text, icons, buttons
+    cardBg:     'rgba(181,11,242,0.06)',   // card background
+    tint:       'rgba(181,11,242,0.10)',   // pills / status rows
+    tintStrong: 'rgba(181,11,242,0.14)',   // emphasis (shared chips)
+    border:     '#CC88F5',
+    shadow:     'rgba(181,11,242,0.10)',
+  },
+  crowd: {
+    accent:     '#5D8000',                 // dark olive green — text, icons, buttons
+    cardBg:     'rgba(176,232,23,0.08)',   // card background
+    tint:       'rgba(176,232,23,0.15)',   // pills / status rows
+    tintStrong: 'rgba(176,232,23,0.26)',   // emphasis
+    border:     'rgba(176,232,23,0.55)',
+    shadow:     'rgba(93,128,0,0.10)',
+  },
+};
+
 const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 
 // Reduced circular mark — used in navbars
-const OtraLogoMark = ({ color = '#B50BF2', size = 22, style }) => (
+const OtraLogoMark = ({ color = '#B50BF2', size = 22, style, animatePupil = false }) => (
   <svg viewBox="0 0 8.4 8.4" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style}>
     <path fill={color} d="M6.89,1h1.03V0h-3.72C1.89,0,0,1.89,0,4.2c0,1.29.6,2.43,1.51,3.2H.49v1h3.72c2.32,0,4.2-1.89,4.2-4.2,0-1.29-.6-2.43-1.51-3.2ZM4.2,7.4c-1.77,0-3.2-1.43-3.2-3.2s1.43-3.2,3.2-3.2,3.2,1.43,3.2,3.2-1.43,3.2-3.2,3.2Z"/>
-    <circle fill={color} cx="4.2" cy="4.2" r=".88"/>
+    <circle fill={color} cx="4.2" cy="4.2" r=".88"
+      style={animatePupil ? { animation: 'otra-look 2.8s ease-in-out infinite' } : undefined} />
   </svg>
 );
 
@@ -153,7 +189,6 @@ const Badge = ({ label, color, bg, border }) => (
   <span style={{
     display: 'inline-block', fontSize: '10px', fontWeight: '600',
     color, backgroundColor: bg,
-    border: `0.5px solid ${border}`,
     padding: '3px 8px', borderRadius: radius.pill,
     fontFamily: font,
   }}>{label}</span>
@@ -167,6 +202,8 @@ const PrimaveraApp = () => {
     return stored && FESTIVALS[stored] ? stored : null;
   });
   const [festivalSwitcherOpen, setFestivalSwitcherOpen] = useState(false);
+  const [festivalRequestInput, setFestivalRequestInput] = useState('');
+  const [festivalRequestStatus, setFestivalRequestStatus] = useState('idle'); // idle | submitting | sent
   const activeFestival = activeFestivalId ? FESTIVALS[activeFestivalId] : null;
 
   const [sharedPostId] = useState(() => new URLSearchParams(window.location.search).get('post'));
@@ -188,6 +225,8 @@ const PrimaveraApp = () => {
   const [ageChecked, setAgeChecked]         = useState(false);
   const [termsChecked, setTermsChecked]     = useState(false);
   const [userName, setUserName]             = useState(() => localStorage.getItem('fulmi_user_name') || '');
+  const [editingName, setEditingName]       = useState(false);
+  const [nameDraft, setNameDraft]           = useState('');
   const [isModalOpen, setIsModalOpen]       = useState(false);
   const [vibeCreating, setVibeCreating]     = useState(false);
   const [vibeStep, setVibeStep]             = useState(0);
@@ -207,6 +246,8 @@ const PrimaveraApp = () => {
   const [carouselIndexes, setCarouselIndexes]   = useState({});
   const [noteAuthors, setNoteAuthors]           = useState({});
   const [acceptedRequestIds, setAcceptedRequestIds] = useState(new Set());
+  const [seenCrowdIds, setSeenCrowdIds]             = useState(new Set());
+  const [seenAIIds, setSeenAIIds]                   = useState(new Set());
 
   // ── Load / refresh all data from DB ──────────────────────────────────────
   const lastRefresh = useRef(0);
@@ -239,7 +280,7 @@ const PrimaveraApp = () => {
         const authorsMap = {};
         await Promise.all(uniqueIds.map(async id => {
           const res = await supabase.getUserById(id);
-          if (res?.[0]?.email) authorsMap[id] = res[0].email.split('@')[0];
+          if (res?.[0]) authorsMap[id] = displayNameFor(res[0]);
         }));
         setNoteAuthors(authorsMap);
 
@@ -281,7 +322,7 @@ const PrimaveraApp = () => {
           const received = (await Promise.all(vibesOnly.map(async r => {
             const myVibeNote = camelAll.find(n => n.id === r.note_2_id) || null;
             const userRes = await supabase.getUserById(r.user_1_id);
-            return { matchId: r.id, myVibeNote, createdAt: r.created_at, authorName: userRes?.[0]?.email?.split('@')[0] || '', message: r.message || null };
+            return { matchId: r.id, myVibeNote, createdAt: r.created_at, authorName: displayNameFor(userRes?.[0]), message: r.message || null };
           }))).filter(Boolean);
           setReceivedRequests(prev => {
             const keptAccepted = prev.filter(r => acceptedRequestIdsRef.current.has(r.matchId));
@@ -306,7 +347,7 @@ const PrimaveraApp = () => {
               matchId: r.id,
               theirVibeNote,
               myNote,
-              authorName: userRes?.[0]?.email?.split('@')[0] || '',
+              authorName: displayNameFor(userRes?.[0]),
               message: r.message || null,
               confirmed,
               theirResponse: r.user_2_response || null,
@@ -323,7 +364,7 @@ const PrimaveraApp = () => {
             const theirNote = camelAll.find(n => n.id === theirNoteId);
             if (!theirNote) return null;
             const userRes = await supabase.getUserById(theirUserId);
-            return { matchId: r.id, note: theirNote, score: r.score, quality: r.quality, authorName: userRes?.[0]?.email?.split('@')[0] || '' };
+            return { matchId: r.id, note: theirNote, score: r.score, quality: r.quality, authorName: displayNameFor(userRes?.[0]) };
           }))).filter(Boolean);
           setConfirmedMatches(confirmed);
         } else {
@@ -352,7 +393,7 @@ const PrimaveraApp = () => {
       if (notes?.[0]) {
         setSharedPost(toCamelCase(notes[0]));
         const userRes = await supabase.getUserById(notes[0].user_id);
-        if (userRes?.[0]?.email) setSharedPostAuthor(userRes[0].email.split('@')[0]);
+        if (userRes?.[0]) setSharedPostAuthor(displayNameFor(userRes[0]));
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -476,7 +517,10 @@ const PrimaveraApp = () => {
     setLoading(true);
     try {
       await supabase.confirmAge(userId);
-      if (userName.trim()) localStorage.setItem('fulmi_user_name', userName.trim());
+      if (userName.trim()) {
+        localStorage.setItem('fulmi_user_name', userName.trim());
+        supabase.updateUser(userId, { name: userName.trim() });
+      }
       setAuthStep(null);
       if (activeFestivalId) await loadData(userId, activeFestivalId);
     } catch (err) {
@@ -509,6 +553,25 @@ const PrimaveraApp = () => {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, [authStep]);
+
+  // Mark connection items as seen when user opens the relevant sub-tab
+  useEffect(() => {
+    if (tab !== 'matches') return;
+    if (matchSubTab === 'requests') {
+      setSeenCrowdIds(prev => {
+        const next = new Set(prev);
+        receivedRequests.forEach(r => next.add(r.matchId));
+        sentRequests.filter(r => r.confirmed).forEach(r => next.add(r.matchId));
+        return next;
+      });
+    } else if (matchSubTab === 'ai') {
+      setSeenAIIds(prev => {
+        const next = new Set(prev);
+        confirmedMatches.filter(m => m.note?.visibility !== 'public').forEach(m => next.add(m.matchId));
+        return next;
+      });
+    }
+  }, [tab, matchSubTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveNote = async (formData) => {
     if (!userId) return;
@@ -651,7 +714,7 @@ const PrimaveraApp = () => {
 
     return (
       <div style={{
-        maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
         backgroundColor: '#EEE1FD', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
@@ -736,7 +799,7 @@ const PrimaveraApp = () => {
   if (authStep === 'splash') {
     return (
       <div style={{
-        maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
         backgroundColor: '#F1F9B5', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
@@ -809,7 +872,7 @@ const PrimaveraApp = () => {
         onTouchStart={e => { emailSwipeRef.start = e.touches[0].clientX; }}
         onTouchEnd={e => { if (emailSwipeRef.start !== null && e.changedTouches[0].clientX - emailSwipeRef.start > 50) { setAuthStep('onboarding'); } emailSwipeRef.start = null; }}
         style={{
-        maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
         backgroundColor: t.primary, fontFamily: font,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -859,7 +922,7 @@ const PrimaveraApp = () => {
   if (authStep === 'otp') {
     return (
       <div style={{
-        maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
         backgroundColor: t.primary, fontFamily: font,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -940,7 +1003,7 @@ const PrimaveraApp = () => {
         onTouchStart={e => { ageSwipeRef.start = e.touches[0].clientX; }}
         onTouchEnd={e => { if (ageSwipeRef.start !== null && e.changedTouches[0].clientX - ageSwipeRef.start > 50) { setAuthStep('email'); } ageSwipeRef.start = null; }}
         style={{
-        maxWidth: '380px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
         backgroundColor: t.bg, fontFamily: font,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -965,7 +1028,7 @@ const PrimaveraApp = () => {
               onChange={e => setUserName(e.target.value)}
               style={{
                 height: '48px', padding: '0 14px', borderRadius: radius.lg,
-                border: `1px solid ${t.border}`, fontSize: '15px',
+                fontSize: '15px', border: 'none',
                 backgroundColor: t.white, color: t.dark,
                 outline: 'none', fontFamily: font, boxSizing: 'border-box', width: '100%',
               }}
@@ -1016,25 +1079,22 @@ const PrimaveraApp = () => {
 
   // ── Festival picker ───────────────────────────────────────────────────────
 
+  const submitFestivalRequest = async () => {
+    const text = festivalRequestInput.trim();
+    if (!text || festivalRequestStatus === 'submitting') return;
+    setFestivalRequestStatus('submitting');
+    await supabase.requestFestival(text, userId);
+    setFestivalRequestInput('');
+    setFestivalRequestStatus('sent');
+  };
+
   if (!activeFestivalId) {
     return (
-      <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#EEE1FD', fontFamily: font, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-        {/* Blurred blobs */}
-        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-          {[
-            { color: '#B50BF2', x: '18%',  y: '12%', w: '65%', h: '48%' },
-            { color: '#8A00CC', x: '78%',  y: '8%',  w: '60%', h: '44%' },
-            { color: '#CC70F0', x: '45%',  y: '40%', w: '50%', h: '38%' },
-            { color: '#D4A0F5', x: '30%',  y: '55%', w: '40%', h: '30%' },
-          ].map((b, i) => (
-            <div key={i} style={{ position: 'absolute', left: b.x, top: b.y, width: b.w, height: b.h, backgroundColor: b.color, borderRadius: radius.circle, filter: 'blur(52px)', transform: 'translate(-50%, -50%)' }} />
-          ))}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 35%, #EEE1FD 68%)' }} />
-        </div>
+      <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', backgroundColor: t.bg, fontFamily: font, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         {/* Content anchored to bottom */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 24px 48px', zIndex: 5 }}>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', color: t.dark, margin: '0 0 8px', fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em' }}>Pick your festival</h1>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: t.dark, margin: '0 0 20px', fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em' }}>Pick your festival</h1>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {FESTIVAL_LIST.map(f => (
               <button key={f.id} onClick={() => {
                 localStorage.setItem('fulmi_festival_id', f.id);
@@ -1043,15 +1103,55 @@ const PrimaveraApp = () => {
                 lastRefresh.current = 0;
                 loadData(userId, f.id);
               }} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                width: '100%', padding: '18px 20px', borderRadius: radius.lg,
-                border: 'none', backgroundColor: t.dark,
-                cursor: 'pointer', textAlign: 'left',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                width: '100%', padding: '14px 16px', borderRadius: radius.md,
+                backgroundColor: f.id === activeFestivalId ? t.primaryBg : t.white,
+                cursor: 'pointer', textAlign: 'left', border: 'none', outline: 'none',
               }}>
-                <span style={{ fontSize: '16px', fontWeight: '700', color: '#FFFFFF', fontFamily: font }}>{f.fullName}</span>
-                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontFamily: font, marginTop: '4px' }}>{f.dates}</span>
+                <div>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
+                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.dates}</p>
+                </div>
+                {f.id === activeFestivalId && (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
               </button>
             ))}
+          </div>
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${t.border}` }}>
+            {festivalRequestStatus === 'sent' ? (
+              <p style={{ fontSize: '13px', color: t.textMuted, fontFamily: font, margin: 0 }}>Thanks! We'll let you know if it's added.</p>
+            ) : (
+              <>
+                <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '0 0 8px' }}>Can't find it?</p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text" placeholder="Your festival"
+                    value={festivalRequestInput} onChange={(e) => setFestivalRequestInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') submitFestivalRequest(); }}
+                    style={{
+                      flex: 1, height: '44px', padding: '0 14px', borderRadius: radius.lg,
+                      border: 'none', fontSize: '14px', backgroundColor: t.white,
+                      color: t.dark, outline: 'none', fontFamily: font,
+                    }}
+                  />
+                  <button
+                    onClick={submitFestivalRequest}
+                    disabled={!festivalRequestInput.trim() || festivalRequestStatus === 'submitting'}
+                    style={{
+                      height: '44px', padding: '0 16px', borderRadius: radius.lg,
+                      border: 'none', backgroundColor: t.dark, color: '#FFFFFF',
+                      fontSize: '13px', fontWeight: '700', fontFamily: font, cursor: 'pointer',
+                      opacity: (!festivalRequestInput.trim() || festivalRequestStatus === 'submitting') ? 0.5 : 1,
+                    }}
+                  >
+                    {festivalRequestStatus === 'submitting' ? '…' : 'Request'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1060,25 +1160,35 @@ const PrimaveraApp = () => {
 
   // ── Main app ──────────────────────────────────────────────────────────────
 
-  return (
-    <div style={{ maxWidth: '380px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: t.bg, fontFamily: font, position: 'relative' }}>
+  const unseenCrowdCount = [
+    ...receivedRequests,
+    ...sentRequests.filter(r => r.confirmed),
+  ].filter(r => !seenCrowdIds.has(r.matchId)).length;
+  const unseenAICount = confirmedMatches
+    .filter(m => m.note?.visibility !== 'public' && !seenAIIds.has(m.matchId)).length;
+  const totalConnectionsNotif = unseenCrowdCount + unseenAICount;
 
-      {/* Top header — floating/transparent on home, solid on other tabs */}
+  return (
+    <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: t.bg, fontFamily: font, position: 'relative' }}>
+
+      {/* Top header — flowing fade */}
       <div style={{
-        padding: '12px 16px',
+        padding: '12px 16px 20px',
         position: 'sticky',
         top: 0, left: 0, right: 0, zIndex: 10,
-        backgroundColor: t.white,
-        borderBottom: `1px solid ${t.border}`,
+        background: 'linear-gradient(to bottom, #F8FAFB 60%, rgba(248,250,251,0))',
+        pointerEvents: 'none',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <OtraLogoMark color={t.primary} size={22} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'auto' }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: t.white, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <OtraLogoMark color={t.primary} size={22} />
+          </div>
           {/* Festival selector — fully rounded pill */}
           <button onClick={() => setFestivalSwitcherOpen(true)} style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             backgroundColor: t.white, border: 'none',
             borderRadius: radius.xxl, padding: '7px 10px 7px 14px',
-            cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+            cursor: 'pointer',
           }}>
             <span style={{ fontSize: '11px', fontWeight: '500', fontFamily: font, color: t.textMuted, whiteSpace: 'nowrap' }}>{activeFestival?.fullName || 'Select festival'}</span>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1106,21 +1216,20 @@ const PrimaveraApp = () => {
                 width: '100%', padding: '20px', borderRadius: radius.lg,
                 border: 'none', backgroundColor: t.white,
                 cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
-                boxShadow: '0 2px 16px rgba(181,11,242,0.08)',
               }}>
                 {/* Icon + title + badge in one row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', marginBottom: '16px' }}>
                   <svg width="20" height="21" viewBox="0 0 23 24" fill="none" style={{ flexShrink: 0 }}>
                     <path d="M9.29037 2.32259C9.71812 2.32259 10.0646 2.67 10.0646 3.09678C10.0646 3.52453 9.71812 3.87097 9.29037 3.87097C5.01483 3.87097 1.54842 7.33737 1.54842 11.6129C1.54842 15.8894 5.01483 19.3548 9.29037 19.3548C12.9698 19.3548 16.05 16.7875 16.8368 13.3461C16.9327 12.929 17.3488 12.6687 17.7659 12.7645C18.182 12.8593 18.4423 13.2745 18.3475 13.6906C17.9236 15.5448 16.9433 17.187 15.5943 18.4344L19.175 22.7302C19.4479 23.0583 19.4043 23.547 19.0763 23.8208C18.7482 24.0938 18.2604 24.0502 17.9866 23.7221L14.374 19.3867C12.9137 20.3447 11.168 20.9031 9.29034 20.9031C4.15935 20.9031 0 16.7438 0 11.6128C0 6.4828 4.15938 2.32259 9.29037 2.32259Z" fill={t.primary}/>
                     <path d="M17.552 0.211931C17.6032 -0.0706435 18.0097 -0.0706435 18.0591 0.211931C18.4307 2.34677 20.102 4.01997 22.2387 4.39158C22.5223 4.4419 22.5223 4.84837 22.2387 4.89772C20.1029 5.2703 18.4307 6.94255 18.0591 9.07737C18.0107 9.36091 17.6023 9.36091 17.552 9.07737C17.1803 6.94253 15.509 5.27032 13.3743 4.89772C13.0907 4.84836 13.0907 4.44192 13.3743 4.39158C15.5091 4.01997 17.1803 2.34675 17.552 0.211931Z" fill={t.primary}/>
                   </svg>
-                  <span style={{ fontSize: '18px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>AI Search</span>
+                  <span style={{ fontSize: '20px', fontWeight: '800', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>AI Search</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(181,11,242,0.10)', borderRadius: radius.pill, padding: '4px 9px', flexShrink: 0 }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font }}>Compatible only</span>
                   </div>
                 </div>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
+                <p style={{ margin: '0 0 40px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
                   Describe who you're looking for. Our AI finds them quietly — nothing posted publicly.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -1135,10 +1244,9 @@ const PrimaveraApp = () => {
                 width: '100%', padding: '20px', borderRadius: radius.lg,
                 border: 'none', backgroundColor: t.white,
                 cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               }}>
                 {/* Icon + title + badge in one row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', marginBottom: '16px' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
                     <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill="#5d8000"/>
                     <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill="#5d8000"/>
@@ -1146,7 +1254,7 @@ const PrimaveraApp = () => {
                     <path d="M22.7995 9.60046C23.4621 9.60046 23.9998 10.1371 23.9998 10.7997V13.2003C23.9998 13.863 23.4621 14.3996 22.7995 14.3996C22.1369 14.3996 21.5991 13.863 21.5991 13.2003V10.7997C21.5991 10.1371 22.1369 9.60046 22.7995 9.60046Z" fill="#5d8000"/>
                     <path d="M19.1999 6.00058C19.1999 5.33797 18.6621 4.80023 17.9995 4.80023C17.3369 4.80023 16.8003 5.33797 16.8003 6.00058V17.9994C16.8003 18.662 17.3369 19.1998 17.9995 19.1998C18.6621 19.1998 19.1999 18.662 19.1999 17.9994V6.00058Z" fill="#5d8000"/>
                   </svg>
-                  <span style={{ fontSize: '18px', fontWeight: '400', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>Crowd</span>
+                  <span style={{ fontSize: '20px', fontWeight: '800', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>Crowd</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(176,232,23,0.15)', borderRadius: radius.pill, padding: '4px 9px', flexShrink: 0 }}>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5d8000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     <span style={{ fontSize: '11px', fontWeight: '600', color: '#5d8000', fontFamily: font }}>Public</span>
@@ -1187,8 +1295,8 @@ const PrimaveraApp = () => {
             {/* Sub-tab switcher */}
             <div style={{ marginBottom: '20px' }}>
               <div style={{
-                display: 'inline-flex', position: 'relative',
-                backgroundColor: t.surface, borderRadius: radius.md, border: `1px solid ${t.border}`,
+                display: 'flex', position: 'relative', width: '228px',
+                backgroundColor: t.surface, borderRadius: radius.md,
                 padding: '4px', gap: '0',
               }}>
                 <div style={{
@@ -1212,7 +1320,7 @@ const PrimaveraApp = () => {
                     transition: 'color 0.18s cubic-bezier(0.23, 1, 0.32, 1)', whiteSpace: 'nowrap',
                   }}>
                     {st.label}
-                    {st.id === 'requests' && (receivedRequests.length + sentRequests.length) > 0 && (
+                    {st.id === 'requests' && unseenCrowdCount > 0 && (
                       <span style={{
                         marginLeft: '5px',
                         backgroundColor: matchSubTab === 'requests' ? 'rgba(255,255,255,0.35)' : t.primary,
@@ -1220,7 +1328,17 @@ const PrimaveraApp = () => {
                         fontSize: '9px', fontWeight: '700',
                         borderRadius: radius.pill, padding: '1px 5px', fontFamily: font,
                         verticalAlign: 'middle',
-                      }}>{receivedRequests.length + sentRequests.length}</span>
+                      }}>{unseenCrowdCount}</span>
+                    )}
+                    {st.id === 'ai' && unseenAICount > 0 && (
+                      <span style={{
+                        marginLeft: '5px',
+                        backgroundColor: matchSubTab === 'ai' ? 'rgba(255,255,255,0.35)' : t.primary,
+                        color: '#fff',
+                        fontSize: '9px', fontWeight: '700',
+                        borderRadius: radius.pill, padding: '1px 5px', fontFamily: font,
+                        verticalAlign: 'middle',
+                      }}>{unseenAICount}</span>
                     )}
                   </button>
                 ))}
@@ -1229,7 +1347,7 @@ const PrimaveraApp = () => {
 
             {/* ── SUB-TAB: AI FOUND ── */}
             {matchSubTab === 'ai' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                 {searchCards.length === 0 ? (
                   <NoSearchCard onCreateSearch={() => navigateTo('notes')} />
                 ) : searchCards.map(({ note: myNote, matches }) => {
@@ -1270,11 +1388,11 @@ const PrimaveraApp = () => {
                         {metaChips.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
                             {metaChips.map((chip, i) => (
-                              <span key={i} style={{ fontSize: '10px', color: t.textMuted, backgroundColor: t.white, borderRadius: radius.sm, padding: '3px 8px', border: `1px solid ${t.border}`, textTransform: 'capitalize' }}>{chip}</span>
+                              <span key={i} style={{ fontSize: '10px', color: t.textMuted, backgroundColor: t.white, borderRadius: radius.sm, padding: '3px 8px', textTransform: 'capitalize' }}>{chip}</span>
                             ))}
                           </div>
                         )}
-                        <p style={{ margin: 0, fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <p style={{ margin: 0, fontSize: '13px', color: t.text, fontFamily: font, lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {myNote.description}
                         </p>
                       </div>
@@ -1335,7 +1453,7 @@ const PrimaveraApp = () => {
               ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
               return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                   {allCrowd.length === 0 ? (
                     <div style={{
                       backgroundColor: t.surface, borderRadius: radius.xl, padding: '24px 20px',
@@ -1360,66 +1478,62 @@ const PrimaveraApp = () => {
                       }}>Check the Crowd →</button>
                     </div>
                   ) : allCrowd.map(item => {
-                    if (item.direction === 'received') {
-                      const req = item;
-                      const isAccepted = acceptedRequestIds.has(req.matchId);
-                      const myVibeNote = req.myVibeNote;
-                      const chips = [
-                        myVibeNote?.location && myVibeNote.location.replace(/_/g, ' '),
-                        myVibeNote?.time,
-                        myVibeNote?.artist && myVibeNote.artist !== 'Otro' ? myVibeNote.artist : null,
-                      ].filter(Boolean);
-                      return (
+                    const req = item;
+                    const isSent = item.direction === 'sent';
+                    // Origin post = where the connection started: your post (received) or their post (sent)
+                    const originPost = isSent ? req.theirVibeNote : req.myVibeNote;
+                    const originName = isSent ? (req.authorName || 'Someone') : 'You';
+                    const isAccepted = isSent ? req.confirmed : acceptedRequestIds.has(req.matchId);
+                    const myVibeNote = isSent ? req.myNote : req.myVibeNote;
+                    const onAddInstagram = isSent
+                      ? async (ig) => {
+                          if (!req.myNote) return;
+                          await supabase.updateNote(req.myNote.id, { instagram: ig });
+                          setMyNotes(prev => prev.map(n => n.id === req.myNote.id ? { ...n, instagram: ig } : n));
+                          setSentRequests(prev => prev.map(r =>
+                            r.matchId === req.matchId ? { ...r, myNote: { ...r.myNote, instagram: ig } } : r
+                          ));
+                        }
+                      : async (ig) => {
+                          if (!req.myVibeNote) return;
+                          await supabase.updateNote(req.myVibeNote.id, { instagram: ig });
+                          setMyNotes(prev => prev.map(n => n.id === req.myVibeNote.id ? { ...n, instagram: ig } : n));
+                          setReceivedRequests(prev => prev.map(r =>
+                            r.myVibeNote?.id === req.myVibeNote.id ? { ...r, myVibeNote: { ...r.myVibeNote, instagram: ig } } : r
+                          ));
+                        };
+
+                    return (
+                      <div key={req.matchId} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {/* Origin post header — same style as the Crowd feed post */}
+                        {originPost && (
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', fontFamily: font, color: isSent ? t.dark : CATEGORY_THEME.crowd.accent }}>{originName}</p>
+                              {timeAgo(originPost.createdAt || originPost.created_at) && (
+                                <span style={{ fontSize: '12px', color: t.textMuted, fontFamily: font }}>· {timeAgo(originPost.createdAt || originPost.created_at)}</span>
+                              )}
+                            </div>
+                            {originPost.artist && originPost.artist !== 'Otro' && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                                <span style={{ fontSize: '10px', color: t.textMuted, backgroundColor: t.surface, borderRadius: radius.xs, padding: '2px 7px', fontFamily: font, textTransform: 'capitalize' }}>{originPost.artist}</span>
+                              </div>
+                            )}
+                            <p style={{ margin: '8px 0 0', fontSize: '14px', lineHeight: '1.6', color: t.text, fontFamily: font }}>{originPost.description}</p>
+                          </div>
+                        )}
                         <RequestCard
-                          key={req.matchId}
-                          direction="received"
+                          direction={item.direction}
                           req={req}
-                          chips={chips}
                           isAccepted={isAccepted}
                           myVibeNote={myVibeNote}
-                          onDecline={() => handleRequestResponse(req.matchId, false)}
-                          onAccept={() => handleRequestResponse(req.matchId, true)}
-                          onAddInstagram={async (ig) => {
-                            if (!myVibeNote) return;
-                            await supabase.updateNote(myVibeNote.id, { instagram: ig });
-                            setMyNotes(prev => prev.map(n => n.id === myVibeNote.id ? { ...n, instagram: ig } : n));
-                            setReceivedRequests(prev => prev.map(r =>
-                              r.myVibeNote?.id === myVibeNote.id
-                                ? { ...r, myVibeNote: { ...r.myVibeNote, instagram: ig } }
-                                : r
-                            ));
-                          }}
+                          theirVibeNote={isSent ? req.theirVibeNote : undefined}
+                          onDecline={!isSent ? () => handleRequestResponse(req.matchId, false) : undefined}
+                          onAccept={!isSent ? () => handleRequestResponse(req.matchId, true) : undefined}
+                          onAddInstagram={onAddInstagram}
                         />
-                      );
-                    } else {
-                      const req = item;
-                      const chips = [
-                        req.theirVibeNote?.location && req.theirVibeNote.location.replace(/_/g, ' '),
-                        req.theirVibeNote?.time,
-                        req.theirVibeNote?.artist && req.theirVibeNote.artist !== 'Otro' ? req.theirVibeNote.artist : null,
-                      ].filter(Boolean);
-                      return (
-                        <RequestCard
-                          key={req.matchId}
-                          direction="sent"
-                          req={req}
-                          chips={chips}
-                          isAccepted={req.confirmed}
-                          myVibeNote={req.myNote}
-                          theirVibeNote={req.theirVibeNote}
-                          onAddInstagram={async (ig) => {
-                            if (!req.myNote) return;
-                            await supabase.updateNote(req.myNote.id, { instagram: ig });
-                            setMyNotes(prev => prev.map(n => n.id === req.myNote.id ? { ...n, instagram: ig } : n));
-                            setSentRequests(prev => prev.map(r =>
-                              r.matchId === req.matchId
-                                ? { ...r, myNote: { ...r.myNote, instagram: ig } }
-                                : r
-                            ));
-                          }}
-                        />
-                      );
-                    }
+                      </div>
+                    );
                   })}
                 </div>
               );
@@ -1446,7 +1560,7 @@ const PrimaveraApp = () => {
             <div style={{ padding: '0 16px 14px' }}>
               <div style={{
                 display: 'inline-flex', position: 'relative',
-                backgroundColor: t.surface, borderRadius: radius.md, border: `1px solid ${t.border}`,
+                backgroundColor: t.surface, borderRadius: radius.md,
                 padding: '4px', gap: '0',
               }}>
                 {/* sliding pill */}
@@ -1510,6 +1624,7 @@ const PrimaveraApp = () => {
                     onLike={handleLikePublic}
                     onDelete={handleDeleteNote}
                     myUserId={userId}
+                    onNavigateToConnections={() => { setMatchSubTab('requests'); navigateTo('matches'); }}
                   />
                 </div>
               );
@@ -1525,6 +1640,7 @@ const PrimaveraApp = () => {
                   onDelete={handleDeleteNote}
                   myUserId={userId}
                   onCreatePost={() => { setVibeCreating(true); setVibeStep(0); setVibeText(''); setVibeArtist(null); }}
+                  onNavigateToConnections={() => { setMatchSubTab('requests'); navigateTo('matches'); }}
                 />
               </div>
             )}
@@ -1568,7 +1684,7 @@ const PrimaveraApp = () => {
                       placeholder="Four Tet dropped that track and everyone just went silent. Still thinking about it."
                       style={{
                         width: '100%', minHeight: '180px', padding: '14px 14px 48px', borderRadius: radius.lg,
-                        border: `1px solid ${t.border}`, fontSize: '14px', fontFamily: font,
+                        fontSize: '14px', fontFamily: font, border: 'none',
                         color: t.dark, backgroundColor: t.white, boxSizing: 'border-box',
                         resize: 'none', outline: 'none', lineHeight: '1.65',
                       }}
@@ -1618,7 +1734,7 @@ const PrimaveraApp = () => {
                       {(activeFestival?.artists || []).filter(a => a !== 'Otro').slice().sort((a, b) => a.localeCompare(b)).map(artist => (
                         <button key={artist} onClick={() => setVibeArtist(vibeArtist === artist ? null : artist)} style={{
                           padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
-                          border: vibeArtist === artist ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
+                          border: 'none',
                           backgroundColor: vibeArtist === artist ? t.primaryBg : t.white,
                           fontSize: '12px', color: vibeArtist === artist ? t.primary : t.textSec,
                           fontWeight: vibeArtist === artist ? '600' : '400', fontFamily: font,
@@ -1629,8 +1745,8 @@ const PrimaveraApp = () => {
                   </div>
                   <div style={{ display: 'flex', gap: '10px', paddingTop: '20px' }}>
                     <button onClick={() => setVibeStep(0)} style={{
-                      flex: 1, padding: '14px', borderRadius: radius.md,
-                      border: `1px solid ${t.border}`, backgroundColor: t.white,
+                      flex: 1, padding: '14px', borderRadius: radius.md, border: 'none',
+                      backgroundColor: t.white,
                       color: t.dark, fontSize: '14px', fontWeight: '500', fontFamily: font, cursor: 'pointer',
                     }}>← Back</button>
                     <button onClick={submitVibe} style={{
@@ -1652,25 +1768,56 @@ const PrimaveraApp = () => {
               <h1 style={{ fontSize: '26px', fontWeight: '800', margin: 0, color: t.dark, letterSpacing: '0.01em', fontFamily: "'HealTheWeb', system-ui, sans-serif" }}>Profile</h1>
 
               {/* User card */}
-              <div style={cardStyle}>
+              {(() => {
+                const displayName = userName.trim() || user.email.split('@')[0];
+                const saveName = () => {
+                  const v = nameDraft.trim();
+                  setUserName(v);
+                  if (v) localStorage.setItem('fulmi_user_name', v);
+                  else localStorage.removeItem('fulmi_user_name');
+                  if (v && userId) supabase.updateUser(userId, { name: v });
+                  setEditingName(false);
+                };
+                return (
+              <div style={{ ...cardStyle, boxShadow: 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                   <div style={{
                     width: '52px', height: '52px', borderRadius: radius.lg,
                     backgroundColor: t.primaryBg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '20px', fontWeight: '700', color: t.primary,
+                    fontSize: '20px', fontWeight: '700', color: t.primary, flexShrink: 0,
                   }}>
-                    {user.email.charAt(0).toUpperCase()}
+                    {displayName.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 2px', color: t.dark }}>{user.email}</p>
-                    <p style={{ fontSize: '12px', color: t.textMuted, margin: 0 }}>Plan: Free</p>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    {editingName ? (
+                      <input
+                        autoFocus
+                        value={nameDraft}
+                        onChange={e => setNameDraft(e.target.value)}
+                        onBlur={saveName}
+                        onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+                        placeholder="Your name"
+                        style={{ width: '100%', padding: '2px 0', border: 'none', borderBottom: `1.5px solid ${t.primary}`, outline: 'none', background: 'none', fontSize: '16px', fontWeight: '700', fontFamily: font, color: t.dark, boxSizing: 'border-box' }}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => { setNameDraft(userName); setEditingName(true); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', padding: 0, cursor: 'pointer', maxWidth: '100%' }}
+                      >
+                        <span style={{ fontSize: '16px', fontWeight: '700', color: t.dark, fontFamily: font, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>
+                        </svg>
+                      </button>
+                    )}
+                    <p style={{ fontSize: '13px', fontWeight: '400', margin: '2px 0 0', color: t.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                   {[
                     { value: myNotes.filter(n => n.visibility === 'targeted' || n.visibility === 'private').length, label: 'Searches' },
-                    { value: myNotes.filter(n => n.visibility === 'public').length, label: 'Vibes' },
+                    { value: myNotes.filter(n => n.visibility === 'public').length, label: 'Posts' },
                     { value: confirmedMatches.length, label: 'Connections' },
                   ].map(({ value, label }) => (
                     <div key={label} style={{ backgroundColor: t.surface, padding: '12px', borderRadius: radius.md, textAlign: 'center' }}>
@@ -1680,24 +1827,63 @@ const PrimaveraApp = () => {
                   ))}
                 </div>
               </div>
+                );
+              })()}
 
-              {/* Sign out */}
-              <button
-                onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]); setAuthStep('splash'); }}
-                style={{
+              {/* Legal + account actions */}
+              {(() => {
+                const profileBtnStyle = {
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  background: 'none', border: `1px solid ${t.border}`, borderRadius: radius.md,
+                  background: t.white, border: 'none', borderRadius: radius.md,
                   padding: '10px 14px', cursor: 'pointer', color: t.textMuted,
                   fontSize: '13px', fontFamily: font, fontWeight: '500', width: '100%',
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Sign out
-              </button>
+                  textDecoration: 'none',
+                };
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={profileBtnStyle}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      Terms of Service
+                    </a>
+                    <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={profileBtnStyle}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                      Privacy Policy
+                    </a>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Delete your account? This cannot be undone.')) {
+                          alert('To delete your account, email hello@otra.social');
+                        }
+                      }}
+                      style={profileBtnStyle}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
+                      Delete account
+                    </button>
+                    <button
+                      onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]); setSeenCrowdIds(new Set()); setSeenAIIds(new Set()); setAuthStep('splash'); }}
+                      style={{ ...profileBtnStyle, marginTop: '12px' }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                      </svg>
+                      Sign out
+                    </button>
+                  </div>
+                );
+              })()}
 
             </div>
           );
@@ -1713,12 +1899,12 @@ const PrimaveraApp = () => {
           display: 'flex', alignItems: 'flex-end',
         }}>
           <div onClick={e => e.stopPropagation()} style={{
-            width: '100%', maxWidth: '380px', margin: '0 auto',
-            backgroundColor: t.white, borderRadius: `${radius.xl} ${radius.xl} 0 0`,
+            width: '100%', maxWidth: '480px', margin: '0 auto',
+            backgroundColor: t.bg, borderRadius: `${radius.xl} ${radius.xl} 0 0`,
             padding: '20px 20px 36px', display: 'flex', flexDirection: 'column', gap: '10px',
           }}>
             <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: radius.xs, margin: '0 auto 12px' }} />
-            <p style={{ fontSize: '12px', fontWeight: '600', color: t.textMuted, fontFamily: font, margin: '0 0 4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Switch festival</p>
+            <p style={{ fontSize: '28px', fontWeight: '700', color: t.dark, margin: '0 0 20px', fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em' }}>Switch festival</p>
             {FESTIVAL_LIST.map(f => (
               <button key={f.id} onClick={() => {
                 localStorage.setItem('fulmi_festival_id', f.id);
@@ -1730,9 +1916,8 @@ const PrimaveraApp = () => {
               }} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 width: '100%', padding: '14px 16px', borderRadius: radius.md,
-                border: f.id === activeFestivalId ? `2px solid ${t.primary}` : `1px solid ${t.border}`,
                 backgroundColor: f.id === activeFestivalId ? t.primaryBg : t.white,
-                cursor: 'pointer', textAlign: 'left',
+                cursor: 'pointer', textAlign: 'left', border: 'none', outline: 'none',
               }}>
                 <div>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
@@ -1745,19 +1930,59 @@ const PrimaveraApp = () => {
                 )}
               </button>
             ))}
+            <div style={{ marginTop: '6px', paddingTop: '14px', borderTop: `1px solid ${t.border}` }}>
+              {festivalRequestStatus === 'sent' ? (
+                <p style={{ fontSize: '13px', color: t.textMuted, fontFamily: font, margin: 0 }}>Thanks! We'll let you know if it's added.</p>
+              ) : (
+                <>
+                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '0 0 8px' }}>Can't find it?</p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text" placeholder="Your festival"
+                      value={festivalRequestInput} onChange={(e) => setFestivalRequestInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') submitFestivalRequest(); }}
+                      style={{
+                        flex: 1, height: '44px', padding: '0 14px', borderRadius: radius.lg,
+                        border: 'none', fontSize: '14px', backgroundColor: t.white,
+                        color: t.dark, outline: 'none', fontFamily: font,
+                      }}
+                    />
+                    <button
+                      onClick={submitFestivalRequest}
+                      disabled={!festivalRequestInput.trim() || festivalRequestStatus === 'submitting'}
+                      style={{
+                        height: '44px', padding: '0 16px', borderRadius: radius.lg,
+                        border: 'none', backgroundColor: t.dark, color: '#FFFFFF',
+                        fontSize: '13px', fontWeight: '700', fontFamily: font, cursor: 'pointer',
+                        opacity: (!festivalRequestInput.trim() || festivalRequestStatus === 'submitting') ? 0.5 : 1,
+                      }}
+                    >
+                      {festivalRequestStatus === 'submitting' ? '…' : 'Request'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Bottom Navigation — floating pill */}
+      {/* Bottom Navigation — flowing fade */}
       <div style={{
-        position: 'fixed', bottom: '12px', left: '50%', transform: 'translateX(-50%)',
-        width: 'calc(100% - 32px)', maxWidth: '348px',
-        backgroundColor: t.white, borderRadius: radius.lg,
-        display: 'flex', alignItems: 'flex-end',
-        padding: '6px 8px 10px', gap: '4px', zIndex: 20,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: '480px',
+        background: 'linear-gradient(to top, #F8FAFB 60%, rgba(248,250,251,0))',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        padding: '20px 16px 16px', zIndex: 20,
+        pointerEvents: 'none',
       }}>
+        <div style={{
+          width: '100%', maxWidth: '448px',
+          backgroundColor: t.white, borderRadius: radius.pill,
+          display: 'flex', alignItems: 'flex-end',
+          padding: '6px 8px 10px', gap: '4px',
+          pointerEvents: 'auto',
+        }}>
         {/* Home */}
         <button onClick={() => navigateTo('home')} style={{
           flex: 1, background: 'none', border: 'none', padding: '10px 0',
@@ -1802,10 +2027,21 @@ const PrimaveraApp = () => {
           flex: 1, background: 'none', border: 'none', padding: '10px 0',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: tab === 'matches' ? t.primary : t.textMuted,
+          position: 'relative',
         }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
+          {totalConnectionsNotif > 0 && (
+            <span style={{
+              position: 'absolute', top: '6px', right: 'calc(50% - 22px)',
+              backgroundColor: t.primary, color: '#fff',
+              fontSize: '9px', fontWeight: '700',
+              borderRadius: radius.pill, padding: '1px 5px',
+              fontFamily: font, lineHeight: '1.4',
+              pointerEvents: 'none',
+            }}>{totalConnectionsNotif}</span>
+          )}
         </button>
 
         {/* Profile */}
@@ -1819,6 +2055,7 @@ const PrimaveraApp = () => {
             <circle cx="12" cy="7" r="4"/>
           </svg>
         </button>
+        </div>
       </div>
     </div>
   );
@@ -1832,25 +2069,6 @@ const cardStyle = {
   boxShadow: '0 1px 6px rgba(29,29,47,0.07)',
 };
 
-const btnPrimary = {
-  flex: 1, padding: '9px', border: 'none',
-  backgroundColor: t.primary, borderRadius: radius.md,
-  cursor: 'pointer', fontSize: '13px', color: '#FFFFFF',
-  fontWeight: '600', fontFamily: font,
-};
-
-const btnOutline = {
-  flex: 1, padding: '9px', border: `1px solid ${t.border}`, backgroundColor: t.surface,
-  borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', color: '#1D1D2F',
-  fontWeight: '500', fontFamily: font,
-};
-
-const btnGhost = {
-  flex: 1, padding: '9px', border: `1px solid ${t.border}`, backgroundColor: '#FFFFFF',
-  borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', color: '#9E9A93',
-  fontFamily: font,
-};
-
 // ─── Hourglass SVG (shared) ────────────────────────────────────────────────
 const HourglassIcon = ({ size = 16, color }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -1859,6 +2077,104 @@ const HourglassIcon = ({ size = 16, color }) => (
     <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
   </svg>
 );
+
+// ─── Shared Connections state modules (used by both AI Search & Crowd cards) ──
+// Waiting status — hourglass in a (non-interactive) circle frame + label below.
+const StatusRow = ({ theme, label }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+    <div style={{
+      width: '60px', height: '60px', borderRadius: radius.circle,
+      backgroundColor: theme.tint, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <HourglassIcon size={24} color={theme.accent} />
+    </div>
+    <span style={{ fontSize: '13px', fontWeight: '600', color: theme.accent, fontFamily: font }}>{label}</span>
+  </div>
+);
+
+// Decline / Accept as circular icon buttons (X + thunder), tinted in the category color.
+const DecisionButtons = ({ theme, onNo, onYes }) => (
+  <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+    <button onClick={onNo} style={{
+      width: '60px', height: '60px', borderRadius: radius.circle,
+      backgroundColor: t.white, border: 'none', cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      boxShadow: '0 2px 8px rgba(29,29,47,0.08)',
+    }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="2" strokeLinecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <button onClick={onYes} style={{
+      width: '60px', height: '60px', borderRadius: radius.circle, border: 'none',
+      backgroundColor: theme.accent, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      boxShadow: `0 4px 16px ${theme.shadow}`,
+    }}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+    </button>
+  </div>
+);
+
+// Instagram icon (shared) — used by both the contact input and reveal.
+const InstagramIcon = ({ color, size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+  </svg>
+);
+
+// Contact (Instagram) input — styled as the shared "INSTAGRAM / WHATSAPP" field bar.
+const ContactInput = ({ theme, value, onChange, onSubmit }) => (
+  <div style={{ backgroundColor: t.white, borderRadius: radius.md, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <InstagramIcon color={theme.accent} />
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <p style={{ margin: '0 0 1px', fontSize: '10px', color: theme.accent, fontWeight: '700', fontFamily: font, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Instagram / WhatsApp</p>
+      <input
+        type="text" placeholder="@your_instagram"
+        value={value} onChange={e => onChange(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && value.trim() && onSubmit(value.trim())}
+        style={{ width: '100%', padding: 0, border: 'none', outline: 'none', background: 'none', fontSize: '17px', fontWeight: '700', fontFamily: font, color: t.dark, boxSizing: 'border-box' }}
+      />
+    </div>
+    <button
+      onClick={() => value.trim() && onSubmit(value.trim())}
+      disabled={!value.trim()}
+      style={{ width: '38px', height: '38px', borderRadius: radius.circle, border: 'none', flexShrink: 0, backgroundColor: value.trim() ? theme.accent : t.borderDark, cursor: value.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+);
+
+// Revealed contact handle — same field bar, with copy-to-clipboard.
+const ContactRevealed = ({ theme, handle }) => {
+  const h = String(handle).replace(/^@+/, '');
+  const [copied, setCopied] = React.useState(false);
+  return (
+    <div style={{ backgroundColor: t.white, borderRadius: radius.md, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <InstagramIcon color={theme.accent} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: '0 0 1px', fontSize: '10px', color: theme.accent, fontWeight: '700', fontFamily: font, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Instagram / WhatsApp</p>
+        <p style={{ margin: 0, fontSize: '17px', fontWeight: '700', color: t.dark, fontFamily: font, overflow: 'hidden', textOverflow: 'ellipsis' }}>@{h}</p>
+      </div>
+      <button
+        onClick={() => { navigator.clipboard?.writeText('@' + h); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0, color: theme.accent, display: 'flex', alignItems: 'center' }}
+        title="Copy"
+      >
+        {copied ? (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        )}
+      </button>
+    </div>
+  );
+};
 
 // ─── NoSearchCard ──────────────────────────────────────────────────────────
 const NoSearchCard = ({ onCreateSearch }) => (
@@ -1893,11 +2209,7 @@ const SearchingCard = ({ text, sub } = {}) => (
     alignItems: 'center', justifyContent: 'center', gap: '14px', textAlign: 'center',
   }}>
     {!text && (
-      <div style={{
-        width: '44px', height: '44px',
-        border: `3px solid ${t.primaryBorder}`, borderTop: `3px solid ${t.primary}`,
-        borderRadius: radius.circle, animation: 'spin 0.8s linear infinite',
-      }} />
+      <OtraLogoMark color={t.primary} size={52} animatePupil />
     )}
     <div>
       <p style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: '700', color: t.dark, fontFamily: font }}>
@@ -1914,12 +2226,8 @@ const SearchingCard = ({ text, sub } = {}) => (
 const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagram }) => {
   const [igInput, setIgInput] = React.useState('');
   const { match, state, confirmed } = item;
-  const isGreen = state.startsWith('mutual');
-
-  const accent = isGreen ? t.successDark : t.primary;
-  const accentBg = isGreen ? t.successBg : '#FFF5F0';
-  const accentBorder = isGreen ? t.successBorder : t.primaryBorder;
-  const accentShadow = isGreen ? 'rgba(5,194,112,0.08)' : 'rgba(247,96,46,0.08)';
+  const theme = CATEGORY_THEME.ai;
+  const isMutual = state.startsWith('mutual');
 
   const chips = [
     match.artist && match.artist !== 'Otro' ? { label: match.artist, key: 'artist' } : null,
@@ -1935,10 +2243,9 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
 
   return (
     <div style={{
-      backgroundColor: accentBg, border: `1px solid ${accentBorder}`,
+      backgroundColor: theme.cardBg,
       borderRadius: radius.xl, padding: '24px 20px 20px',
       minHeight: '360px', display: 'flex', flexDirection: 'column',
-      boxShadow: `0 4px 20px ${accentShadow}`,
     }}>
       {/* Header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
@@ -1946,37 +2253,23 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
           <span style={{ fontSize: '17px', fontWeight: '700', color: t.dark, fontFamily: font, display: 'block' }}>
             {authorName || 'Someone'}
           </span>
-          <span style={{ fontSize: '12px', color: t.textMuted, fontFamily: font }}>Matched by AI</span>
+          <span style={{ fontSize: '12px', color: theme.accent, fontWeight: '600', fontFamily: font }}>Matched by AI</span>
         </div>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '4px',
-          backgroundColor: isGreen ? 'rgba(5,194,112,0.12)' : 'rgba(247,96,46,0.10)',
-          borderRadius: radius.pill, padding: '4px 10px',
-        }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: accent, fontFamily: font }}>{match.score}%</span>
-        </div>
+        {isMutual && (
+          <Badge label="Mutual match" color={theme.accent} bg={theme.tint} border={theme.border} />
+        )}
       </div>
 
       {/* "They want to connect" indicator */}
       {state === 'they_want' && (
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: '5px', alignSelf: 'flex-start',
-          backgroundColor: 'rgba(247,96,46,0.10)', borderRadius: radius.sm, padding: '5px 10px', marginBottom: '12px',
+          backgroundColor: theme.tint, borderRadius: radius.sm, padding: '5px 10px', marginBottom: '12px',
         }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill={t.primary} stroke="none">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill={theme.accent} stroke="none">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
-          <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font }}>They already want to connect</span>
-        </div>
-      )}
-
-      {/* Mutual badge */}
-      {isGreen && (
-        <div style={{ marginBottom: '12px' }}>
-          <Badge label="Mutual match" color={t.successDark} bg={t.successBg} border={t.successBorder} />
+          <span style={{ fontSize: '11px', fontWeight: '600', color: theme.accent, fontFamily: font }}>They already want to connect</span>
         </div>
       )}
 
@@ -1989,10 +2282,10 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
               <span key={key} style={{
                 fontSize: '11px', fontFamily: font, textTransform: 'capitalize',
                 borderRadius: radius.sm, padding: '4px 10px',
-                backgroundColor: common ? 'rgba(247,96,46,0.13)' : 'rgba(29,29,47,0.05)',
-                color: common ? t.primary : t.textMuted,
+                backgroundColor: common ? theme.tintStrong : 'rgba(29,29,47,0.05)',
+                color: common ? theme.accent : t.textMuted,
                 fontWeight: common ? '600' : '400',
-                border: common ? `1px solid ${t.primaryBorder}` : '1px solid transparent',
+                border: 'none',
               }}>
                 {common && '✦ '}{label}
               </span>
@@ -2009,101 +2302,23 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
       {/* ── State-specific bottom ── */}
 
       {(state === 'pending' || state === 'they_want') && (
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <button onClick={onNo} style={{
-            width: '60px', height: '60px', borderRadius: radius.circle,
-            border: `2px solid ${t.borderDark}`, backgroundColor: t.white,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(29,29,47,0.08)',
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-          <button onClick={onYes} style={{
-            width: '60px', height: '60px', borderRadius: radius.circle, border: 'none',
-            backgroundColor: t.primary, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(247,96,46,0.35)',
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
-          </button>
-        </div>
+        <DecisionButtons theme={theme} onNo={onNo} onYes={onYes} />
       )}
 
       {state === 'requested' && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          backgroundColor: 'rgba(247,96,46,0.08)', borderRadius: radius.md, padding: '13px',
-        }}>
-          <HourglassIcon size={16} color={t.primary} />
-          <span style={{ fontSize: '13px', fontWeight: '600', color: t.primary, fontFamily: font }}>Request sent — waiting for reply</span>
-        </div>
+        <StatusRow theme={theme} label="Request sent — waiting for reply" />
       )}
 
       {state === 'mutual_add_ig' && (
-        <div>
-          <p style={{ margin: '0 0 10px', fontSize: '13px', color: t.successDark, fontWeight: '600', fontFamily: font }}>
-            You connected! Add your contact to share it ↓
-          </p>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type="text" placeholder="@your_instagram"
-              value={igInput} onChange={e => setIgInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
-              style={{
-                flex: 1, padding: '11px 14px', borderRadius: radius.md,
-                border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font,
-                backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-            <button
-              onClick={() => igInput.trim() && onAddInstagram(igInput.trim())}
-              disabled={!igInput.trim()}
-              style={{
-                width: '46px', height: '46px', borderRadius: radius.circle, border: 'none', flexShrink: 0,
-                backgroundColor: igInput.trim() ? t.successDark : t.borderDark,
-                cursor: igInput.trim() ? 'pointer' : 'not-allowed',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background-color 0.15s cubic-bezier(0.23, 1, 0.32, 1)',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <ContactInput theme={theme} value={igInput} onChange={setIgInput} onSubmit={onAddInstagram} />
       )}
 
       {state === 'mutual_wait_theirs' && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px',
-        }}>
-          <HourglassIcon size={16} color={t.successDark} />
-          <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Waiting for their contact…</span>
-        </div>
+        <StatusRow theme={theme} label="Waiting for their contact…" />
       )}
 
       {state === 'mutual_done' && confirmed?.note?.instagram && (
-        <div style={{
-          backgroundColor: t.white, border: `1px solid ${t.successBorder}`,
-          borderRadius: radius.md, padding: '12px 16px',
-          display: 'flex', alignItems: 'center', gap: '10px',
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.successDark} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-          </svg>
-          <div>
-            <p style={{ margin: '0 0 1px', fontSize: '10px', color: t.successDark, fontWeight: '700', fontFamily: font, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Instagram / WhatsApp</p>
-            <p style={{ margin: 0, fontSize: '17px', fontWeight: '700', color: t.dark, fontFamily: font }}>@{confirmed.note.instagram}</p>
-          </div>
-        </div>
+        <ContactRevealed theme={theme} handle={confirmed.note.instagram} />
       )}
     </div>
   );
@@ -2111,11 +2326,26 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
 
 // ─── VibesFeed ─────────────────────────────────────────────────────────────
 
-const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDelete, onCreatePost }) => {
+const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDelete, onCreatePost, onNavigateToConnections }) => {
   const [shareNote, setShareNote] = useState(null);
   const [connectNote, setConnectNote] = useState(null);
   const [connectComment, setConnectComment] = useState('');
+  const [connectSent, setConnectSent] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const connectTextareaRef = React.useRef(null);
+
+  const autoResizeConnectTextarea = () => {
+    const el = connectTextareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 240) + 'px';
+  };
+
+  const closeConnectModal = () => {
+    setConnectNote(null);
+    setConnectComment('');
+    setConnectSent(false);
+  };
 
   if (notes.length === 0) {
     return (
@@ -2149,7 +2379,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
   const handleShare = (note) => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?post=${note.id}`;
     if (navigator.share) {
-      navigator.share({ title: 'otra — Vibe', text: `Someone at the festival is looking for a connection 👀\n\n"${note.description}"`, url: shareUrl }).catch(() => {});
+      navigator.share({ title: 'Otra — Post', text: `Someone at the festival is looking for a connection 👀\n\n"${note.description}"`, url: shareUrl }).catch(() => {});
     } else {
       setShareNote({ ...note, shareUrl });
     }
@@ -2169,14 +2399,17 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
     return () => document.removeEventListener('click', close);
   }, [openMenuId]);
 
+  const sortedNotes = [...notes].sort((a, b) =>
+    new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0)
+  );
+
   return (
     <div style={{ backgroundColor: t.bg }}>
-      {notes.map((note, idx) => {
+      {sortedNotes.map((note, idx) => {
         const chips = [
-          note.location && note.location.replace(/_/g, ' '),
-          note.time,
           note.artist && note.artist !== 'Otro' ? note.artist : null,
         ].filter(Boolean);
+        const postedAgo = timeAgo(note.createdAt || note.created_at);
 
         return (
           <div key={note.id} style={{
@@ -2186,10 +2419,15 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
             {/* Author + chips */}
             <div style={{ marginBottom: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', fontFamily: font,
-                  color: note.user_id === myUserId ? t.primary : t.dark }}>
-                  {note.user_id === myUserId ? 'You' : (noteAuthors[note.user_id] || 'Someone')}
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', fontFamily: font,
+                    color: note.user_id === myUserId ? t.primary : t.dark }}>
+                    {note.user_id === myUserId ? 'You' : (noteAuthors[note.user_id] || 'Someone')}
+                  </p>
+                  {postedAgo && (
+                    <span style={{ fontSize: '12px', color: t.textMuted, fontFamily: font }}>· {postedAgo}</span>
+                  )}
+                </div>
                 <div style={{ position: 'relative' }}>
                   <button
                     onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === note.id ? null : note.id); }}
@@ -2202,7 +2440,6 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                       style={{
                         position: 'absolute', top: '100%', right: 0, zIndex: 50,
                         backgroundColor: t.white, borderRadius: radius.md,
-                        border: `1px solid ${t.border}`,
                         boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
                         minWidth: '120px', overflow: 'hidden',
                       }}
@@ -2257,7 +2494,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                 ...iconBtn,
                 color: note.liked ? t.primary : t.textMuted,
               }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12.0002 0C12.6628 0 13.2005 0.537736 13.2005 1.20035V22.7997C13.2005 23.4623 12.6628 24 12.0002 24C11.3375 24 10.7998 23.4623 10.7998 22.7997V1.20035C10.7998 0.537736 11.3375 0 12.0002 0Z" fill="currentColor"/>
                   <path d="M7.19986 6.00058C7.19986 5.33797 6.66325 4.80023 6.00064 4.80023C5.33803 4.80023 4.80029 5.33797 4.80029 6.00058V17.9994C4.80029 18.662 5.33803 19.1998 6.00064 19.1998C6.66325 19.1998 7.19986 18.662 7.19986 17.9994V6.00058Z" fill="currentColor"/>
                   <path d="M1.20035 9.60046C1.86295 9.60046 2.40069 10.1371 2.40069 10.7997V13.2003C2.40069 13.863 1.86295 14.3996 1.20035 14.3996C0.537736 14.3996 0 13.863 0 13.2003V10.7997C0 10.1371 0.537736 9.60046 1.20035 9.60046Z" fill="currentColor"/>
@@ -2269,7 +2506,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
 
               {/* Share */}
               <button onClick={() => handleShare(note)} style={iconBtn}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
@@ -2280,7 +2517,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
 
               {/* Connect — thunder icon */}
               <button
-                onClick={() => { if (!note.requested && note.user_id !== myUserId) { setConnectNote(note); setConnectComment(''); } }}
+                onClick={() => { if (!note.requested && note.user_id !== myUserId) { setConnectNote(note); setConnectComment(''); setConnectSent(false); } }}
                 disabled={note.requested || note.user_id === myUserId}
                 style={{
                   ...iconBtn,
@@ -2289,7 +2526,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                   pointerEvents: note.user_id === myUserId ? 'none' : 'auto',
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill={note.requested ? t.primary : 'none'} stroke={note.requested ? t.primary : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={note.requested ? t.primary : 'none'} stroke={note.requested ? t.primary : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                 </svg>
               </button>
@@ -2306,19 +2543,22 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
           backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 200, padding: '20px',
-        }} onClick={() => setConnectNote(null)}>
+        }} onClick={closeConnectModal}>
           <div style={{
-            backgroundColor: t.white, borderRadius: radius.xxl,
+            backgroundColor: t.border, borderRadius: radius.xxl,
             padding: '24px', width: '100%', maxWidth: '360px',
             boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
           }} onClick={e => e.stopPropagation()}>
 
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <span style={{ fontSize: '18px', fontWeight: '800', color: t.dark, fontFamily: font }}>Connect</span>
-              <button onClick={() => setConnectNote(null)} style={{
+            <div style={{ display: 'flex', justifyContent: connectSent ? 'center' : 'space-between', alignItems: 'center', marginBottom: '20px', position: 'relative' }}>
+              <span style={{ fontSize: '18px', fontWeight: '800', color: t.dark, fontFamily: font, textAlign: connectSent ? 'center' : 'left' }}>
+                {connectSent ? 'Connection requested' : 'Send connection request'}
+              </span>
+              <button onClick={closeConnectModal} style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
                 color: t.textMuted, display: 'flex', alignItems: 'center',
+                ...(connectSent ? { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' } : {}),
               }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -2326,80 +2566,101 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
               </button>
             </div>
 
-            {/* Post preview */}
-            <div style={{
-              backgroundColor: t.surface, borderRadius: radius.lg, padding: '14px', marginBottom: '16px',
-              border: `1px solid ${t.border}`,
-            }}>
-              <div style={{ marginBottom: '8px' }}>
-                <p style={{ margin: '0 0 2px', fontSize: '13px', fontWeight: '700', color: t.dark, fontFamily: font }}>
-                  {noteAuthors[connectNote.user_id] || 'Someone'}
-                </p>
-                {[
-                  connectNote.location && connectNote.location.replace(/_/g, ' '),
-                  connectNote.time,
-                  connectNote.artist && connectNote.artist !== 'Otro' ? connectNote.artist : null,
-                ].filter(Boolean).length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                    {[
-                      connectNote.location && connectNote.location.replace(/_/g, ' '),
-                      connectNote.time,
-                      connectNote.artist && connectNote.artist !== 'Otro' ? connectNote.artist : null,
-                    ].filter(Boolean).map((chip, i) => (
-                      <span key={i} style={{
-                        fontSize: '10px', color: t.textMuted, backgroundColor: t.white,
-                        borderRadius: radius.xs, padding: '2px 7px', fontFamily: font, textTransform: 'capitalize',
-                      }}>{chip}</span>
-                    ))}
+            {!connectSent ? (
+              <>
+                {/* Post preview */}
+                <div style={{
+                  backgroundColor: t.surface, borderRadius: radius.lg, padding: '14px', marginBottom: '16px',
+                }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: t.dark, fontFamily: font }}>
+                        {noteAuthors[connectNote.user_id] || 'Someone'}
+                      </p>
+                      {timeAgo(connectNote.createdAt || connectNote.created_at) && (
+                        <span style={{ fontSize: '12px', color: t.textMuted, fontFamily: font }}>· {timeAgo(connectNote.createdAt || connectNote.created_at)}</span>
+                      )}
+                    </div>
+                    {connectNote.artist && connectNote.artist !== 'Otro' && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                        <span style={{
+                          fontSize: '10px', color: t.textMuted, backgroundColor: t.white,
+                          borderRadius: radius.xs, padding: '2px 7px', fontFamily: font, textTransform: 'capitalize',
+                        }}>{connectNote.artist}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', color: t.textSec, fontFamily: font }}>
+                    {connectNote.description}
+                  </p>
+                </div>
+
+                {/* Comment field + send button */}
+                <div style={{ position: 'relative' }}>
+                  <textarea
+                    ref={connectTextareaRef}
+                    value={connectComment}
+                    onChange={e => { setConnectComment(e.target.value); autoResizeConnectTextarea(); }}
+                    placeholder="Write a message…"
+                    autoFocus
+                    style={{
+                      width: '100%', minHeight: '110px', maxHeight: '240px', padding: '14px 14px 60px',
+                      borderRadius: radius.md, border: 'none',
+                      fontSize: '14px', fontFamily: font, color: t.dark,
+                      backgroundColor: t.white, resize: 'none', outline: 'none', overflowY: 'auto',
+                      lineHeight: '1.5', boxSizing: 'border-box',
+                      transition: 'border-color 0.15s cubic-bezier(0.23, 1, 0.32, 1)',
+                    }}
+                    onFocus={e => e.target.style.borderColor = t.primary}
+                    onBlur={e => e.target.style.borderColor = t.border}
+                  />
+                  <button
+                    disabled={!connectComment.trim()}
+                    onClick={() => {
+                      onSendRequest(connectNote, connectComment.trim());
+                      setConnectSent(true);
+                    }}
+                    style={{
+                      position: 'absolute', bottom: '12px', right: '12px',
+                      width: '48px', height: '48px', borderRadius: radius.circle, border: 'none',
+                      backgroundColor: connectComment.trim() ? t.primary : t.borderDark,
+                      cursor: connectComment.trim() ? 'pointer' : 'not-allowed',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
+                      boxShadow: connectComment.trim() ? '0 4px 16px rgba(181,11,242,0.35)' : 'none',
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Confirmation */
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '4px 8px 8px' }}>
+                <div style={{
+                  width: '80px', height: '80px', borderRadius: radius.xxl,
+                  backgroundColor: t.primaryBg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px',
+                }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p style={{ margin: '0 0 20px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.6', maxWidth: '260px' }}>
+                  If the request gets accepted, you'll both be able to swap contacts.
+                </p>
+                <button
+                  onClick={() => { closeConnectModal(); onNavigateToConnections && onNavigateToConnections(); }}
+                  style={{
+                    padding: '13px 28px', borderRadius: radius.md, border: 'none',
+                    backgroundColor: t.dark, color: '#fff', cursor: 'pointer',
+                    fontSize: '14px', fontWeight: '700', fontFamily: font,
+                  }}
+                >View Connections</button>
               </div>
-              <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', color: t.textSec, fontFamily: font }}>
-                {connectNote.description}
-              </p>
-            </div>
-
-            {/* Comment field */}
-            <textarea
-              value={connectComment}
-              onChange={e => setConnectComment(e.target.value)}
-              placeholder="Write a message…"
-              autoFocus
-              style={{
-                width: '100%', minHeight: '80px', padding: '12px 14px',
-                borderRadius: radius.md, border: `1px solid ${t.border}`,
-                fontSize: '14px', fontFamily: font, color: t.dark,
-                backgroundColor: t.white, resize: 'none', outline: 'none',
-                lineHeight: '1.5', boxSizing: 'border-box',
-                transition: 'border-color 0.15s cubic-bezier(0.23, 1, 0.32, 1)',
-              }}
-              onFocus={e => e.target.style.borderColor = t.primary}
-              onBlur={e => e.target.style.borderColor = t.border}
-            />
-
-            {/* Send button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-              <button
-                disabled={!connectComment.trim()}
-                onClick={() => {
-                  onSendRequest(connectNote, connectComment.trim());
-                  setConnectNote(null);
-                  setConnectComment('');
-                }}
-                style={{
-                  width: '48px', height: '48px', borderRadius: radius.circle, border: 'none',
-                  backgroundColor: connectComment.trim() ? t.primary : t.borderDark,
-                  cursor: connectComment.trim() ? 'pointer' : 'not-allowed',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
-                  boxShadow: connectComment.trim() ? '0 4px 16px rgba(247,96,46,0.35)' : 'none',
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                </svg>
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -2413,10 +2674,10 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
         }} onClick={() => setShareNote(null)}>
           <div style={{
             backgroundColor: t.white, borderRadius: `${radius.xl} ${radius.xl} 0 0`,
-            padding: '24px 20px 36px', width: '100%', maxWidth: '380px',
+            padding: '24px 20px 36px', width: '100%', maxWidth: '480px',
           }} onClick={e => e.stopPropagation()}>
             <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: radius.xs, margin: '0 auto 20px' }} />
-            <p style={{ fontSize: '15px', fontWeight: '700', color: t.dark, margin: '0 0 6px', fontFamily: font }}>Share this vibe</p>
+            <p style={{ fontSize: '15px', fontWeight: '700', color: t.dark, margin: '0 0 6px', fontFamily: font }}>Share this post</p>
             <p style={{ fontSize: '13px', color: t.textSec, margin: '0 0 20px', lineHeight: '1.5', fontFamily: font }}>
               {shareNote.description?.substring(0, 80)}{shareNote.description?.length > 80 ? '…' : ''}
             </p>
@@ -2456,7 +2717,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
 };
 
 // ─── RequestCard ───────────────────────────────────────────────────────────
-const RequestCard = ({ direction = 'received', req, chips, isAccepted, myVibeNote, theirVibeNote, onDecline, onAccept, onAddInstagram }) => {
+const RequestCard = ({ direction = 'received', req, isAccepted, myVibeNote, theirVibeNote, onDecline, onAccept, onAddInstagram }) => {
   const [igInput, setIgInput] = React.useState('');
   const [menuOpen, setMenuOpen] = React.useState(false);
   const isSent = direction === 'sent';
@@ -2469,56 +2730,36 @@ const RequestCard = ({ direction = 'received', req, chips, isAccepted, myVibeNot
   }, [menuOpen]);
   const iHaveIg = !!myVibeNote?.instagram;
   const theyHaveIg = !!theirVibeNote?.instagram;
-  const quotedNote = isSent ? theirVibeNote : myVibeNote;
+  const theme = CATEGORY_THEME.crowd;
+
+  // Prominent direction arrow — the differentiator between sent (→) and received (←)
+  const DirectionArrow = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      {isSent ? (
+        <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>
+      ) : (
+        <><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>
+      )}
+    </svg>
+  );
 
   return (
     <div style={{
-      backgroundColor: isAccepted ? t.successBg : t.white,
+      backgroundColor: theme.cardBg,
       borderRadius: radius.xl,
-      border: `1px solid ${isAccepted ? t.successBorder : t.border}`,
       padding: '20px',
-      minHeight: '220px',
       display: 'flex', flexDirection: 'column',
-      boxShadow: isAccepted ? '0 4px 20px rgba(5,194,112,0.08)' : '0 1px 3px rgba(29,29,47,0.05)',
-      transition: 'background-color 0.25s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.25s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.25s cubic-bezier(0.23, 1, 0.32, 1)',
     }}>
-      {/* Header */}
+      {/* Header — [direction arrow] author on the left; Mutual + menu on the right */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isAccepted ? t.successDark : t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
+          <DirectionArrow />
           <span style={{ fontSize: '15px', fontWeight: '700', color: t.dark, fontFamily: font }}>
-            {req.authorName || 'Someone'}
+            {isSent ? 'You' : (req.authorName || 'Someone')}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Sent / Received directional badge */}
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '4px',
-            fontSize: '10px', fontWeight: '600', fontFamily: font,
-            color: t.textMuted,
-            backgroundColor: t.surface,
-            border: `1px solid ${t.border}`,
-            borderRadius: radius.pill, padding: '2px 8px',
-          }}>
-            {isSent ? (
-              <>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-                Sent
-              </>
-            ) : (
-              <>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-                </svg>
-                Received
-              </>
-            )}
-          </span>
-          {isAccepted && <Badge label="Mutual match" color={t.successDark} bg={t.successBg} border={t.successBorder} />}
+          {isAccepted && <Badge label="Mutual match" color={theme.accent} bg={theme.tint} border={theme.border} />}
           {!isSent && (
             <div style={{ position: 'relative' }}>
               <button
@@ -2550,38 +2791,9 @@ const RequestCard = ({ direction = 'received', req, chips, isAccepted, myVibeNot
         </div>
       </div>
 
-      {/* Context chips */}
-      {chips.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
-          {chips.map((chip, i) => (
-            <span key={i} style={{
-              fontSize: '10px', color: t.textMuted, backgroundColor: isAccepted ? 'rgba(5,194,112,0.10)' : t.surface,
-              borderRadius: radius.sm, padding: '3px 8px', fontFamily: font, textTransform: 'capitalize',
-            }}>{chip}</span>
-          ))}
-        </div>
-      )}
-
-      {/* Quoted post */}
-      {quotedNote?.description && (
-        <div style={{
-          backgroundColor: isAccepted ? 'rgba(5,194,112,0.08)' : t.surface,
-          borderRadius: radius.md, padding: '10px 12px',
-          marginBottom: '14px',
-          borderLeft: `3px solid ${isAccepted ? t.successBorder : t.primaryBorder}`,
-        }}>
-          <p style={{ margin: '0 0 2px', fontSize: '9px', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', color: isAccepted ? t.successDark : t.textMuted, fontFamily: font }}>
-            {isSent ? 'Their post' : 'Your post'}
-          </p>
-          <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.5', color: t.textSec, fontFamily: font, fontStyle: 'italic' }}>
-            "{quotedNote.description.substring(0, 100)}{quotedNote.description.length > 100 ? '…' : ''}"
-          </p>
-        </div>
-      )}
-
-      {/* Message */}
+      {/* Message — their outreach (received) or yours (sent) */}
       {req.message && (
-        <p style={{ fontSize: '14px', lineHeight: '1.6', color: t.text, margin: '0 0 12px', fontFamily: font, flex: 1 }}>
+        <p style={{ fontSize: '14px', lineHeight: '1.6', color: t.text, margin: '0 0 16px', fontFamily: font }}>
           {req.message}
         </p>
       )}
@@ -2590,82 +2802,25 @@ const RequestCard = ({ direction = 'received', req, chips, isAccepted, myVibeNot
       {isSent ? (
         // Outgoing card states
         !isAccepted ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-            backgroundColor: t.surface, borderRadius: radius.md, padding: '13px',
-          }}>
-            <HourglassIcon size={16} color={t.textMuted} />
-            <span style={{ fontSize: '13px', fontWeight: '600', color: t.textMuted, fontFamily: font }}>Waiting for their reply</span>
-          </div>
+          <StatusRow theme={theme} label="Waiting for their reply" />
         ) : theyHaveIg ? (
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: '10px',
-            backgroundColor: 'rgba(5,194,112,0.08)', borderRadius: radius.md, padding: '13px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.successDark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.57 1.2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.74a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/>
-              </svg>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: t.successDark, fontFamily: font }}>@{theirVibeNote.instagram}</span>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <ContactRevealed theme={theme} handle={theirVibeNote.instagram} />
             {!iHaveIg && onAddInstagram && (
-              <div>
-                <p style={{ margin: '0 0 8px', fontSize: '12px', color: t.successDark, fontWeight: '600', fontFamily: font }}>Share yours back ↓</p>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input
-                    type="text" placeholder="@your_instagram"
-                    value={igInput} onChange={e => setIgInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
-                    style={{ flex: 1, padding: '10px 12px', borderRadius: radius.md, border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font, backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box' }}
-                  />
-                  <button onClick={() => igInput.trim() && onAddInstagram(igInput.trim())} disabled={!igInput.trim()} style={{ width: '42px', height: '42px', borderRadius: radius.circle, border: 'none', flexShrink: 0, backgroundColor: igInput.trim() ? t.successDark : t.borderDark, cursor: igInput.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  </button>
-                </div>
-              </div>
+              <ContactInput theme={theme} value={igInput} onChange={setIgInput} onSubmit={onAddInstagram} />
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px' }}>
-            <HourglassIcon size={16} color={t.successDark} />
-            <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Connected — waiting for their Instagram</span>
-          </div>
+          <StatusRow theme={theme} label="Connected — waiting for their Instagram" />
         )
       ) : (
         // Incoming card states
         !isAccepted ? (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={onDecline} style={{ ...btnGhost, flex: 1, fontSize: '12px' }}>Decline</button>
-            <button onClick={onAccept} style={{ ...btnPrimary, flex: 1, fontSize: '12px' }}>Accept</button>
-          </div>
+          <DecisionButtons theme={theme} onNo={onDecline} onYes={onAccept} />
         ) : iHaveIg ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', backgroundColor: 'rgba(5,194,112,0.10)', borderRadius: radius.md, padding: '13px' }}>
-            <HourglassIcon size={16} color={t.successDark} />
-            <span style={{ fontSize: '13px', fontWeight: '600', color: t.successDark, fontFamily: font }}>Contact shared — waiting for theirs</span>
-          </div>
+          <StatusRow theme={theme} label="Contact shared — waiting for theirs" />
         ) : (
-          <div>
-            <p style={{ margin: '0 0 10px', fontSize: '13px', color: t.successDark, fontWeight: '600', fontFamily: font }}>
-              You connected! Add your Instagram to share it ↓
-            </p>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="text" placeholder="@your_instagram"
-                value={igInput} onChange={e => setIgInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && igInput.trim() && onAddInstagram(igInput.trim())}
-                style={{ flex: 1, padding: '11px 14px', borderRadius: radius.md, border: `2px solid ${t.successBorder}`, fontSize: '14px', fontFamily: font, backgroundColor: t.white, color: t.dark, outline: 'none', boxSizing: 'border-box' }}
-              />
-              <button
-                onClick={() => igInput.trim() && onAddInstagram(igInput.trim())}
-                disabled={!igInput.trim()}
-                style={{ width: '46px', height: '46px', borderRadius: radius.circle, border: 'none', flexShrink: 0, backgroundColor: igInput.trim() ? t.successDark : t.borderDark, cursor: igInput.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
+          <ContactInput theme={theme} value={igInput} onChange={setIgInput} onSubmit={onAddInstagram} />
         )
       )}
     </div>

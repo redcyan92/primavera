@@ -17,7 +17,7 @@
   --c-primary-border: #FABB96;
 
   /* ── Base surfaces ── */
-  --c-bg:             #FEFBF6;
+  --c-bg:             #F8FAFB;
   --c-white:          #FFFFFF;
   --c-surface:        #F7F5F2;
   --c-surface-2:      #F0EDE7;
@@ -75,6 +75,13 @@
 
 /* ── Spinner ── */
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Otra eye look (loading) ── */
+@keyframes otra-look {
+  0%, 18%   { transform: translateX(-0.95px); }
+  50%, 68%  { transform: translateX(0.95px); }
+  100%      { transform: translateX(-0.95px); }
+}
 
 /* ── Cursor blink ── */
 @keyframes blink { 50% { opacity: 0; } }
