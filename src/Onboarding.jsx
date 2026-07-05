@@ -155,11 +155,11 @@ const LightningIcon = () => (
 );
 
 const FEED_POSTS = [
-  { author: 'luna.garcia', time: '2h', tag: 'Peggy Gou', body: 'Lost my voice screaming during Peggy Gou. The girl next to me shared her water bottle and we danced together for the entire set. Best night ever.', likes: 7 },
-  { author: 'neon_sarah', time: '1h', tag: 'Fred again..', body: 'That moment when Fred again.. dropped "Marea" and 40,000 people went completely silent before erupting. Chills. Actual chills. I was sobbing.', likes: 23 },
-  { author: 'dj.marco', time: '45m', tag: 'Björk', body: 'Cried during Björk. Not even a little — full ugly crying. The person next to me quietly handed me a pack of tissues they clearly needed for themselves.', likes: 4 },
-  { author: 'festival.kid', time: '30m', tag: 'Tame Impala', body: 'The couple slow dancing during "Let It Happen" while confetti rained down — that was the most beautiful thing I\'ve ever seen at a festival.', likes: 12 },
-  { author: 'clara.vibe', time: '15m', tag: 'Rosalía', body: 'Someone in the crowd started singing the bridge of "DESPECHÁ" so loud that people around them joined in. By the end the whole section was a choir.', likes: 3 },
+  { author: 'Luna García', time: '2h', tag: 'Peggy Gou', body: 'Lost my voice screaming during Peggy Gou. The girl next to me shared her water bottle and we danced together for the entire set. Best night ever.', likes: 7 },
+  { author: 'Sarah Chen', time: '1h', tag: 'Fred again..', body: 'That moment when Fred again.. dropped "Marea" and 40,000 people went completely silent before erupting. Chills. Actual chills. I was sobbing.', likes: 23 },
+  { author: 'Marco Rossi', time: '45m', tag: 'Björk', body: 'Cried during Björk. Not even a little — full ugly crying. The person next to me quietly handed me a pack of tissues they clearly needed for themselves.', likes: 4 },
+  { author: 'Tom Eriksen', time: '30m', tag: 'Tame Impala', body: 'The couple slow dancing during "Let It Happen" while confetti rained down — that was the most beautiful thing I\'ve ever seen at a festival.', likes: 12 },
+  { author: 'Clara Moreau', time: '15m', tag: 'Rosalía', body: 'Someone in the crowd started singing the bridge of "DESPECHÁ" so loud that people around them joined in. By the end the whole section was a choir.', likes: 3 },
 ];
 
 const FOCUS_INDEX = 2;
