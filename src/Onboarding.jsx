@@ -129,11 +129,12 @@ function AnimatedSearchBar({ active }) {
 }
 
 const VibesIcon = ({ color = '#9E9A93' }) => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="1" y="7" width="2" height="4" rx="1" fill={color}/>
-    <rect x="5" y="4" width="2" height="10" rx="1" fill={color}/>
-    <rect x="9" y="6" width="2" height="6" rx="1" fill={color}/>
-    <rect x="13" y="3" width="2" height="12" rx="1" fill={color}/>
+  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7.50001 0C7.91413 0 8.25019.336085 8.25019.750219V14.2498C8.25019 14.6639 7.91413 15 7.50001 15C7.08582 15 6.74976 14.6639 6.74976 14.2498V.750219C6.74976.336085 7.08582 0 7.50001 0Z" fill={color}/>
+    <path d="M4.49998 3.75022C4.49998 3.33609 4.16459 3 3.75046 3C3.33633 3 3.00024 3.33609 3.00024 3.75022V11.2495C3.00024 11.6636 3.33633 11.9997 3.75046 11.9997C4.16459 11.9997 4.49998 11.6636 4.49998 11.2495V3.75022Z" fill={color}/>
+    <path d="M.750219 6.00049C1.16434 6.00049 1.50043 6.33589 1.50043 6.75001V8.25039C1.50043 8.66458 1.16434 8.99995.750219 8.99995.336085 8.99995 0 8.66458 0 8.25039V6.75001C0 6.33589.336085 6.00049.750219 6.00049Z" fill={color}/>
+    <path d="M14.2498 6.00049C14.6639 6.00049 14.9999 6.33589 14.9999 6.75001V8.25039C14.9999 8.66458 14.6639 8.99995 14.2498 8.99995 13.8356 8.99995 13.4995 8.66458 13.4995 8.25039V6.75001C13.4995 6.33589 13.8356 6.00049 14.2498 6.00049Z" fill={color}/>
+    <path d="M12 3.75022C12 3.33609 11.6639 3 11.2497 3C10.8356 3 10.5002 3.33609 10.5002 3.75022V11.2495C10.5002 11.6636 10.8356 11.9997 11.2497 11.9997 11.6639 11.9997 12 11.6636 12 11.2495V3.75022Z" fill={color}/>
   </svg>
 );
 
@@ -222,7 +223,7 @@ function FeedPost({ post, likes, opacity, scale, highlight }) {
 function AnimatedFeed({ active }) {
   const [scrollY, setScrollY] = useState(0);
   const [phase, setPhase] = useState('scrolling');
-  const [likeCount, setLikeCount] = useState(FEED_POSTS[FOCUS_INDEX].likes);
+  const [likeCount, setLikeCount] = useState(0);
   const [visible, setVisible] = useState(true);
   const timerRef = useRef(null);
   const frameRef = useRef(null);
@@ -231,18 +232,18 @@ function AnimatedFeed({ active }) {
     if (!active) {
       setScrollY(0);
       setPhase('scrolling');
-      setLikeCount(FEED_POSTS[FOCUS_INDEX].likes);
+      setLikeCount(0);
       setVisible(true);
       cancelAnimationFrame(frameRef.current);
       clearTimeout(timerRef.current);
       return;
     }
 
-    const targetScroll = FOCUS_INDEX * (POST_HEIGHT + POST_GAP) - 20;
+    const targetScroll = FOCUS_INDEX * (POST_HEIGHT + POST_GAP) - 80;
 
     if (phase === 'scrolling') {
       let start = null;
-      const duration = 2200;
+      const duration = 3000;
       const animate = (ts) => {
         if (!start) start = ts;
         const elapsed = ts - start;
@@ -261,9 +262,15 @@ function AnimatedFeed({ active }) {
     } else if (phase === 'focusing') {
       timerRef.current = setTimeout(() => setPhase('counting'), 700);
     } else if (phase === 'counting') {
-      const target = FEED_POSTS[FOCUS_INDEX].likes + 18;
+      const target = 12;
       if (likeCount < target) {
-        timerRef.current = setTimeout(() => setLikeCount(c => c + 1), 60);
+        if (likeCount === 0) {
+          timerRef.current = setTimeout(() => setLikeCount(1), 300);
+        } else if (likeCount === 1) {
+          timerRef.current = setTimeout(() => setLikeCount(2), 600);
+        } else {
+          timerRef.current = setTimeout(() => setLikeCount(c => c + 1), 80);
+        }
       } else {
         timerRef.current = setTimeout(() => setPhase('fadeout'), 500);
       }
@@ -273,7 +280,7 @@ function AnimatedFeed({ active }) {
     } else if (phase === 'hidden') {
       timerRef.current = setTimeout(() => {
         setScrollY(0);
-        setLikeCount(FEED_POSTS[FOCUS_INDEX].likes);
+        setLikeCount(0);
         setPhase('scrolling');
         setVisible(true);
       }, 800);
@@ -305,7 +312,7 @@ function AnimatedFeed({ active }) {
         flexDirection: 'column',
         gap: `${POST_GAP}px`,
         paddingTop: '40px',
-        transform: `translateY(${-scrollY}px) scale(${isZoomed ? 1 : 0.6})`,
+        transform: `translateY(${-scrollY}px) scale(${isZoomed ? 0.85 : 0.6})`,
         transformOrigin: `center ${scrollY + 140}px`,
         transition: isZoomed ? 'transform 0.7s cubic-bezier(0.23, 1, 0.32, 1)' : 'none',
       }}>
