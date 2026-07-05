@@ -172,7 +172,7 @@ function FeedPost({ post, likes, opacity, scale, highlight }) {
       padding: '14px',
       opacity,
       transform: `scale(${scale})`,
-      transition: 'opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+      transition: 'opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1), transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
       transformOrigin: 'center center',
       flexShrink: 0,
     }}>
@@ -242,7 +242,7 @@ function AnimatedFeed({ active }) {
 
     if (phase === 'scrolling') {
       let start = null;
-      const duration = 2000;
+      const duration = 2200;
       const animate = (ts) => {
         if (!start) start = ts;
         const elapsed = ts - start;
@@ -252,12 +252,14 @@ function AnimatedFeed({ active }) {
         if (progress < 1) {
           frameRef.current = requestAnimationFrame(animate);
         } else {
-          timerRef.current = setTimeout(() => setPhase('focusing'), 300);
+          timerRef.current = setTimeout(() => setPhase('fading'), 200);
         }
       };
       frameRef.current = requestAnimationFrame(animate);
+    } else if (phase === 'fading') {
+      timerRef.current = setTimeout(() => setPhase('focusing'), 400);
     } else if (phase === 'focusing') {
-      timerRef.current = setTimeout(() => setPhase('counting'), 600);
+      timerRef.current = setTimeout(() => setPhase('counting'), 700);
     } else if (phase === 'counting') {
       const target = FEED_POSTS[FOCUS_INDEX].likes + 18;
       if (likeCount < target) {
@@ -283,14 +285,15 @@ function AnimatedFeed({ active }) {
     };
   }, [active, phase, likeCount]);
 
-  const isFocusing = phase === 'focusing' || phase === 'counting' || phase === 'fadeout';
+  const isZoomed = phase === 'focusing' || phase === 'counting' || phase === 'fadeout';
+  const isFading = phase === 'fading' || isZoomed;
 
   return (
     <div style={{
       position: 'absolute',
       left: '20px', right: '20px',
-      top: '5%',
-      height: '45%',
+      top: 0,
+      height: '50%',
       zIndex: 3,
       overflow: 'hidden',
       opacity: visible ? 1 : 0,
@@ -301,16 +304,17 @@ function AnimatedFeed({ active }) {
         display: 'flex',
         flexDirection: 'column',
         gap: `${POST_GAP}px`,
-        transform: `translateY(${-scrollY}px) scale(${isFocusing ? 1 : 0.5})`,
-        transformOrigin: `center ${scrollY + 120}px`,
-        transition: isFocusing ? 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none',
+        paddingTop: '40px',
+        transform: `translateY(${-scrollY}px) scale(${isZoomed ? 1 : 0.6})`,
+        transformOrigin: `center ${scrollY + 140}px`,
+        transition: isZoomed ? 'transform 0.7s cubic-bezier(0.23, 1, 0.32, 1)' : 'none',
       }}>
         {FEED_POSTS.map((post, i) => (
           <FeedPost
             key={i}
             post={post}
             likes={i === FOCUS_INDEX ? likeCount : post.likes}
-            opacity={isFocusing && i !== FOCUS_INDEX ? 0 : 1}
+            opacity={isFading && i !== FOCUS_INDEX ? 0 : 1}
             scale={1}
             highlight={i === FOCUS_INDEX && (phase === 'counting' || phase === 'fadeout')}
           />
