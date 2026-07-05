@@ -159,13 +159,14 @@ const FEED_POSTS = [
   { author: 'neon_sarah', time: '1h', tag: 'Fred again..', body: 'That moment when Fred again.. dropped "Marea" and 40,000 people went completely silent before erupting. Chills. Actual chills. I was sobbing.', likes: 23 },
   { author: 'dj.marco', time: '45m', tag: 'Björk', body: 'Cried during Björk. Not even a little — full ugly crying. The person next to me quietly handed me a pack of tissues they clearly needed for themselves.', likes: 4 },
   { author: 'festival.kid', time: '30m', tag: 'Tame Impala', body: 'The couple slow dancing during "Let It Happen" while confetti rained down — that was the most beautiful thing I\'ve ever seen at a festival.', likes: 12 },
+  { author: 'clara.vibe', time: '15m', tag: 'Rosalía', body: 'Someone in the crowd started singing the bridge of "DESPECHÁ" so loud that people around them joined in. By the end the whole section was a choir.', likes: 3 },
 ];
 
 const FOCUS_INDEX = 2;
 const POST_HEIGHT = 170;
 const POST_GAP = 12;
 
-function FeedPost({ post, likes, opacity, scale, highlight }) {
+function FeedPost({ post, likes, opacity, scale, highlight, iconBump }) {
   return (
     <div style={{
       background: '#F8FAFB',
@@ -208,7 +209,7 @@ function FeedPost({ post, likes, opacity, scale, highlight }) {
         gap: '16px',
         paddingTop: '10px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', transform: iconBump ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}>
           <VibesIcon color={highlight ? '#B50BF2' : '#9E9A93'} />
           <span style={{ fontSize: '12px', fontWeight: '500', color: highlight ? '#B50BF2' : '#9E9A93', transition: 'color 0.3s ease' }}>{likes}</span>
         </div>
@@ -225,8 +226,10 @@ function AnimatedFeed({ active }) {
   const [phase, setPhase] = useState('scrolling');
   const [likeCount, setLikeCount] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [iconBump, setIconBump] = useState(false);
   const timerRef = useRef(null);
   const frameRef = useRef(null);
+  const bumpRef = useRef(null);
 
   useEffect(() => {
     if (!active) {
@@ -234,8 +237,10 @@ function AnimatedFeed({ active }) {
       setPhase('scrolling');
       setLikeCount(0);
       setVisible(true);
+      setIconBump(false);
       cancelAnimationFrame(frameRef.current);
       clearTimeout(timerRef.current);
+      clearTimeout(bumpRef.current);
       return;
     }
 
@@ -265,9 +270,14 @@ function AnimatedFeed({ active }) {
       const target = 12;
       if (likeCount < target) {
         if (likeCount === 0) {
-          timerRef.current = setTimeout(() => setLikeCount(1), 300);
+          timerRef.current = setTimeout(() => {
+            setLikeCount(1);
+            setIconBump(true);
+            clearTimeout(bumpRef.current);
+            bumpRef.current = setTimeout(() => setIconBump(false), 250);
+          }, 300);
         } else if (likeCount === 1) {
-          timerRef.current = setTimeout(() => setLikeCount(2), 600);
+          timerRef.current = setTimeout(() => setLikeCount(2), 350);
         } else {
           timerRef.current = setTimeout(() => setLikeCount(c => c + 1), 80);
         }
@@ -312,7 +322,7 @@ function AnimatedFeed({ active }) {
         flexDirection: 'column',
         gap: `${POST_GAP}px`,
         paddingTop: '40px',
-        transform: `translateY(${-scrollY}px) scale(${isZoomed ? 0.85 : 0.6})`,
+        transform: `translateY(${-scrollY}px) scale(${isZoomed ? 0.85 : 0.72})`,
         transformOrigin: `center ${scrollY + 140}px`,
         transition: isZoomed ? 'transform 0.7s cubic-bezier(0.23, 1, 0.32, 1)' : 'none',
       }}>
@@ -324,6 +334,7 @@ function AnimatedFeed({ active }) {
             opacity={isFading && i !== FOCUS_INDEX ? 0 : 1}
             scale={1}
             highlight={i === FOCUS_INDEX && (phase === 'counting' || phase === 'fadeout')}
+            iconBump={i === FOCUS_INDEX && iconBump}
           />
         ))}
       </div>
