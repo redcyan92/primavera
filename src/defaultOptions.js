@@ -35,7 +35,8 @@ export const TIME_OPTIONS = [
   { value: 'morning', label: 'Morning (10am–2pm)' },
   { value: 'afternoon', label: 'Afternoon (2–6pm)' },
   { value: 'evening', label: 'Evening (6–10pm)' },
-  { value: 'late_night', label: 'Late night (10pm+)' },
+  { value: 'late_night', label: 'Late night (10pm–2am)' },
+  { value: 'early_hours', label: 'Early hours (2am–6am)' },
 ];
 
 export const LOCATION_OPTIONS = [

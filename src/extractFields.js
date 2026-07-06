@@ -14,7 +14,8 @@ const TIME_PATTERNS = [
   { pattern: /\b(morning|mañana|por\s+la\s+mañana|mattina|mattino|di\s+mattina)\b/i, extract: () => 'morning' },
   { pattern: /\b(afternoon|tarde|por\s+la\s+tarde|pomeriggio|di\s+pomeriggio)\b/i, extract: () => 'afternoon' },
   { pattern: /\b(evening|night(?!\s*club)|noche|por\s+la\s+noche|sera|di\s+sera)\b/i, extract: () => 'evening' },
-  { pattern: /\b(late\s*night|early\s*hours?|madrugada|de\s+madrugada|notte\s+fonda)\b/i, extract: () => 'late night' },
+  { pattern: /\b(late\s*night|madrugada|de\s+madrugada|notte\s+fonda)\b/i, extract: () => 'late night' },
+  { pattern: /\b(early\s*hours?|madrugada\s*tarde|alba|all'alba|amanecer|de\s+madrugada\s+tarde)\b/i, extract: () => 'early_hours' },
 ];
 
 const LOCATION_KEYWORDS = {

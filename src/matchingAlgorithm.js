@@ -13,8 +13,8 @@ function cosineSim(a, b) {
 const checkTimeOverlap = (time1, time2) => {
   const t1 = time1.toLowerCase();
   const t2 = time2.toLowerCase();
-  const days = ['thursday', 'friday', 'saturday', 'sunday', 'viernes', 'sabado', 'sábado', 'domingo', 'jueves'];
-  const periods = ['morning', 'afternoon', 'evening', 'late night', 'late_night', 'mañana', 'tarde', 'noche', 'madrugada', 'midnight'];
+  const days = ['wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'miércoles', 'jueves', 'viernes', 'sabado', 'sábado', 'domingo'];
+  const periods = ['morning', 'afternoon', 'evening', 'late night', 'late_night', 'early_hours', 'early hours', 'mañana', 'tarde', 'noche', 'madrugada', 'midnight'];
   return days.some(d => t1.includes(d) && t2.includes(d)) || periods.some(p => t1.includes(p) && t2.includes(p));
 };
 
