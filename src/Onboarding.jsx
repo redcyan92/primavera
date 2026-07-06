@@ -535,8 +535,8 @@ const SLIDES = [
     image: '/onboarding2_BG.webp',
   },
   {
-    headline: 'Share with the community',
-    body: 'Share a festival moment that everyone sees. Anyone could recognize themselves and reach out. Your space to shout out to whoever was there.',
+    headline: 'Keep the festival alive.\nStay in the crowd.',
+    body: 'Browse posts from people who were there, give a vibe to what you felt too, and add your own moment to the feed.',
     image: '/onboarding3_BG.webp',
   },
 ];
@@ -646,6 +646,7 @@ export default function Onboarding({ onComplete, onBack }) {
           margin: '0 0 12px',
           fontSize: '28px', fontWeight: '700', lineHeight: '1.2',
           color: '#1D1D2F', fontFamily: healFont, letterSpacing: '0.01em',
+          whiteSpace: 'pre-line',
         }}>{slide.headline}</h1>
 
         {/* Body */}
