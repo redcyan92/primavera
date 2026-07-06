@@ -4,7 +4,7 @@ import { radius } from './radius';
 const font = "'Plus Jakarta Sans', system-ui, sans-serif";
 const healFont = "'HealTheWeb', system-ui, sans-serif";
 
-const TYPING_TEXT = "That guy with the pink cowboy hat who danced with me during Fred again..'s set";
+const TYPING_TEXT = "That guy with the pink cowboy hat who danced with me during Fred Again's set";
 
 const SparkleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -155,11 +155,11 @@ const LightningIcon = () => (
 );
 
 const FEED_POSTS = [
-  { author: 'Luna García', time: '2h', tag: 'Peggy Gou', body: 'Lost my voice screaming during Peggy Gou. The girl next to me shared her water bottle and we danced together for the entire set. Best night ever.', likes: 7 },
-  { author: 'Sarah Chen', time: '1h', tag: 'Fred again..', body: 'That moment when Fred again.. dropped "Marea" and 40,000 people went completely silent before erupting. Chills. Actual chills. I was sobbing.', likes: 23 },
-  { author: 'Marco Rossi', time: '45m', tag: 'Björk', body: 'Cried during Björk. Not even a little — full ugly crying. The person next to me quietly handed me a pack of tissues they clearly needed for themselves.', likes: 4 },
-  { author: 'Tom Eriksen', time: '30m', tag: 'Tame Impala', body: 'The couple slow dancing during "Let It Happen" while confetti rained down — that was the most beautiful thing I\'ve ever seen at a festival.', likes: 12 },
-  { author: 'Clara Moreau', time: '15m', tag: 'Rosalía', body: 'Someone in the crowd started singing the bridge of "DESPECHÁ" so loud that people around them joined in. By the end the whole section was a choir.', likes: 3 },
+  { author: 'Luna', time: '2h', tag: 'Peggy Gou', body: 'Lost my voice screaming during Peggy Gou. The girl next to me shared her water bottle and we danced together for the entire set. Best night ever.', likes: 7 },
+  { author: 'Sarah', time: '1h', tag: 'Fred again..', body: 'That moment when Fred again.. dropped "Marea" and 40,000 people went completely silent before erupting. Chills. Actual chills. I was sobbing.', likes: 23 },
+  { author: 'James', time: '45m', tag: 'Björk', body: 'Cried during Björk. Not even a little — full ugly crying. The person next to me quietly handed me a pack of tissues they clearly needed for themselves.', likes: 4 },
+  { author: 'Tom', time: '30m', tag: 'Tame Impala', body: 'The couple slow dancing during "Let It Happen" while confetti rained down — that was the most beautiful thing I\'ve ever seen at a festival.', likes: 12 },
+  { author: 'Clara', time: '15m', tag: 'Rosalía', body: 'Someone in the crowd started singing the bridge of "DESPECHÁ" so loud that people around them joined in. By the end the whole section was a choir.', likes: 3 },
 ];
 
 const FOCUS_INDEX = 2;
@@ -346,17 +346,17 @@ const SLIDES = [
   {
     headline: 'Search for someone you met at the festival',
     body: 'You crossed paths. Describe the moment. Who you saw, where, when. Write it down. The system matches you only if they\'re searching too.',
-    image: '/onboarding_BG.png',
+    image: '/onboarding_BG.webp',
   },
   {
     headline: 'Share with the community',
     body: 'Share a festival moment that everyone sees. Anyone could recognize themselves and reach out. Your space to shout out to whoever was there.',
-    image: '/onboarding2_BG.png',
+    image: '/onboarding2_BG.webp',
   },
   {
     headline: 'Swap contacts with your connections',
     body: 'When both of you were searching and the system found a match, you can share your Instagram or WhatsApp and keep the conversation going.',
-    image: '/onboarding3_BG.png',
+    image: '/onboarding3_BG.webp',
   },
 ];
 
