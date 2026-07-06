@@ -1341,11 +1341,11 @@ const PrimaveraApp = () => {
                   <span style={{ fontSize: '20px', fontWeight: '800', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>AI Search</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(181,11,242,0.10)', borderRadius: radius.pill, padding: '4px 9px', flexShrink: 0 }}>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font }}>Compatible only</span>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color: t.primary, fontFamily: font }}>Matches only</span>
                   </div>
                 </div>
                 <p style={{ margin: '0 0 40px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
-                  Describe who you're looking for. Our AI finds them quietly — nothing posted publicly.
+                  Describe who you're looking for and the moment you shared. If they're also searching, AI will match you privately.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <span style={{ fontSize: '13px', fontWeight: '700', color: t.dark, fontFamily: font }}>Find your missed connection</span>
@@ -1371,12 +1371,12 @@ const PrimaveraApp = () => {
                   </svg>
                   <span style={{ fontSize: '20px', fontWeight: '800', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", lineHeight: '1', flex: 1 }}>Crowd</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(176,232,23,0.15)', borderRadius: radius.pill, padding: '4px 9px', flexShrink: 0 }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5d8000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5d8000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <span style={{ fontSize: '11px', fontWeight: '600', color: '#5d8000', fontFamily: font }}>Public</span>
                   </div>
                 </div>
                 <p style={{ margin: '0 0 16px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
-                  Post to the Crowd wall. Anyone at the festival can see it and reach out to you.
+                  Post a moment to the Crowd wall. Anyone at the festival can see it, interact and connect with you.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <span style={{ fontSize: '13px', fontWeight: '700', color: t.dark, fontFamily: font }}>See what people are sharing</span>
@@ -1817,8 +1817,7 @@ const PrimaveraApp = () => {
                     {/* Public indicator — bottom left */}
                     <div style={{ position: 'absolute', bottom: '14px', left: '14px', display: 'flex', alignItems: 'center', gap: '5px', pointerEvents: 'none' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                       </svg>
                       <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>Public · visible to everyone</span>
                     </div>

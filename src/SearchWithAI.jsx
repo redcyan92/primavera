@@ -275,7 +275,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
             </svg>
-            <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>Compatible only</span>
+            <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>Matches only</span>
           </div>
           {/* Send button — bottom right */}
           <button
