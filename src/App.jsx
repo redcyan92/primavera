@@ -15,10 +15,11 @@ const supabase = {
   key: SUPABASE_KEY,
 
   async request(table, method = 'GET', data = null, filter = null) {
+    const jwt = localStorage.getItem('fulmi_jwt') || this.key;
     const headers = {
       'Content-Type': 'application/json',
       'apikey': this.key,
-      'Authorization': `Bearer ${this.key}`,
+      'Authorization': `Bearer ${jwt}`,
       'Prefer': 'return=representation'
     };
     let url = `${this.url}/rest/v1/${table}`;
@@ -228,6 +229,8 @@ const PrimaveraApp = () => {
   const [editingName, setEditingName]       = useState(false);
   const [nameDraft, setNameDraft]           = useState('');
   const [isModalOpen, setIsModalOpen]       = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [showSignOutModal, setShowSignOutModal]             = useState(false);
   const [vibeCreating, setVibeCreating]     = useState(false);
   const [vibeStep, setVibeStep]             = useState(0);
   const [vibeText, setVibeText]             = useState('');
@@ -495,12 +498,15 @@ const PrimaveraApp = () => {
       if (uid) {
         localStorage.setItem('fulmi_user_email', pendingEmail);
         localStorage.setItem('fulmi_user_id', uid);
+        if (session.access_token) localStorage.setItem('fulmi_jwt', session.access_token);
         setUser({ email: pendingEmail });
         setUserId(uid);
         lastRefresh.current = 0;
         if (isNew) {
           setAuthStep('age');
         } else {
+          const localName = localStorage.getItem('fulmi_user_name');
+          if (localName && !users[0].name) await supabase.updateUser(uid, { name: localName });
           setAuthStep(null);
           if (activeFestivalId) await loadData(uid, activeFestivalId);
         }
@@ -519,7 +525,7 @@ const PrimaveraApp = () => {
       await supabase.confirmAge(userId);
       if (userName.trim()) {
         localStorage.setItem('fulmi_user_name', userName.trim());
-        supabase.updateUser(userId, { name: userName.trim() });
+        await supabase.updateUser(userId, { name: userName.trim() });
       }
       setAuthStep(null);
       if (activeFestivalId) await loadData(userId, activeFestivalId);
@@ -632,6 +638,8 @@ const PrimaveraApp = () => {
   };
 
   const handleDeleteNote = async (noteId) => {
+    const prevPublic = publicNotes;
+    const prevMy = myNotes;
     setPublicNotes(prev => prev.filter(n => n.id !== noteId));
     setMyNotes(prev => prev.filter(n => n.id !== noteId));
     await supabase.deleteNote(noteId);
@@ -1060,13 +1068,13 @@ const PrimaveraApp = () => {
           </div>
           <button
             onClick={handleConfirmAge}
-            disabled={!ageChecked || !termsChecked || loading}
+            disabled={!ageChecked || !termsChecked || !userName.trim() || loading}
             style={{
               height: '52px', cursor: 'pointer', borderRadius: radius.lg,
               border: 'none', backgroundColor: t.dark,
               fontSize: '15px', fontWeight: '700', color: '#FFFFFF',
               fontFamily: font,
-              opacity: (!ageChecked || !termsChecked || loading) ? 0.4 : 1,
+              opacity: (!ageChecked || !termsChecked || !userName.trim() || loading) ? 0.4 : 1,
               transition: 'opacity 0.15s',
             }}
           >
@@ -1347,7 +1355,7 @@ const PrimaveraApp = () => {
 
             {/* ── SUB-TAB: AI FOUND ── */}
             {matchSubTab === 'ai' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
                 {searchCards.length === 0 ? (
                   <NoSearchCard onCreateSearch={() => navigateTo('notes')} />
                 ) : searchCards.map(({ note: myNote, matches }) => {
@@ -1453,7 +1461,7 @@ const PrimaveraApp = () => {
               ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
               return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
                   {allCrowd.length === 0 ? (
                     <div style={{
                       backgroundColor: t.surface, borderRadius: radius.xl, padding: '24px 20px',
@@ -1775,7 +1783,7 @@ const PrimaveraApp = () => {
                   setUserName(v);
                   if (v) localStorage.setItem('fulmi_user_name', v);
                   else localStorage.removeItem('fulmi_user_name');
-                  if (v && userId) supabase.updateUser(userId, { name: v });
+                  if (v && userId) supabase.updateUser(userId, { name: v }).then(r => console.log('name update result:', JSON.stringify(r)));
                   setEditingName(false);
                 };
                 return (
@@ -1855,11 +1863,7 @@ const PrimaveraApp = () => {
                       Privacy Policy
                     </a>
                     <button
-                      onClick={() => {
-                        if (window.confirm('Delete your account? This cannot be undone.')) {
-                          alert('To delete your account, email hello@otra.social');
-                        }
-                      }}
+                      onClick={() => setShowDeleteAccountModal(true)}
                       style={profileBtnStyle}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -1871,7 +1875,7 @@ const PrimaveraApp = () => {
                       Delete account
                     </button>
                     <button
-                      onClick={() => { localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]); setSeenCrowdIds(new Set()); setSeenAIIds(new Set()); setAuthStep('splash'); }}
+                      onClick={() => setShowSignOutModal(true)}
                       style={{ ...profileBtnStyle, marginTop: '12px' }}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -1891,6 +1895,88 @@ const PrimaveraApp = () => {
       </div>
 
       <CreateNoteFlow isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveNote} days={activeFestival?.days || []} />
+
+      {/* Delete account modal */}
+      {showDeleteAccountModal && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 200, padding: '20px',
+        }} onClick={() => setShowDeleteAccountModal(false)}>
+          <div style={{
+            backgroundColor: t.border, borderRadius: radius.xxl,
+            padding: '24px', width: '100%', maxWidth: '360px',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <span style={{ fontSize: '18px', fontWeight: '800', color: t.dark, fontFamily: font }}>Delete account?</span>
+              <button onClick={() => setShowDeleteAccountModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: t.textMuted, display: 'flex', alignItems: 'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <p style={{ fontFamily: font, fontSize: '14px', color: t.textSec, margin: '0 0 24px', lineHeight: '1.5' }}>To delete your account, email <strong>hello@otra.social</strong></p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => { window.location.href = 'mailto:hello@otra.social?subject=Delete%20my%20account'; setShowDeleteAccountModal(false); }}
+                style={{ width: '100%', padding: '13px', background: t.primary, border: 'none', borderRadius: radius.md, fontSize: '15px', fontWeight: '700', color: '#fff', cursor: 'pointer', fontFamily: font }}
+              >
+                Send email
+              </button>
+              <button
+                onClick={() => setShowDeleteAccountModal(false)}
+                style={{ width: '100%', padding: '13px', background: t.white, border: 'none', borderRadius: radius.md, fontSize: '15px', fontWeight: '500', color: t.dark, cursor: 'pointer', fontFamily: font }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sign out modal */}
+      {showSignOutModal && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 200, padding: '20px',
+        }} onClick={() => setShowSignOutModal(false)}>
+          <div style={{
+            backgroundColor: t.border, borderRadius: radius.xxl,
+            padding: '24px', width: '100%', maxWidth: '360px',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <span style={{ fontSize: '18px', fontWeight: '800', color: t.dark, fontFamily: font }}>Sign out?</span>
+              <button onClick={() => setShowSignOutModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: t.textMuted, display: 'flex', alignItems: 'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <p style={{ fontFamily: font, fontSize: '14px', color: t.textSec, margin: '0 0 24px', lineHeight: '1.5' }}>You'll need to log in again to access your account.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => { setShowSignOutModal(false); localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); localStorage.removeItem('fulmi_jwt'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]); setSeenCrowdIds(new Set()); setSeenAIIds(new Set()); setAuthStep('splash'); }}
+                style={{ width: '100%', padding: '13px', background: t.primary, border: 'none', borderRadius: radius.md, fontSize: '15px', fontWeight: '700', color: '#fff', cursor: 'pointer', fontFamily: font }}
+              >
+                Sign out
+              </button>
+              <button
+                onClick={() => setShowSignOutModal(false)}
+                style={{ width: '100%', padding: '13px', background: t.white, border: 'none', borderRadius: radius.md, fontSize: '15px', fontWeight: '500', color: t.dark, cursor: 'pointer', fontFamily: font }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Festival switcher bottom sheet */}
       {festivalSwitcherOpen && (
@@ -2229,15 +2315,19 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
   const theme = CATEGORY_THEME.ai;
   const isMutual = state.startsWith('mutual');
 
+  const [showSelfDesc, setShowSelfDesc] = React.useState(false);
+
   const chips = [
     match.artist && match.artist !== 'Otro' ? { label: match.artist, key: 'artist' } : null,
-    match.time ? { label: match.time, key: 'time' } : null,
+    match.time ? { label: match.time.replace(/_/g, ' '), key: 'time' } : null,
+    match.location ? { label: match.location.replace(/_/g, ' '), key: 'location' } : null,
   ].filter(Boolean);
 
   const isCommon = (key) => {
     if (!myNote) return false;
     if (key === 'artist') return myNote.artist && myNote.artist === match.artist;
     if (key === 'time') return myNote.time && myNote.time === match.time;
+    if (key === 'location') return myNote.location && myNote.location === match.location;
     return false;
   };
 
@@ -2250,15 +2340,39 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
       {/* Header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
         <div>
-          <span style={{ fontSize: '17px', fontWeight: '700', color: t.dark, fontFamily: font, display: 'block' }}>
-            {authorName || 'Someone'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '17px', fontWeight: '700', color: t.dark, fontFamily: font }}>
+              {authorName || 'Someone'}
+            </span>
+            {match.ownDesc && (
+              <button onClick={() => setShowSelfDesc(v => !v)} style={{
+                width: '20px', height: '20px', borderRadius: radius.circle, border: 'none',
+                backgroundColor: showSelfDesc ? theme.accent : 'rgba(29,29,47,0.08)',
+                color: showSelfDesc ? '#fff' : t.textMuted,
+                fontSize: '13px', fontWeight: '700', lineHeight: 1,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background-color 0.2s, color 0.2s',
+                padding: 0, flexShrink: 0,
+              }}>{showSelfDesc ? '−' : '+'}</button>
+            )}
+          </div>
           <span style={{ fontSize: '12px', color: theme.accent, fontWeight: '600', fontFamily: font }}>Matched by AI</span>
         </div>
         {isMutual && (
           <Badge label="Mutual match" color={theme.accent} bg={theme.tint} border={theme.border} />
         )}
       </div>
+
+      {/* Self-description (expandable) */}
+      {showSelfDesc && match.ownDesc && (
+        <p style={{
+          fontSize: '13px', lineHeight: '1.5', color: t.textMuted, margin: '0 0 14px',
+          fontFamily: font, fontStyle: 'italic',
+          backgroundColor: 'rgba(29,29,47,0.03)', borderRadius: radius.md, padding: '10px 12px',
+        }}>
+          "{match.ownDesc}"
+        </p>
+      )}
 
       {/* "They want to connect" indicator */}
       {state === 'they_want' && (
@@ -2332,6 +2446,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
   const [connectComment, setConnectComment] = useState('');
   const [connectSent, setConnectSent] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [deleteConfirmNoteId, setDeleteConfirmNoteId] = useState(null);
   const connectTextareaRef = React.useRef(null);
 
   const autoResizeConnectTextarea = () => {
@@ -2447,7 +2562,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                     >
                       {note.user_id === myUserId ? (
                         <button
-                          onClick={() => { setOpenMenuId(null); onDelete(note.id); }}
+                          onClick={() => { setOpenMenuId(null); setDeleteConfirmNoteId(note.id); }}
                           style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '14px', color: t.danger, cursor: 'pointer', fontFamily: font }}
                         >
                           Delete
@@ -2708,6 +2823,45 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                   {label}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteConfirmNoteId && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 200, padding: '20px',
+        }} onClick={() => setDeleteConfirmNoteId(null)}>
+          <div style={{
+            backgroundColor: t.border, borderRadius: radius.xxl,
+            padding: '24px', width: '100%', maxWidth: '360px',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <span style={{ fontSize: '18px', fontWeight: '800', color: t.dark, fontFamily: font }}>Delete post?</span>
+              <button onClick={() => setDeleteConfirmNoteId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: t.textMuted, display: 'flex', alignItems: 'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <p style={{ fontFamily: font, fontSize: '14px', color: t.textSec, margin: '0 0 24px', lineHeight: '1.5' }}>This action can't be undone.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => { onDelete(deleteConfirmNoteId); setDeleteConfirmNoteId(null); }}
+                style={{ width: '100%', padding: '13px', background: t.primary, border: 'none', borderRadius: radius.md, fontSize: '15px', fontWeight: '700', color: '#fff', cursor: 'pointer', fontFamily: font }}
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteConfirmNoteId(null)}
+                style={{ width: '100%', padding: '13px', background: t.white, border: 'none', borderRadius: radius.md, fontSize: '15px', fontWeight: '500', color: t.dark, cursor: 'pointer', fontFamily: font }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
