@@ -83,6 +83,13 @@
   100%      { transform: translateX(-0.95px); }
 }
 
+/* ── Otra eye look for onboarding match: right → left → right → center ── */
+@keyframes otra-look-match {
+  0%, 15%   { transform: translateX(0.95px); }
+  45%, 60%  { transform: translateX(-0.95px); }
+  85%, 100% { transform: translateX(0.95px); }
+}
+
 /* ── Cursor blink ── */
 @keyframes blink { 50% { opacity: 0; } }
 

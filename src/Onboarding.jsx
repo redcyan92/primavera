@@ -342,15 +342,44 @@ function AnimatedFeed({ active }) {
   );
 }
 
-const MATCH_HANDLE = '@pink.cowboy.hat';
+const MATCH_HANDLE = '@tomcowboy127';
 
-const OtraEye = ({ size = 100, pupilCentered = false }) => (
-  <svg viewBox="0 0 8.4 8.4" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
-    <path fill="#B50BF2" d="M6.89,1h1.03V0h-3.72C1.89,0,0,1.89,0,4.2c0,1.29.6,2.43,1.51,3.2H.49v1h3.72c2.32,0,4.2-1.89,4.2-4.2,0-1.29-.6-2.43-1.51-3.2ZM4.2,7.4c-1.77,0-3.2-1.43-3.2-3.2s1.43-3.2,3.2-3.2,3.2,1.43,3.2,3.2-1.43,3.2-3.2,3.2Z"/>
-    <circle fill="#B50BF2" cx="4.2" cy="4.2" r=".88"
-      style={{ animation: pupilCentered ? 'none' : 'otra-look 2.8s ease-in-out infinite', transition: 'transform 0.4s cubic-bezier(0.23,1,0.32,1)' }} />
-  </svg>
-);
+function OtraEye({ size = 100, pupilCentered = false }) {
+  const circleRef = useRef(null);
+
+  // Start animation imperatively on mount — kept out of React's style reconciliation
+  // so re-renders never overwrite the animation/transform mid-transition.
+  useEffect(() => {
+    const el = circleRef.current;
+    if (!el) return;
+    el.style.transition = 'transform 0.5s cubic-bezier(0.23,1,0.32,1)';
+    el.style.animation = 'otra-look-match 2.8s ease-in-out infinite';
+  }, []);
+
+  useEffect(() => {
+    const el = circleRef.current;
+    if (!el) return;
+    if (pupilCentered) {
+      // Read live animated position before stopping the animation
+      const raw = getComputedStyle(el).transform;
+      const currentX = raw && raw !== 'none' ? new DOMMatrix(raw).m41 : 0;
+      el.style.animation = 'none';
+      el.style.transform = `translateX(${currentX}px)`;
+      void el.getBoundingClientRect(); // force reflow so transition sees the starting position
+      el.style.transform = 'translateX(0)';
+    } else {
+      el.style.transform = '';
+      el.style.animation = 'otra-look-match 2.8s ease-in-out infinite';
+    }
+  }, [pupilCentered]);
+
+  return (
+    <svg viewBox="0 0 8.4 8.4" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+      <path fill="#B50BF2" d="M6.89,1h1.03V0h-3.72C1.89,0,0,1.89,0,4.2c0,1.29.6,2.43,1.51,3.2H.49v1h3.72c2.32,0,4.2-1.89,4.2-4.2,0-1.29-.6-2.43-1.51-3.2ZM4.2,7.4c-1.77,0-3.2-1.43-3.2-3.2s1.43-3.2,3.2-3.2,3.2,1.43,3.2,3.2-1.43,3.2-3.2,3.2Z"/>
+      <circle ref={circleRef} fill="#B50BF2" cx="4.2" cy="4.2" r=".88" />
+    </svg>
+  );
+}
 
 function AnimatedMatch({ active }) {
   const [phase, setPhase] = useState('searching');
@@ -375,10 +404,11 @@ function AnimatedMatch({ active }) {
     } else if (phase === 'matched') {
       timerRef.current = setTimeout(() => setPhase('transitioning'), 1600);
     } else if (phase === 'transitioning') {
-      timerRef.current = setTimeout(() => setPhase('typing'), 1400);
+      timerRef.current = setTimeout(() => setPhase('typing'), 600);
     } else if (phase === 'typing') {
       if (charIndex < MATCH_HANDLE.length) {
-        timerRef.current = setTimeout(() => setCharIndex(c => c + 1), 55);
+        const delay = charIndex === 0 ? 600 : 55;
+        timerRef.current = setTimeout(() => setCharIndex(c => c + 1), delay);
       } else {
         clearTimeout(bumpRef.current);
         setSendBump(true);
@@ -418,7 +448,6 @@ function AnimatedMatch({ active }) {
         width: 'calc(100% - 40px)',
         background: cardBg,
         borderRadius: '16px',
-        boxShadow: '0 2px 16px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.06)',
         transition: 'background-color 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
         position: 'relative',
       }}>
@@ -461,7 +490,7 @@ function AnimatedMatch({ active }) {
             ))}
           </div>
           <p style={{ fontSize: '13px', lineHeight: '1.55', color: '#1D1D2F', margin: '0 0 16px', fontFamily: font }}>
-            The girl with the pink cowboy hat dancing in the crowd — I was right next to you during the whole set and couldn't stop smiling.
+            "The blonde girl who laughed at my pink cowboy hat. We danced together at Fred Again."
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
             background: '#F8FAFB', borderRadius: '12px', padding: '12px 14px' }}>
@@ -501,13 +530,13 @@ const SLIDES = [
     image: '/onboarding_BG.webp',
   },
   {
-    headline: 'Share with the community',
-    body: 'Share a festival moment that everyone sees. Anyone could recognize themselves and reach out. Your space to shout out to whoever was there.',
+    headline: 'Swap contacts with your connections',
+    body: 'When both of you were searching and the system found a match, you can share your Instagram or WhatsApp and keep the conversation going.',
     image: '/onboarding2_BG.webp',
   },
   {
-    headline: 'Swap contacts with your connections',
-    body: 'When both of you were searching and the system found a match, you can share your Instagram or WhatsApp and keep the conversation going.',
+    headline: 'Share with the community',
+    body: 'Share a festival moment that everyone sees. Anyone could recognize themselves and reach out. Your space to shout out to whoever was there.',
     image: '/onboarding3_BG.webp',
   },
 ];
@@ -575,11 +604,11 @@ export default function Onboarding({ onComplete, onBack }) {
       {/* Animated search bar on slide 1 */}
       {current === 0 && <AnimatedSearchBar active={current === 0} />}
 
-      {/* Animated feed on slide 2 */}
-      {current === 1 && <AnimatedFeed active={current === 1} />}
+      {/* Animated match on slide 2 */}
+      {current === 1 && <AnimatedMatch active={current === 1} />}
 
-      {/* Animated match on slide 3 */}
-      {current === 2 && <AnimatedMatch active={current === 2} />}
+      {/* Animated feed on slide 3 */}
+      {current === 2 && <AnimatedFeed active={current === 2} />}
 
       {/* Skip */}
       {!isLast && (
