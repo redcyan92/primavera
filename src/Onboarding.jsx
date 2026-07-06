@@ -531,7 +531,7 @@ const SLIDES = [
   },
   {
     headline: 'Swap contacts with your connections',
-    body: 'When both of you were searching and the system found a match, you can share your Instagram or WhatsApp and keep the conversation going.',
+    body: 'When both of you were searching and the match is mutual, you can share your Instagram or WhatsApp and reconnect beyond the festival.',
     image: '/onboarding2_BG.webp',
   },
   {
