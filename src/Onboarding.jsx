@@ -375,7 +375,7 @@ function AnimatedMatch({ active }) {
     } else if (phase === 'matched') {
       timerRef.current = setTimeout(() => setPhase('transitioning'), 1600);
     } else if (phase === 'transitioning') {
-      timerRef.current = setTimeout(() => setPhase('typing'), 400);
+      timerRef.current = setTimeout(() => setPhase('typing'), 1400);
     } else if (phase === 'typing') {
       if (charIndex < MATCH_HANDLE.length) {
         timerRef.current = setTimeout(() => setCharIndex(c => c + 1), 55);
@@ -400,6 +400,7 @@ function AnimatedMatch({ active }) {
   const eyeOpacity = phase === 'transitioning' ? 0 : 1;
   const matchLabelOpacity = phase === 'matched' || phase === 'transitioning' ? 1 : 0;
   const matchLabelScale = phase === 'matched' || phase === 'transitioning' ? 1 : 0.88;
+  const bgColor = phase === 'searching' ? '#FFFFFF' : '#FBF1FF';
 
   return (
     <div style={{
@@ -410,7 +411,8 @@ function AnimatedMatch({ active }) {
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       opacity: visible ? 1 : 0,
-      transition: 'opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+      background: bgColor,
+      transition: 'opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94), background-color 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
       pointerEvents: 'none',
     }}>
       {/* Eye + mutual match label */}
