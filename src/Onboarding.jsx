@@ -413,7 +413,7 @@ function AnimatedMatch({ active }) {
         clearTimeout(bumpRef.current);
         setSendBump(true);
         bumpRef.current = setTimeout(() => setSendBump(false), 300);
-        timerRef.current = setTimeout(() => setPhase('fadeout'), 1200);
+        timerRef.current = setTimeout(() => setPhase('fadeout'), 2200);
       }
     } else if (phase === 'fadeout') {
       setVisible(false);
@@ -459,7 +459,7 @@ function AnimatedMatch({ active }) {
           opacity: eyeContentOpacity,
           transition: 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
         }}>
-          <OtraEye size={100} pupilCentered={phase === 'matched' || phase === 'transitioning'} />
+          <OtraEye size={70} pupilCentered={phase === 'matched' || phase === 'transitioning'} />
           <div style={{
             background: 'rgba(245,232,255,0.9)',
             borderRadius: '999px',
