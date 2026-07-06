@@ -536,7 +536,7 @@ const SLIDES = [
   },
   {
     headline: 'Keep the festival alive.\nStay in the crowd.',
-    body: 'Browse posts from people who were there, give a vibe to what you felt too, and add your own moment to the feed.',
+    body: 'Browse posts from people who were there, give a vibe to what you felt too, and add your own moment to the feed. Connect with whoever you vibe with.',
     image: '/onboarding3_BG.webp',
   },
 ];
