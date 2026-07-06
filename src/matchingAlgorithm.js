@@ -25,6 +25,8 @@ const getQualityLabel = (score) => {
   return 'Low chance';
 };
 
+const EMBEDDING_GATE = 0.40;
+
 export const calculateMatchScore = (note1, note2) => {
   let score = 0;
 
@@ -37,16 +39,19 @@ export const calculateMatchScore = (note1, note2) => {
   const e1o = note1.embeddingOther, e1s = note1.embeddingSelf;
   const e2o = note2.embeddingOther, e2s = note2.embeddingSelf;
 
+  let avgSim = 0;
   if (e1o && e2s && e2o && e1s) {
-    const sim = (cosineSim(e1o, e2s) + cosineSim(e2o, e1s)) / 2;
-    score += Math.round(sim * 50);
+    avgSim = (cosineSim(e1o, e2s) + cosineSim(e2o, e1s)) / 2;
+    score += Math.round(avgSim * 50);
   } else if (e1o && e2s) {
-    score += Math.round(cosineSim(e1o, e2s) * 25);
+    avgSim = cosineSim(e1o, e2s);
+    score += Math.round(avgSim * 25);
   } else if (e2o && e1s) {
-    score += Math.round(cosineSim(e2o, e1s) * 25);
+    avgSim = cosineSim(e2o, e1s);
+    score += Math.round(avgSim * 25);
   }
 
-  return { score, quality: getQualityLabel(score) };
+  return { score, avgSim, quality: getQualityLabel(score) };
 };
 
 export const findMatches = (myNote, allNotes) => {
@@ -57,15 +62,15 @@ export const findMatches = (myNote, allNotes) => {
       (n.visibility === 'public' && n.searchIntent)
     )
     .map(n => {
-      const { score, quality } = calculateMatchScore(myNote, n);
+      const { score, avgSim, quality } = calculateMatchScore(myNote, n);
       return {
         id: n.id, user_id: n.user_id,
-        description: n.description, artist: n.artist,
+        description: n.description, ownDesc: n.ownDesc, artist: n.artist,
         time: n.time, location: n.location, instagram: n.instagram,
         embeddingOther: n.embeddingOther, embeddingSelf: n.embeddingSelf,
-        score, quality, userResponse: null,
+        score, avgSim, quality, userResponse: null,
       };
     })
-    .filter(m => m.score >= 40)
+    .filter(m => m.score >= 50 && m.avgSim >= EMBEDDING_GATE)
     .sort((a, b) => b.score - a.score);
 };

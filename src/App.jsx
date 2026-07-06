@@ -14,12 +14,49 @@ const supabase = {
   url: SUPABASE_URL,
   key: SUPABASE_KEY,
 
+  getJwt() {
+    return localStorage.getItem('fulmi_jwt') || this.key;
+  },
+
+  saveSession(session) {
+    if (session.access_token) localStorage.setItem('fulmi_jwt', session.access_token);
+    if (session.refresh_token) localStorage.setItem('fulmi_refresh', session.refresh_token);
+    if (session.expires_at) localStorage.setItem('fulmi_jwt_exp', String(session.expires_at));
+    else if (session.expires_in) localStorage.setItem('fulmi_jwt_exp', String(Math.floor(Date.now() / 1000) + session.expires_in));
+  },
+
+  clearSession() {
+    localStorage.removeItem('fulmi_jwt');
+    localStorage.removeItem('fulmi_refresh');
+    localStorage.removeItem('fulmi_jwt_exp');
+  },
+
+  async refreshIfNeeded() {
+    const exp = Number(localStorage.getItem('fulmi_jwt_exp') || 0);
+    const refresh = localStorage.getItem('fulmi_refresh');
+    if (!refresh || !exp) return;
+    if (Date.now() / 1000 < exp - 60) return;
+    try {
+      const res = await fetch(`${this.url}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': this.key },
+        body: JSON.stringify({ refresh_token: refresh }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.saveSession(data);
+      }
+    } catch (err) {
+      console.error('Token refresh error:', err);
+    }
+  },
+
   async request(table, method = 'GET', data = null, filter = null) {
-    const jwt = localStorage.getItem('fulmi_jwt') || this.key;
+    await this.refreshIfNeeded();
     const headers = {
       'Content-Type': 'application/json',
       'apikey': this.key,
-      'Authorization': `Bearer ${jwt}`,
+      'Authorization': `Bearer ${this.getJwt()}`,
       'Prefer': 'return=representation'
     };
     let url = `${this.url}/rest/v1/${table}`;
@@ -59,6 +96,7 @@ const supabase = {
       body: JSON.stringify({ type: 'email', email, token }),
     });
     const data = await res.json();
+    if (res.ok && data.access_token) this.saveSession(data);
     return res.ok ? data : null;
   },
   async createNote(userId, note)  { return this.request('notes', 'POST', { user_id: userId, ...note }); },
@@ -382,8 +420,17 @@ const PrimaveraApp = () => {
     }
   }, []);
 
-  // Restore session on mount
+  // Restore session on mount — if no JWT, force re-login
   useEffect(() => {
+    if (userId && !localStorage.getItem('fulmi_jwt')) {
+      localStorage.removeItem('fulmi_user_email');
+      localStorage.removeItem('fulmi_user_id');
+      supabase.clearSession();
+      setUser(null);
+      setUserId(null);
+      setAuthStep('splash');
+      return;
+    }
     if (userId && activeFestivalId) { lastRefresh.current = 0; loadData(userId, activeFestivalId); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -498,7 +545,6 @@ const PrimaveraApp = () => {
       if (uid) {
         localStorage.setItem('fulmi_user_email', pendingEmail);
         localStorage.setItem('fulmi_user_id', uid);
-        if (session.access_token) localStorage.setItem('fulmi_jwt', session.access_token);
         setUser({ email: pendingEmail });
         setUserId(uid);
         lastRefresh.current = 0;
@@ -1783,7 +1829,7 @@ const PrimaveraApp = () => {
                   setUserName(v);
                   if (v) localStorage.setItem('fulmi_user_name', v);
                   else localStorage.removeItem('fulmi_user_name');
-                  if (v && userId) supabase.updateUser(userId, { name: v }).then(r => console.log('name update result:', JSON.stringify(r)));
+                  if (v && userId) supabase.updateUser(userId, { name: v });
                   setEditingName(false);
                 };
                 return (
@@ -1962,7 +2008,7 @@ const PrimaveraApp = () => {
             <p style={{ fontFamily: font, fontSize: '14px', color: t.textSec, margin: '0 0 24px', lineHeight: '1.5' }}>You'll need to log in again to access your account.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
-                onClick={() => { setShowSignOutModal(false); localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); localStorage.removeItem('fulmi_jwt'); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]); setSeenCrowdIds(new Set()); setSeenAIIds(new Set()); setAuthStep('splash'); }}
+                onClick={() => { setShowSignOutModal(false); localStorage.removeItem('fulmi_user_email'); localStorage.removeItem('fulmi_user_id'); supabase.clearSession(); setUser(null); setUserId(null); setSearchCards([]); setMyNotes([]); setPublicNotes([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]); setSeenCrowdIds(new Set()); setSeenAIIds(new Set()); setAuthStep('splash'); }}
                 style={{ width: '100%', padding: '13px', background: t.primary, border: 'none', borderRadius: radius.md, fontSize: '15px', fontWeight: '700', color: '#fff', cursor: 'pointer', fontFamily: font }}
               >
                 Sign out

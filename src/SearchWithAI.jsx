@@ -166,9 +166,9 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
 
   // ── Typewriter placeholder ────────────────────────────────────────────────
   const EXAMPLES = [
-    'tall girl with dark curly hair, was at Bicep around midnight near the front…',
-    'chico con gorra verde cerca del bar durante Rosalía, tatuajes en los brazos…',
-    'person with glasses and a yellow jacket, we talked briefly near the entrance…',
+    'english guy with a Joy Division tee and a mullet, we talked about living in Berlin near the bar…',
+    'that girl with the snake tattoo on the arm, we shared a cigarette and talked about Tarkovsky…',
+    'tall guy with a mustache and mesh tank top, he picked up my phone when I dropped it at Charli XCX…',
   ];
   const [typeText, setTypeText] = useState('');
   const [exIdx, setExIdx] = useState(0);
@@ -219,7 +219,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
             Who did you vibe with?
           </h1>
           <p style={{ margin: 0, fontSize: '14px', color: t.textMuted, fontFamily: font, lineHeight: '1.6', maxWidth: '300px' }}>
-            Tell me anything you remember — the more detail, the better the match.
+            Describe who you're looking for and what happened — a shared moment makes it easier to find each other.
           </p>
         </div>
 
@@ -356,12 +356,12 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         <SectionLabel>Time of day</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {TIME_OPTIONS.map(opt => (
-            <button key={opt.value} onClick={() => setRefined(p => ({ ...p, time: p.time === opt.label ? null : opt.label }))} style={{
+            <button key={opt.value} onClick={() => setRefined(p => ({ ...p, time: p.time === opt.value ? null : opt.value }))} style={{
               padding: '12px 16px', borderRadius: radius.md, cursor: 'pointer', textAlign: 'left',
               border: 'none',
-              backgroundColor: refined.time === opt.label ? t.primaryBg : t.white,
-              fontSize: '14px', color: refined.time === opt.label ? t.primary : t.text,
-              fontWeight: refined.time === opt.label ? '700' : '400', fontFamily: font,
+              backgroundColor: refined.time === opt.value ? t.primaryBg : t.white,
+              fontSize: '14px', color: refined.time === opt.value ? t.primary : t.text,
+              fontWeight: refined.time === opt.value ? '700' : '400', fontFamily: font,
             }}>{opt.label}</button>
           ))}
         </div>

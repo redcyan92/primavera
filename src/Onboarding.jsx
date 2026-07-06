@@ -342,6 +342,155 @@ function AnimatedFeed({ active }) {
   );
 }
 
+const MATCH_HANDLE = '@pink.cowboy.hat';
+
+const OtraEye = ({ size = 100, pupilCentered = false }) => (
+  <svg viewBox="0 0 8.4 8.4" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+    <path fill="#B50BF2" d="M6.89,1h1.03V0h-3.72C1.89,0,0,1.89,0,4.2c0,1.29.6,2.43,1.51,3.2H.49v1h3.72c2.32,0,4.2-1.89,4.2-4.2,0-1.29-.6-2.43-1.51-3.2ZM4.2,7.4c-1.77,0-3.2-1.43-3.2-3.2s1.43-3.2,3.2-3.2,3.2,1.43,3.2,3.2-1.43,3.2-3.2,3.2Z"/>
+    <circle fill="#B50BF2" cx="4.2" cy="4.2" r=".88"
+      style={{ animation: pupilCentered ? 'none' : 'otra-look 2.8s ease-in-out infinite', transition: 'transform 0.4s cubic-bezier(0.23,1,0.32,1)' }} />
+  </svg>
+);
+
+function AnimatedMatch({ active }) {
+  const [phase, setPhase] = useState('searching');
+  const [visible, setVisible] = useState(true);
+  const [charIndex, setCharIndex] = useState(0);
+  const [sendBump, setSendBump] = useState(false);
+  const timerRef = useRef(null);
+  const bumpRef = useRef(null);
+
+  const reset = () => {
+    setPhase('searching');
+    setVisible(true);
+    setCharIndex(0);
+    setSendBump(false);
+  };
+
+  useEffect(() => {
+    if (!active) { reset(); clearTimeout(timerRef.current); return; }
+
+    if (phase === 'searching') {
+      timerRef.current = setTimeout(() => setPhase('matched'), 2200);
+    } else if (phase === 'matched') {
+      timerRef.current = setTimeout(() => setPhase('transitioning'), 1600);
+    } else if (phase === 'transitioning') {
+      timerRef.current = setTimeout(() => setPhase('typing'), 400);
+    } else if (phase === 'typing') {
+      if (charIndex < MATCH_HANDLE.length) {
+        timerRef.current = setTimeout(() => setCharIndex(c => c + 1), 55);
+      } else {
+        clearTimeout(bumpRef.current);
+        setSendBump(true);
+        bumpRef.current = setTimeout(() => setSendBump(false), 300);
+        timerRef.current = setTimeout(() => setPhase('fadeout'), 1200);
+      }
+    } else if (phase === 'fadeout') {
+      setVisible(false);
+      timerRef.current = setTimeout(() => setPhase('hidden'), 500);
+    } else if (phase === 'hidden') {
+      timerRef.current = setTimeout(() => { reset(); }, 700);
+    }
+
+    return () => clearTimeout(timerRef.current);
+  }, [active, phase, charIndex]);
+
+  const showEye = phase === 'searching' || phase === 'matched' || phase === 'transitioning';
+  const showCard = phase === 'typing' || phase === 'fadeout';
+  const eyeOpacity = phase === 'transitioning' ? 0 : 1;
+  const matchLabelOpacity = phase === 'matched' || phase === 'transitioning' ? 1 : 0;
+  const matchLabelScale = phase === 'matched' || phase === 'transitioning' ? 1 : 0.88;
+
+  return (
+    <div style={{
+      position: 'absolute',
+      left: 0, right: 0,
+      top: 0, height: '50%',
+      zIndex: 3,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      opacity: visible ? 1 : 0,
+      transition: 'opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+      pointerEvents: 'none',
+    }}>
+      {/* Eye + mutual match label */}
+      {showEye && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
+          opacity: eyeOpacity, transition: 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94)' }}>
+          <OtraEye size={100} pupilCentered={phase === 'matched' || phase === 'transitioning'} />
+          <div style={{
+            background: 'rgba(245,232,255,0.9)',
+            borderRadius: '999px',
+            padding: '6px 18px',
+            opacity: matchLabelOpacity,
+            transform: `scale(${matchLabelScale})`,
+            transition: 'opacity 0.5s cubic-bezier(0.23,1,0.32,1), transform 0.5s cubic-bezier(0.23,1,0.32,1)',
+          }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#B50BF2', fontFamily: font }}>Mutual match!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Match card */}
+      {showCard && (
+        <div style={{
+          width: 'calc(100% - 40px)',
+          background: '#FFFFFF',
+          borderRadius: '16px',
+          padding: '20px',
+          boxShadow: '0 2px 16px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.06)',
+          opacity: phase === 'typing' ? 1 : 0,
+          transition: 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
+        }}>
+          {/* Name */}
+          <div style={{ fontWeight: '700', fontSize: '18px', color: '#1D1D2F', marginBottom: '10px', fontFamily: font }}>
+            Tom
+          </div>
+          {/* Tags */}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+            {['Saturday Evening', 'Fred Again'].map(tag => (
+              <span key={tag} style={{
+                background: '#F3E8FF', borderRadius: '999px',
+                padding: '3px 10px', fontSize: '11px', fontWeight: '500', color: '#B50BF2',
+              }}>{tag}</span>
+            ))}
+          </div>
+          {/* Description */}
+          <p style={{ fontSize: '13px', lineHeight: '1.55', color: '#1D1D2F', margin: '0 0 16px', fontFamily: font }}>
+            The girl with the pink cowboy hat dancing in the crowd — I was right next to you during the whole set and couldn't stop smiling.
+          </p>
+          {/* Instagram row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
+            background: '#F8FAFB', borderRadius: '12px', padding: '12px 14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#9E9A93', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '2px' }}>Instagram</span>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D2F', fontFamily: font }}>
+                {MATCH_HANDLE.slice(0, charIndex)}
+                {charIndex < MATCH_HANDLE.length && (
+                  <span style={{ display: 'inline-block', width: '1.5px', height: '14px', background: '#1D1D2F', marginLeft: '1px', verticalAlign: 'text-bottom', animation: 'blink 0.8s step-end infinite' }} />
+                )}
+              </span>
+            </div>
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: '#B50BF2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              transform: sendBump ? 'scale(1.18)' : 'scale(1)',
+              transition: 'transform 0.25s cubic-bezier(0.23,1,0.32,1)',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 2L11 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const SLIDES = [
   {
     headline: 'Search for someone you met at the festival',
@@ -425,6 +574,9 @@ export default function Onboarding({ onComplete, onBack }) {
 
       {/* Animated feed on slide 2 */}
       {current === 1 && <AnimatedFeed active={current === 1} />}
+
+      {/* Animated match on slide 3 */}
+      {current === 2 && <AnimatedMatch active={current === 2} />}
 
       {/* Skip */}
       {!isLast && (
