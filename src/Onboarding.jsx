@@ -282,7 +282,7 @@ function AnimatedFeed({ active }) {
           timerRef.current = setTimeout(() => setLikeCount(c => c + 1), 80);
         }
       } else {
-        timerRef.current = setTimeout(() => setPhase('fadeout'), 500);
+        timerRef.current = setTimeout(() => setPhase('fadeout'), 1800);
       }
     } else if (phase === 'fadeout') {
       setVisible(false);
