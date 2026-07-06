@@ -526,7 +526,7 @@ function AnimatedMatch({ active }) {
 const SLIDES = [
   {
     headline: 'Search for someone you met at the festival',
-    body: 'You crossed paths. Describe the moment. Who you saw, where, when. Write it down. The system matches you only if they\'re searching too.',
+    body: 'Describe exactly who you saw, where, and that moment worth remembering. That\'s how you find each other.',
     image: '/onboarding_BG.webp',
   },
   {
@@ -536,7 +536,7 @@ const SLIDES = [
   },
   {
     headline: 'Keep the festival alive.\nStay in the crowd.',
-    body: 'Browse posts from people who were there, give a vibe to what you felt too, and add your own moment to the feed. Connect with whoever you vibe with.',
+    body: 'Browse posts from people who were there, give a vibe, add your own moment, and connect with whoever you vibe with.',
     image: '/onboarding3_BG.webp',
   },
 ];
