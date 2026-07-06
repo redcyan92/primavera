@@ -7,6 +7,26 @@ import { LOCATION_OPTIONS, TIME_OPTIONS } from './defaultOptions';
 import { radius } from './radius';
 import { FESTIVALS, FESTIVAL_LIST, DEFAULT_FESTIVAL_ID } from './festivals';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error('App crash:', error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', backgroundColor: '#F8FAFB', fontFamily: 'system-ui, sans-serif' }}>
+          <p style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>Something went wrong</p>
+          <p style={{ fontSize: '13px', color: '#888', marginBottom: '24px', textAlign: 'center' }}>{this.state.error.message}</p>
+          <button onClick={() => window.location.reload()} style={{ padding: '12px 24px', backgroundColor: '#B50BF2', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
+            Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'YOUR_SUPABASE_KEY';
 
@@ -241,6 +261,7 @@ const PrimaveraApp = () => {
     return stored && FESTIVALS[stored] ? stored : null;
   });
   const [festivalSwitcherOpen, setFestivalSwitcherOpen] = useState(false);
+  const [aiSearchActive, setAiSearchActive] = useState(false);
   const [festivalRequestInput, setFestivalRequestInput] = useState('');
   const [festivalRequestStatus, setFestivalRequestStatus] = useState('idle'); // idle | submitting | sent
   const activeFestival = activeFestivalId ? FESTIVALS[activeFestivalId] : null;
@@ -292,6 +313,7 @@ const PrimaveraApp = () => {
 
   // ── Load / refresh all data from DB ──────────────────────────────────────
   const lastRefresh = useRef(0);
+  const prevFestivalRef = useRef(activeFestivalId);
   const touchStartX = useRef(null);
   const acceptedRequestIdsRef = useRef(new Set());
 
@@ -434,6 +456,16 @@ const PrimaveraApp = () => {
     if (userId && activeFestivalId) { lastRefresh.current = 0; loadData(userId, activeFestivalId); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-fetch when the user switches festivals
+  useEffect(() => {
+    if (prevFestivalRef.current === activeFestivalId) return;
+    prevFestivalRef.current = activeFestivalId;
+    if (!userId || !activeFestivalId) return;
+    lastRefresh.current = 0;
+    loadData(userId, activeFestivalId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFestivalId]);
 
   // Fetch shared post from ?post= URL param
   useEffect(() => {
@@ -1144,10 +1176,15 @@ const PrimaveraApp = () => {
 
   if (!activeFestivalId) {
     return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', backgroundColor: t.bg, fontFamily: font, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-        {/* Content anchored to bottom */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 24px 48px', zIndex: 5 }}>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', color: t.dark, margin: '0 0 20px', fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em' }}>Pick your festival</h1>
+      <div style={{ maxWidth: '480px', margin: '0 auto', height: '100svh', backgroundColor: t.bg, fontFamily: font, display: 'flex', flexDirection: 'column' }}>
+        {/* Sticky header */}
+        <div style={{ padding: '24px 24px 0', flexShrink: 0, position: 'relative', zIndex: 1 }}>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: t.dark, margin: 0, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em' }}>Pick your festival</h1>
+          {/* Fade into list */}
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, height: '32px', background: `linear-gradient(to bottom, ${t.bg} 0%, rgba(248,250,251,0) 100%)`, pointerEvents: 'none' }} />
+        </div>
+        {/* Scrollable list */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 48px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {FESTIVAL_LIST.map(f => (
               <button key={f.id} onClick={() => {
@@ -1164,7 +1201,7 @@ const PrimaveraApp = () => {
               }}>
                 <div>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
-                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.dates}</p>
+                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.city} · {f.dates}</p>
                 </div>
                 {f.id === activeFestivalId && (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1238,12 +1275,16 @@ const PrimaveraApp = () => {
             <OtraLogoMark color={t.primary} size={22} />
           </div>
           {/* Festival selector — fully rounded pill */}
-          <button onClick={() => setFestivalSwitcherOpen(true)} style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            backgroundColor: t.white, border: 'none',
-            borderRadius: radius.xxl, padding: '7px 10px 7px 14px',
-            cursor: 'pointer',
-          }}>
+          <button
+            onClick={() => setFestivalSwitcherOpen(true)}
+            disabled={isModalOpen || vibeCreating || aiSearchActive}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              backgroundColor: t.white, border: 'none',
+              borderRadius: radius.xxl, padding: '7px 10px 7px 14px',
+              cursor: isModalOpen || vibeCreating || aiSearchActive ? 'default' : 'pointer',
+              opacity: isModalOpen || vibeCreating || aiSearchActive ? 0.4 : 1,
+            }}>
             <span style={{ fontSize: '11px', fontWeight: '500', fontFamily: font, color: t.textMuted, whiteSpace: 'nowrap' }}>{activeFestival?.fullName || 'Select festival'}</span>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 12 15 18 9"/>
@@ -1259,10 +1300,24 @@ const PrimaveraApp = () => {
         {tab === 'home' && (
           <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100svh - 130px)' }}>
             <h1 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 4px', color: t.dark, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em', lineHeight: '1.2' }}>
-              Hello, {userName || user?.email?.split('@')[0] || 'there'}!
+              {(() => {
+                const name = userName || user?.email?.split('@')[0] || 'there';
+                const festivalName = activeFestival?.name || activeFestival?.fullName;
+                const today = new Date().toISOString().slice(0, 10);
+                const { start, end } = activeFestival || {};
+                const second = !start || !festivalName ? null
+                  : today < start ? `can't wait for ${festivalName}!`
+                  : today <= end ? `are you enjoying ${festivalName}?`
+                  : `did you enjoy ${festivalName}?`;
+                return (
+                  <>
+                    Hey {name},{second && <><br />{second}</>}
+                  </>
+                );
+              })()}
             </h1>
             {/* Cards pushed to bottom */}
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '30px' }}>
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
 
               {/* AI Search card */}
               <button onClick={() => navigateTo('notes')} style={{
@@ -1336,6 +1391,8 @@ const PrimaveraApp = () => {
             suggestedMatches={searchCards.flatMap(c => c.matches)}
             confirmedMatches={confirmedMatches}
             onNavigateToConnections={() => navigateTo('matches')}
+            festival={activeFestival}
+            onActiveChange={setAiSearchActive}
           />
         )}
 
@@ -1672,6 +1729,7 @@ const PrimaveraApp = () => {
               ) : (
                 <div style={{ padding: '0 16px 24px' }}>
                   <VibesFeed
+                    key={activeFestivalId}
                     notes={myPublic}
                     noteAuthors={noteAuthors}
                     onSendRequest={handleSendRequest}
@@ -1687,6 +1745,7 @@ const PrimaveraApp = () => {
             {boardSubTab === 'everyone' && (
               <div style={{ padding: '0 0 24px' }}>
                 <VibesFeed
+                  key={activeFestivalId}
                   notes={publicNotes}
                   noteAuthors={noteAuthors}
                   onSendRequest={handleSendRequest}
@@ -1723,6 +1782,12 @@ const PrimaveraApp = () => {
                 </h1>
                 <button onClick={resetVibe} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: t.textMuted, fontSize: '20px', lineHeight: 1 }}>✕</button>
               </div>
+              {/* Fade gradient below title */}
+              <div style={{
+                flexShrink: 0, height: '28px', marginBottom: '-28px',
+                background: `linear-gradient(to bottom, ${t.bg}, transparent)`,
+                zIndex: 1, pointerEvents: 'none', position: 'relative',
+              }} />
 
               {/* Step 0: text */}
               {vibeStep === 0 && (
@@ -1779,7 +1844,7 @@ const PrimaveraApp = () => {
                     Which artist were you at?
                   </p>
                   <div style={{
-                    flex: 1, minHeight: 0,
+                    flex: 1, minHeight: 0, maxHeight: '42vh',
                     WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 48px), transparent 100%)',
                     maskImage: 'linear-gradient(to bottom, black calc(100% - 48px), transparent 100%)',
                     overflowY: 'auto',
@@ -2024,27 +2089,41 @@ const PrimaveraApp = () => {
         </div>
       )}
 
-      {/* Festival switcher bottom sheet */}
+      {/* Festival switcher full-page */}
       {festivalSwitcherOpen && (
-        <div onClick={() => setFestivalSwitcherOpen(false)} style={{
-          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 50,
-          display: 'flex', alignItems: 'flex-end',
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: t.bg, zIndex: 50,
+          display: 'flex', flexDirection: 'column',
         }}>
-          <div onClick={e => e.stopPropagation()} style={{
-            width: '100%', maxWidth: '480px', margin: '0 auto',
-            backgroundColor: t.bg, borderRadius: `${radius.xl} ${radius.xl} 0 0`,
-            padding: '20px 20px 36px', display: 'flex', flexDirection: 'column', gap: '10px',
+          {/* Sticky header */}
+          <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto', padding: '16px 20px 12px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
+              <p style={{ fontSize: '28px', fontWeight: '700', color: t.dark, margin: 0, fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em' }}>Switch festival</p>
+              <button onClick={() => setFestivalSwitcherOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: t.textMuted, display: 'flex', alignItems: 'center' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          {/* Fade gradient below header */}
+          <div style={{
+            flexShrink: 0, height: '24px', marginBottom: '-24px',
+            background: `linear-gradient(to bottom, ${t.bg}, transparent)`,
+            zIndex: 1, pointerEvents: 'none', position: 'relative',
+          }} />
+          {/* Scrollable list */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{
+            maxWidth: '480px', margin: '0 auto',
+            padding: '4px 20px 48px', display: 'flex', flexDirection: 'column', gap: '10px',
           }}>
-            <div style={{ width: '36px', height: '4px', backgroundColor: t.border, borderRadius: radius.xs, margin: '0 auto 12px' }} />
-            <p style={{ fontSize: '28px', fontWeight: '700', color: t.dark, margin: '0 0 20px', fontFamily: "'HealTheWeb', system-ui, sans-serif", letterSpacing: '0.01em' }}>Switch festival</p>
             {FESTIVAL_LIST.map(f => (
               <button key={f.id} onClick={() => {
                 localStorage.setItem('fulmi_festival_id', f.id);
                 setActiveFestivalId(f.id);
                 setFestivalSwitcherOpen(false);
-                lastRefresh.current = 0;
-                setMyNotes([]); setPublicNotes([]); setSuggestedMatches([]); setConfirmedMatches([]); setReceivedRequests([]); setSentRequests([]);
-                loadData(userId, f.id);
+                navigateTo('home');
               }} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 width: '100%', padding: '14px 16px', borderRadius: radius.md,
@@ -2053,7 +2132,7 @@ const PrimaveraApp = () => {
               }}>
                 <div>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
-                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.dates}</p>
+                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.city} · {f.dates}</p>
                 </div>
                 {f.id === activeFestivalId && (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -2095,6 +2174,7 @@ const PrimaveraApp = () => {
                 </>
               )}
             </div>
+          </div>
           </div>
         </div>
       )}
@@ -3036,4 +3116,5 @@ const EmptyState = ({ text, sub }) => (
   </div>
 );
 
+export { ErrorBoundary };
 export default PrimaveraApp;

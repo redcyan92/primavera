@@ -113,7 +113,17 @@ const STATE_LABELS = {
   connected:   { label: 'Connected ✓',     color: '#036B42', bg: '#E6FAF2', border: '#A8E6CF' },
 };
 
-export default function SearchWithAI({ onSave, artists = [], days = [], mySearches = [], suggestedMatches = [], confirmedMatches = [], onNavigateToConnections }) {
+const FESTIVAL_SEARCH_BASE = {
+  'psb-2026': 6,
+  'psp-2026': 4,
+  'vida-2026': 3,
+  'kappa-2026': 3,
+  'nos-alive-2026': 3,
+  'bbk-2026': 3,
+  'opener-2026': 3,
+};
+
+export default function SearchWithAI({ onSave, artists = [], days = [], mySearches = [], suggestedMatches = [], confirmedMatches = [], onNavigateToConnections, festival = null, onActiveChange }) {
   const [step, setStep] = useState('input');
   const [prompt, setPrompt] = useState('');
   const [extracted, setExtracted] = useState(null);
@@ -123,11 +133,15 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
 
   const go = (nextStep, delay = 900) => {
     setStep('loading');
-    setTimeout(() => setStep(nextStep), delay);
+    setTimeout(() => {
+      setStep(nextStep);
+      onActiveChange?.(!['input', 'confirm'].includes(nextStep));
+    }, delay);
   };
 
   const handleAnalyze = () => {
     if (!prompt.trim()) return;
+    onActiveChange?.(true);
     setStep('loading');
     setTimeout(() => {
       const fields = extractFields(prompt, artists);
@@ -158,6 +172,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
   };
 
   const handleReset = () => {
+    onActiveChange?.(false);
     setStep('input');
     setPrompt('');
     setExtracted(null);
@@ -209,9 +224,19 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
           backgroundColor: t.primaryBg, color: t.primary,
           fontFamily: font,
         }}>
-          <span style={{ fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase' }}>AI Search</span>
-          <span style={{ fontWeight: '400', margin: '0 4px' }}>&middot;</span>
-          <span style={{ fontWeight: '400' }}>Find your missed connection</span>
+          {(() => {
+            const count = festival ? (FESTIVAL_SEARCH_BASE[festival.id] ?? 3) + mySearches.length : null;
+            const festivalName = festival?.name || 'the festival';
+            return count != null ? (
+              <span style={{ fontWeight: '400' }}><span style={{ fontWeight: '700' }}>{count}</span> people searching at {festivalName}</span>
+            ) : (
+              <>
+                <span style={{ fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase' }}>AI Search</span>
+                <span style={{ fontWeight: '400', margin: '0 4px' }}>&middot;</span>
+                <span style={{ fontWeight: '400' }}>Find your missed connection</span>
+              </>
+            );
+          })()}
         </span>
 
         <div style={{ textAlign: 'center' }}>
@@ -375,8 +400,12 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
   if (step === 'artist') return (
     <div>
       <StepHeader title="What were you watching?" sub="Which artist or stage were you at?" step={2} total={REFINE_TOTAL} onExit={handleReset} />
-
-      <div style={{ maxHeight: '55vh', overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '2px 0' }}>
+      <div style={{
+        flexShrink: 0, height: '24px', marginBottom: '-24px',
+        background: `linear-gradient(to bottom, ${t.bg}, transparent)`,
+        zIndex: 1, pointerEvents: 'none', position: 'relative',
+      }} />
+      <div style={{ maxHeight: '42vh', overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '2px 0' }}>
         {artists.filter(a => a !== 'Otro').slice().sort((a, b) => a.localeCompare(b)).map(a => (
           <Chip key={a} label={a} selected={refined.artist === a}
             onClick={() => setRefined(p => ({ ...p, artist: p.artist === a ? null : a }))} />
