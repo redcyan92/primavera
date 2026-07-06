@@ -395,12 +395,11 @@ function AnimatedMatch({ active }) {
     return () => clearTimeout(timerRef.current);
   }, [active, phase, charIndex]);
 
-  const showEye = phase === 'searching' || phase === 'matched' || phase === 'transitioning';
-  const showCard = phase === 'typing' || phase === 'fadeout';
-  const eyeOpacity = phase === 'transitioning' ? 0 : 1;
+  const eyeContentOpacity = (phase === 'searching' || phase === 'matched') ? 1 : 0;
+  const cardContentOpacity = phase === 'typing' ? 1 : 0;
   const matchLabelOpacity = phase === 'matched' || phase === 'transitioning' ? 1 : 0;
   const matchLabelScale = phase === 'matched' || phase === 'transitioning' ? 1 : 0.88;
-  const bgColor = phase === 'searching' ? '#FFFFFF' : '#FBF1FF';
+  const cardBg = phase === 'searching' ? '#FFFFFF' : '#FBF1FF';
 
   return (
     <div style={{
@@ -411,14 +410,26 @@ function AnimatedMatch({ active }) {
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       opacity: visible ? 1 : 0,
-      background: bgColor,
-      transition: 'opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94), background-color 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
+      transition: 'opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
       pointerEvents: 'none',
     }}>
-      {/* Eye + mutual match label */}
-      {showEye && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
-          opacity: eyeOpacity, transition: 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94)' }}>
+      {/* Single card frame for all phases */}
+      <div style={{
+        width: 'calc(100% - 40px)',
+        background: cardBg,
+        borderRadius: '16px',
+        boxShadow: '0 2px 16px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.06)',
+        transition: 'background-color 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
+        position: 'relative',
+      }}>
+        {/* Eye + mutual match — absolutely centered over card area */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: '16px',
+          opacity: eyeContentOpacity,
+          transition: 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
+        }}>
           <OtraEye size={100} pupilCentered={phase === 'matched' || phase === 'transitioning'} />
           <div style={{
             background: 'rgba(245,232,255,0.9)',
@@ -431,24 +442,16 @@ function AnimatedMatch({ active }) {
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#B50BF2', fontFamily: font }}>Mutual match!</span>
           </div>
         </div>
-      )}
 
-      {/* Match card */}
-      {showCard && (
+        {/* Tom card content — sets card height, fades in/out */}
         <div style={{
-          width: 'calc(100% - 40px)',
-          background: '#FFFFFF',
-          borderRadius: '16px',
           padding: '20px',
-          boxShadow: '0 2px 16px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.06)',
-          opacity: phase === 'typing' ? 1 : 0,
+          opacity: cardContentOpacity,
           transition: 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
         }}>
-          {/* Name */}
           <div style={{ fontWeight: '700', fontSize: '18px', color: '#1D1D2F', marginBottom: '10px', fontFamily: font }}>
             Tom
           </div>
-          {/* Tags */}
           <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
             {['Saturday Evening', 'Fred Again'].map(tag => (
               <span key={tag} style={{
@@ -457,11 +460,9 @@ function AnimatedMatch({ active }) {
               }}>{tag}</span>
             ))}
           </div>
-          {/* Description */}
           <p style={{ fontSize: '13px', lineHeight: '1.55', color: '#1D1D2F', margin: '0 0 16px', fontFamily: font }}>
             The girl with the pink cowboy hat dancing in the crowd — I was right next to you during the whole set and couldn't stop smiling.
           </p>
-          {/* Instagram row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
             background: '#F8FAFB', borderRadius: '12px', padding: '12px 14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
@@ -488,7 +489,7 @@ function AnimatedMatch({ active }) {
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
