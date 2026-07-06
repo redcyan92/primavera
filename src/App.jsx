@@ -1186,30 +1186,36 @@ const PrimaveraApp = () => {
         {/* Scrollable list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 48px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {FESTIVAL_LIST.map(f => (
-              <button key={f.id} onClick={() => {
-                localStorage.setItem('fulmi_festival_id', f.id);
-                setActiveFestivalId(f.id);
-                setTab('home');
-                lastRefresh.current = 0;
-                loadData(userId, f.id);
-              }} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                width: '100%', padding: '14px 16px', borderRadius: radius.md,
-                backgroundColor: f.id === activeFestivalId ? t.primaryBg : t.white,
-                cursor: 'pointer', textAlign: 'left', border: 'none', outline: 'none',
-              }}>
-                <div>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
-                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.city} · {f.dates}</p>
-                </div>
-                {f.id === activeFestivalId && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                )}
-              </button>
-            ))}
+            {FESTIVAL_LIST.map(f => {
+              const upcoming = f.start && new Date() < new Date(f.start);
+              return (
+                <button key={f.id} onClick={() => {
+                  if (upcoming) return;
+                  localStorage.setItem('fulmi_festival_id', f.id);
+                  setActiveFestivalId(f.id);
+                  setTab('home');
+                  lastRefresh.current = 0;
+                  loadData(userId, f.id);
+                }} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  width: '100%', padding: '14px 16px', borderRadius: radius.md,
+                  backgroundColor: f.id === activeFestivalId ? t.primaryBg : t.white,
+                  cursor: upcoming ? 'default' : 'pointer', textAlign: 'left', border: 'none', outline: 'none',
+                  opacity: upcoming ? 0.5 : 1,
+                }}>
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
+                    <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.city} · {f.dates}</p>
+                  </div>
+                  {upcoming && <span style={{ fontSize: '10px', fontWeight: '700', color: t.textMuted, backgroundColor: t.border, borderRadius: radius.pill, padding: '2px 7px', fontFamily: font, letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Coming soon</span>}
+                  {f.id === activeFestivalId && (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
           </div>
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${t.border}` }}>
             {festivalRequestStatus === 'sent' ? (
@@ -1723,7 +1729,7 @@ const PrimaveraApp = () => {
                       padding: '12px 24px', borderRadius: radius.md, border: 'none',
                       backgroundColor: t.primary, color: '#fff', cursor: 'pointer',
                       fontSize: '14px', fontWeight: '700', fontFamily: font,
-                    }}>Create a post →</button>
+                    }}>Create a post <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginLeft: '2px' }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
                   </div>
                 </div>
               ) : (
@@ -1782,12 +1788,12 @@ const PrimaveraApp = () => {
                 </h1>
                 <button onClick={resetVibe} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: t.textMuted, fontSize: '20px', lineHeight: 1 }}>✕</button>
               </div>
-              {/* Fade gradient below title */}
-              <div style={{
+              {/* Fade gradient below title — only on steps with a scrollable list */}
+              {vibeStep === 1 && <div style={{
                 flexShrink: 0, height: '28px', marginBottom: '-28px',
                 background: `linear-gradient(to bottom, ${t.bg}, transparent)`,
                 zIndex: 1, pointerEvents: 'none', position: 'relative',
-              }} />
+              }} />}
 
               {/* Step 0: text */}
               {vibeStep === 0 && (
@@ -2118,29 +2124,35 @@ const PrimaveraApp = () => {
             maxWidth: '480px', margin: '0 auto',
             padding: '4px 20px 48px', display: 'flex', flexDirection: 'column', gap: '10px',
           }}>
-            {FESTIVAL_LIST.map(f => (
-              <button key={f.id} onClick={() => {
-                localStorage.setItem('fulmi_festival_id', f.id);
-                setActiveFestivalId(f.id);
-                setFestivalSwitcherOpen(false);
-                navigateTo('home');
-              }} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                width: '100%', padding: '14px 16px', borderRadius: radius.md,
-                backgroundColor: f.id === activeFestivalId ? t.primaryBg : t.white,
-                cursor: 'pointer', textAlign: 'left', border: 'none', outline: 'none',
-              }}>
-                <div>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
-                  <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.city} · {f.dates}</p>
-                </div>
-                {f.id === activeFestivalId && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                )}
-              </button>
-            ))}
+            {FESTIVAL_LIST.map(f => {
+              const upcoming = f.start && new Date() < new Date(f.start);
+              return (
+                <button key={f.id} onClick={() => {
+                  if (upcoming) return;
+                  localStorage.setItem('fulmi_festival_id', f.id);
+                  setActiveFestivalId(f.id);
+                  setFestivalSwitcherOpen(false);
+                  navigateTo('home');
+                }} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  width: '100%', padding: '14px 16px', borderRadius: radius.md,
+                  backgroundColor: f.id === activeFestivalId ? t.primaryBg : t.white,
+                  cursor: upcoming ? 'default' : 'pointer', textAlign: 'left', border: 'none', outline: 'none',
+                  opacity: upcoming ? 0.5 : 1,
+                }}>
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: f.id === activeFestivalId ? t.primary : t.dark, fontFamily: font, margin: 0 }}>{f.fullName}</p>
+                    <p style={{ fontSize: '12px', color: t.textMuted, fontFamily: font, margin: '2px 0 0' }}>{f.city} · {f.dates}</p>
+                  </div>
+                  {upcoming && <span style={{ fontSize: '10px', fontWeight: '700', color: t.textMuted, backgroundColor: t.border, borderRadius: radius.pill, padding: '2px 7px', fontFamily: font, letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Coming soon</span>}
+                  {f.id === activeFestivalId && (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
             <div style={{ marginTop: '6px', paddingTop: '14px', borderTop: `1px solid ${t.border}` }}>
               {festivalRequestStatus === 'sent' ? (
                 <p style={{ fontSize: '13px', color: t.textMuted, fontFamily: font, margin: 0 }}>Thanks! We'll let you know if it's added.</p>
@@ -2611,7 +2623,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
             padding: '12px 24px', borderRadius: radius.md, border: 'none',
             backgroundColor: t.primary, color: '#fff', cursor: 'pointer',
             fontSize: '14px', fontWeight: '700', fontFamily: font,
-          }}>Create a post →</button>
+          }}>Create a post <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginLeft: '2px' }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         )}
       </div>
     );

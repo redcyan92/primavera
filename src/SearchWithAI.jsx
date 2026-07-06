@@ -131,12 +131,9 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
     artist: null, time: null, location: null, day: null, ownDesc: '',
   });
 
-  const go = (nextStep, delay = 900) => {
-    setStep('loading');
-    setTimeout(() => {
-      setStep(nextStep);
-      onActiveChange?.(!['input', 'confirm'].includes(nextStep));
-    }, delay);
+  const go = (nextStep) => {
+    setStep(nextStep);
+    onActiveChange?.(!['input', 'confirm'].includes(nextStep));
   };
 
   const handleAnalyze = () => {
