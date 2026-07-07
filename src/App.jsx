@@ -1375,7 +1375,7 @@ const PrimaveraApp = () => {
                     <span style={{ fontSize: '11px', fontWeight: '600', color: '#5d8000', fontFamily: font }}>Public</span>
                   </div>
                 </div>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
+                <p style={{ margin: '0 0 40px', fontSize: '13px', color: t.textSec, fontFamily: font, lineHeight: '1.5' }}>
                   Post a moment to the Crowd wall. Anyone at the festival can see it, interact and connect with you.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -1393,8 +1393,7 @@ const PrimaveraApp = () => {
             onSave={handleSaveNote}
             artists={activeFestival?.artists || []}
             days={activeFestival?.days || []}
-            mySearches={searchCards.map(c => c.note)}
-            suggestedMatches={searchCards.flatMap(c => c.matches)}
+            mySearches={searchCards}
             confirmedMatches={confirmedMatches}
             onNavigateToConnections={() => navigateTo('matches')}
             festival={activeFestival}
@@ -1492,20 +1491,25 @@ const PrimaveraApp = () => {
                   const currentItem = carouselItems[clampedIdx] || null;
                   const setIdx = (val) => setCarouselIndexes(prev => ({ ...prev, [myNote.id]: typeof val === 'function' ? val(prev[myNote.id] || 0) : val }));
 
+                  const fmtChip = s => s.replace(/_/g, ' ').replace(/\s*\(.*?\)/g, '').trim();
                   const metaChips = [
                     myNote.artist && myNote.artist !== 'Otro' ? myNote.artist : null,
-                    myNote.location && myNote.location.replace(/_/g, ' '),
-                    myNote.time && myNote.time.replace(/_/g, ' '),
+                    myNote.time && fmtChip(myNote.time),
+                    myNote.location && fmtChip(myNote.location),
                   ].filter(Boolean);
 
                   return (
-                    <div key={myNote.id} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div key={myNote.id} style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                       {/* Search label */}
-                      <div>
+                      <div style={{
+                        backgroundColor: t.white,
+                        borderRadius: `${radius.xl} ${radius.xl} 0 0`,
+                        padding: '14px 14px 14px',
+                      }}>
                         {metaChips.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
                             {metaChips.map((chip, i) => (
-                              <span key={i} style={{ fontSize: '10px', color: t.textMuted, backgroundColor: t.white, borderRadius: radius.sm, padding: '3px 8px', textTransform: 'capitalize' }}>{chip}</span>
+                              <span key={i} style={{ fontSize: '10px', color: t.textMuted, backgroundColor: t.surface, borderRadius: radius.sm, padding: '3px 8px', textTransform: 'capitalize' }}>{chip}</span>
                             ))}
                           </div>
                         )}
@@ -1516,7 +1520,7 @@ const PrimaveraApp = () => {
 
                       {/* Match carousel */}
                       {carouselItems.length === 0 ? (
-                        <SearchingCard />
+                        <SearchingCard flatTop />
                       ) : (
                         <div
                           onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
@@ -1531,6 +1535,7 @@ const PrimaveraApp = () => {
                           }}
                         >
                           <UnifiedMatchCard
+                            flatTop
                             item={currentItem}
                             authorName={noteAuthors[currentItem.match.user_id]}
                             myNote={myNote}
@@ -1621,10 +1626,14 @@ const PrimaveraApp = () => {
                         };
 
                     return (
-                      <div key={req.matchId} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {/* Origin post header — same style as the Crowd feed post */}
+                      <div key={req.matchId} style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                        {/* Origin post header */}
                         {originPost && (
-                          <div>
+                          <div style={{
+                            backgroundColor: t.white,
+                            borderRadius: `${radius.xl} ${radius.xl} 0 0`,
+                            padding: '14px 14px 14px',
+                          }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', fontFamily: font, color: isSent ? t.dark : CATEGORY_THEME.crowd.accent }}>{originName}</p>
                               {timeAgo(originPost.createdAt || originPost.created_at) && (
@@ -1640,6 +1649,7 @@ const PrimaveraApp = () => {
                           </div>
                         )}
                         <RequestCard
+                          flatTop={!!originPost}
                           direction={item.direction}
                           req={req}
                           isAccepted={isAccepted}
@@ -2424,10 +2434,10 @@ const NoSearchCard = ({ onCreateSearch }) => (
 );
 
 // ─── SearchingCard ─────────────────────────────────────────────────────────
-const SearchingCard = ({ text, sub } = {}) => (
+const SearchingCard = ({ text, sub, flatTop } = {}) => (
   <div style={{
     backgroundColor: text ? t.surface : t.primaryBg,
-    borderRadius: radius.xl, padding: '24px 20px',
+    borderRadius: flatTop ? `0 0 ${radius.xl} ${radius.xl}` : radius.xl, padding: '24px 20px',
     minHeight: '360px', display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: '14px', textAlign: 'center',
   }}>
@@ -2439,14 +2449,14 @@ const SearchingCard = ({ text, sub } = {}) => (
         {text || 'Looking for matches…'}
       </p>
       <p style={{ margin: 0, fontSize: '13px', color: t.textMuted, fontFamily: font }}>
-        {sub || 'Checking with people at the same spot'}
+        {sub || 'Finding people who shared the same moment'}
       </p>
     </div>
   </div>
 );
 
 // ─── UnifiedMatchCard ──────────────────────────────────────────────────────
-const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagram }) => {
+const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagram, flatTop }) => {
   const [igInput, setIgInput] = React.useState('');
   const { match, state, confirmed } = item;
   const theme = CATEGORY_THEME.ai;
@@ -2456,7 +2466,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
 
   const chips = [
     match.artist && match.artist !== 'Otro' ? { label: match.artist, key: 'artist' } : null,
-    match.time ? { label: match.time.replace(/_/g, ' '), key: 'time' } : null,
+    match.time ? { label: match.time.replace(/_/g, ' ').replace(/\s*\(.*?\)/g, '').trim(), key: 'time' } : null,
     match.location ? { label: match.location.replace(/_/g, ' '), key: 'location' } : null,
   ].filter(Boolean);
 
@@ -2471,7 +2481,7 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
   return (
     <div style={{
       backgroundColor: theme.cardBg,
-      borderRadius: radius.xl, padding: '24px 20px 20px',
+      borderRadius: flatTop ? `0 0 ${radius.xl} ${radius.xl}` : radius.xl, padding: '24px 20px 20px',
       minHeight: '360px', display: 'flex', flexDirection: 'column',
     }}>
       {/* Header row */}
@@ -2490,13 +2500,20 @@ const UnifiedMatchCard = ({ item, authorName, myNote, onNo, onYes, onAddInstagra
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'background-color 0.2s, color 0.2s',
                 padding: 0, flexShrink: 0,
-              }}>{showSelfDesc ? '−' : '+'}</button>
+              }}>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  {showSelfDesc
+                    ? <line x1="1" y1="5" x2="9" y2="5" />
+                    : <><line x1="5" y1="1" x2="5" y2="9" /><line x1="1" y1="5" x2="9" y2="5" /></>
+                  }
+                </svg>
+              </button>
             )}
           </div>
           <span style={{ fontSize: '12px', color: theme.accent, fontWeight: '600', fontFamily: font }}>Matched by AI</span>
         </div>
         {isMutual && (
-          <Badge label="Mutual match" color={theme.accent} bg={theme.tint} border={theme.border} />
+          <Badge label="Connected" color={theme.accent} bg={theme.tint} border={theme.border} />
         )}
       </div>
 
@@ -3008,7 +3025,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
 };
 
 // ─── RequestCard ───────────────────────────────────────────────────────────
-const RequestCard = ({ direction = 'received', req, isAccepted, myVibeNote, theirVibeNote, onDecline, onAccept, onAddInstagram }) => {
+const RequestCard = ({ direction = 'received', req, isAccepted, myVibeNote, theirVibeNote, onDecline, onAccept, onAddInstagram, flatTop }) => {
   const [igInput, setIgInput] = React.useState('');
   const [menuOpen, setMenuOpen] = React.useState(false);
   const isSent = direction === 'sent';
@@ -3037,7 +3054,7 @@ const RequestCard = ({ direction = 'received', req, isAccepted, myVibeNote, thei
   return (
     <div style={{
       backgroundColor: theme.cardBg,
-      borderRadius: radius.xl,
+      borderRadius: flatTop ? `0 0 ${radius.xl} ${radius.xl}` : radius.xl,
       padding: '20px',
       display: 'flex', flexDirection: 'column',
     }}>

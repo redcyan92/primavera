@@ -106,11 +106,11 @@ function getSearchState(suggestedMatches, confirmedMatches) {
 }
 
 const STATE_LABELS = {
-  searching:   { label: 'Searching…',      color: '#9E9A93', bg: '#F7F5F2', border: '#EDE8DF' },
-  match_found: { label: 'Match found!',    color: '#FF5B1B', bg: '#FFF0EB', border: '#FABB96' },
-  they_want:   { label: 'They want you!',  color: '#FF5B1B', bg: '#FFF0EB', border: '#FF5B1B' },
-  requested:   { label: 'Request sent',    color: '#9E9A93', bg: '#F7F5F2', border: '#EDE8DF' },
-  connected:   { label: 'Connected ✓',     color: '#036B42', bg: '#E6FAF2', border: '#A8E6CF' },
+  searching:   { label: 'Searching',     color: '#B50BF2', bg: 'rgba(181,11,242,0.06)', border: 'rgba(181,11,242,0.14)' },
+  match_found: { label: 'Mutual match',  color: '#B50BF2', bg: 'rgba(181,11,242,0.08)', border: 'rgba(181,11,242,0.18)' },
+  they_want:   { label: 'Mutual match',  color: '#B50BF2', bg: 'rgba(181,11,242,0.08)', border: 'rgba(181,11,242,0.18)' },
+  requested:   { label: 'Mutual match',  color: '#B50BF2', bg: 'rgba(181,11,242,0.08)', border: 'rgba(181,11,242,0.18)' },
+  connected:   { label: 'Connected',     color: '#B50BF2', bg: 'rgba(181,11,242,0.15)', border: 'rgba(181,11,242,0.30)' },
 };
 
 const FESTIVAL_SEARCH_BASE = {
@@ -123,7 +123,7 @@ const FESTIVAL_SEARCH_BASE = {
   'opener-2026': 3,
 };
 
-export default function SearchWithAI({ onSave, artists = [], days = [], mySearches = [], suggestedMatches = [], confirmedMatches = [], onNavigateToConnections, festival = null, onActiveChange }) {
+export default function SearchWithAI({ onSave, artists = [], days = [], mySearches = [], confirmedMatches = [], onNavigateToConnections, festival = null, onActiveChange }) {
   const [step, setStep] = useState('input');
   const [prompt, setPrompt] = useState('');
   const [extracted, setExtracted] = useState(null);
@@ -304,13 +304,15 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
             color: t.dark, fontFamily: font, textAlign: 'center',
           }}>My Searches</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {mySearches.map(note => {
-              const state = getSearchState(suggestedMatches, confirmedMatches);
+            {mySearches.map(card => {
+              const note = card.note ?? card;
+              const cardMatches = card.matches ?? [];
+              const state = getSearchState(cardMatches, confirmedMatches);
               const stateStyle = STATE_LABELS[state];
               const metaParts = [
-                note.location && note.location.replace(/_/g, ' '),
-                note.time,
                 note.artist && note.artist !== 'Otro' ? note.artist : null,
+                note.time && note.time.replace(/_/g, ' ').replace(/\s*\(.*?\)/g, '').trim(),
+                note.location && note.location.replace(/_/g, ' ').replace(/\s*\(.*?\)/g, '').trim(),
               ].filter(Boolean);
               return (
                 <button
