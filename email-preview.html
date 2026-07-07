@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Email Template Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; padding: 32px 16px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .tab { padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); transition: all 0.15s; }
+    .tab.active { background: #B50BF2; color: #fff; }
+    .preview-frame { width: 100%; border: none; border-radius: 12px; overflow: hidden; }
+    .label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="tab active" onclick="show('search_live')">Search live</button>
+  <button class="tab" onclick="show('activity_digest')">Activity digest</button>
+  <button class="tab" onclick="show('mutual_match')">Mutual match</button>
+  <button class="tab" onclick="show('crowd_request')">Crowd request</button>
+</div>
+
+<div class="label">Preview</div>
+<iframe id="frame" class="preview-frame" style="height:600px"></iframe>
+
+<script>
+const C = {
+  bg:         '#F8FAFB',
+  primary:    '#B50BF2',
+  tint:       'rgba(181,11,242,0.07)',
+  tintBorder: 'rgba(181,11,242,0.18)',
+  dark:       '#1D1D2F',
+  sec:        '#56524E',
+  muted:      '#9E9A93',
+  border:     '#E6E8EC',
+  surface:    '#F2F3F6',
+};
+
+const APP_URL = 'https://otra.social';
+
+const logo = `<svg viewBox="0 0 27.76 8.41" xmlns="http://www.w3.org/2000/svg" width="80" height="24" role="img" aria-label="OTRA">
+  <path fill="#B50BF2" d="M11.8.98h-1.48v2.47h-1V0h5.92v3.45h-.98V.98h-1.49v7.42h-.98V.98Z"/>
+  <path fill="#B50BF2" d="M26.63.01h1.13v8.4h-1.07v-1.26l-2.29-1.34-1.54,2.6h-1.18L26.63.01ZM26.69,6V1.89l-1.8,3.06,1.8,1.04Z"/>
+  <path fill="#B50BF2" d="M21.31,7.51l-3.2-2.81h1.44c1.31,0,2.35-1.04,2.35-2.34S20.84.01,19.55.01h-3.13v8.4h.98v-3.02l3.4,2.99.51-.86ZM17.45,1h2.06c.74,0,1.37.61,1.37,1.37s-.62,1.36-1.37,1.36h-2.06V1Z"/>
+  <path fill="#B50BF2" d="M4.2,1.01c1.77,0,3.2,1.43,3.2,3.2s-1.43,3.2-3.2,3.2-3.2-1.43-3.2-3.2,1.43-3.2,3.2-3.2M4.2,0C1.89,0,0,1.89,0,4.21s1.89,4.2,4.2,4.2,4.2-1.89,4.2-4.2S6.52,0,4.2,0h0Z"/>
+  <rect fill="#B50BF2" x="4.2" y="0" width="3.72" height="1"/>
+  <rect fill="#B50BF2" x=".49" y="7.41" width="3.72" height="1"/>
+  <circle fill="#B50BF2" cx="4.2" cy="4.21" r=".88"/>
+</svg>`;
+
+const btn = (label) =>
+  `<a href="${APP_URL}" style="display:inline-block;margin-top:24px;padding:13px 28px;background:${C.primary};color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;letter-spacing:0.01em">${label}</a>`;
+
+const chip = (text) =>
+  `<span style="display:inline-block;font-size:11px;color:${C.muted};background:${C.surface};border-radius:4px;padding:3px 9px;margin-right:6px;font-weight:500">${text}</span>`;
+
+const quoteBlock = (text, chips = '') =>
+  `<div style="background:#fff;border-radius:10px;padding:14px 16px;margin:18px 0">
+    ${chips ? `<div style="margin-bottom:8px">${chips}</div>` : ''}
+    <p style="margin:0;font-size:14px;color:${C.dark};line-height:1.65">${text}</p>
+  </div>`;
+
+const replyBlock = (text) =>
+  `<div style="background:${C.tint};border:1px solid ${C.tintBorder};border-radius:10px;padding:12px 16px;margin:16px 0;font-size:14px;color:${C.sec};font-style:italic;line-height:1.6">${text}</div>`;
+
+const divider = () =>
+  `<hr style="border:none;border-top:1px solid ${C.border};margin:28px 0">`;
+
+const wrap = (body) => `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${C.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:${C.dark}">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+
+        <tr><td style="padding:0 0 28px">${logo}</td></tr>
+
+        <tr><td style="background:${C.bg};padding:28px 0 32px">
+          ${body}
+        </td></tr>
+
+        <tr><td style="padding:8px 0 0;font-size:12px;color:${C.muted};line-height:1.8;border-top:1px solid ${C.border}">
+          OTRA — Find the people you vibed with<br>
+          <a href="https://otra.social" style="color:${C.primary};text-decoration:none">otra.social</a>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+const templates = {
+  search_live: () => wrap(`
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">AI Search</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">Your search is live</h1>
+    <p style="margin:0 0 4px;font-size:15px;color:${C.sec};line-height:1.6">We're matching you with people at <strong style="color:${C.dark}">Primavera Sound</strong> who shared the same moment.</p>
+    ${quoteBlock('The opening set by Floating Points — that moment when the bass dropped and everyone looked at each other', chip('Floating Points'))}
+    <p style="margin:0;font-size:14px;color:${C.muted}">We'll notify you as soon as we find a match.</p>
+    ${btn('See your search →')}
+  `),
+
+  activity_digest: () => wrap(`
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">New activity</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">More people searching at Primavera Sound</h1>
+    <p style="margin:0;font-size:15px;color:${C.sec};line-height:1.6">New searches for <strong style="color:${C.dark}">Floating Points</strong> just appeared — there may be new matches waiting for you.</p>
+    ${btn('Check your matches →')}
+  `),
+
+  mutual_match: () => wrap(`
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Mutual match</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">It's time to connect ✦</h1>
+    <p style="margin:0 0 4px;font-size:15px;color:${C.sec};line-height:1.6">You and <strong style="color:${C.dark}">Alexis</strong> both accepted each other at <strong style="color:${C.dark}">Primavera Sound</strong>.</p>
+    ${divider()}
+    <p style="margin:0;font-size:14px;color:${C.muted}">Open the app and share your Instagram to connect.</p>
+    ${btn('Connect now →')}
+  `),
+
+  crowd_request: () => wrap(`
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Crowd</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">Someone wants to connect</h1>
+    <p style="margin:0 0 4px;font-size:15px;color:${C.sec};line-height:1.6"><strong style="color:${C.dark}">Marco</strong> saw your post at <strong style="color:${C.dark}">Primavera Sound</strong> and wants to connect.</p>
+    ${quoteBlock('Anyone else at the Boiler Room stage around midnight? The energy was insane')}
+    ${replyBlock('I was there too! Would love to chat about it')}
+    ${btn('See the request →')}
+  `),
+};
+
+function show(key) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.onclick.toString().includes(`'${key}'`)));
+  const frame = document.getElementById('frame');
+  frame.srcdoc = templates[key]();
+  frame.onload = () => {
+    try { frame.style.height = (frame.contentDocument.body.scrollHeight + 32) + 'px'; } catch(e) {}
+  };
+}
+
+show('search_live');
+</script>
+</body>
+</html>

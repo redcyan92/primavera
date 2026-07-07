@@ -4,8 +4,8 @@ const resend    = new Resend(process.env.RESEND_API_KEY);
 const SUPABASE_URL = process.env.SUPABASE_URL;
 // Service role key bypasses RLS — required to read other users' email addresses
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
-const FROM  = 'otra <noreply@otra.social>';
-const APP_URL = 'https://otra.vercel.app';
+const FROM  = 'OTRA <noreply@otra.social>';
+const APP_URL = 'https://otra.social';
 
 // ── Supabase helpers ──────────────────────────────────────────────────────────
 
@@ -54,42 +54,41 @@ const chip = (text) =>
   `<span style="display:inline-block;font-size:11px;color:${C.muted};background:${C.surface};border-radius:4px;padding:3px 9px;margin-right:6px;font-weight:500">${text}</span>`;
 
 const quoteBlock = (text, chips = '') =>
-  `<div style="background:${C.tint};border:1px solid ${C.tintBorder};border-radius:10px;padding:14px 16px;margin:18px 0">
+  `<div style="background:#fff;border-radius:10px;padding:14px 16px;margin:18px 0">
     ${chips ? `<div style="margin-bottom:8px">${chips}</div>` : ''}
     <p style="margin:0;font-size:14px;color:${C.dark};line-height:1.65">${text}</p>
   </div>`;
 
+const replyBlock = (text) =>
+  `<div style="background:${C.tint};border:1px solid ${C.tintBorder};border-radius:10px;padding:12px 16px;margin:16px 0;font-size:14px;color:${C.sec};font-style:italic;line-height:1.6">${text}</div>`;
+
 const divider = () =>
   `<hr style="border:none;border-top:1px solid ${C.border};margin:28px 0">`;
 
-// SVG logomark inlined so it renders in all clients
-const logo = `<svg width="28" height="28" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="100" cy="100" r="90" stroke="${C.primary}" stroke-width="16"/>
-  <circle cx="100" cy="100" r="28" fill="${C.primary}"/>
-  <path d="M100 190 Q130 160 100 130" stroke="${C.primary}" stroke-width="14" stroke-linecap="round" fill="none"/>
+const logo = `<svg viewBox="0 0 27.76 8.41" xmlns="http://www.w3.org/2000/svg" width="80" height="24" role="img" aria-label="OTRA">
+  <path fill="#B50BF2" d="M11.8.98h-1.48v2.47h-1V0h5.92v3.45h-.98V.98h-1.49v7.42h-.98V.98Z"/>
+  <path fill="#B50BF2" d="M26.63.01h1.13v8.4h-1.07v-1.26l-2.29-1.34-1.54,2.6h-1.18L26.63.01ZM26.69,6V1.89l-1.8,3.06,1.8,1.04Z"/>
+  <path fill="#B50BF2" d="M21.31,7.51l-3.2-2.81h1.44c1.31,0,2.35-1.04,2.35-2.34S20.84.01,19.55.01h-3.13v8.4h.98v-3.02l3.4,2.99.51-.86ZM17.45,1h2.06c.74,0,1.37.61,1.37,1.37s-.62,1.36-1.37,1.36h-2.06V1Z"/>
+  <path fill="#B50BF2" d="M4.2,1.01c1.77,0,3.2,1.43,3.2,3.2s-1.43,3.2-3.2,3.2-3.2-1.43-3.2-3.2,1.43-3.2,3.2-3.2M4.2,0C1.89,0,0,1.89,0,4.21s1.89,4.2,4.2,4.2,4.2-1.89,4.2-4.2S6.52,0,4.2,0h0Z"/>
+  <rect fill="#B50BF2" x="4.2" y="0" width="3.72" height="1"/>
+  <rect fill="#B50BF2" x=".49" y="7.41" width="3.72" height="1"/>
+  <circle fill="#B50BF2" cx="4.2" cy="4.21" r=".88"/>
 </svg>`;
 
 const wrap = (body) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:${C.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:${C.dark}">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};padding:32px 16px">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};padding:40px 16px">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
-
-        <!-- Header -->
-        <tr><td style="padding:0 0 24px">${logo}</td></tr>
-
-        <!-- Card -->
-        <tr><td style="background:${C.card};border-radius:16px;padding:28px 28px 32px;border:1px solid ${C.border}">
+        <tr><td style="padding:0 0 28px">${logo}</td></tr>
+        <tr><td style="background:${C.bg};padding:28px 0 32px">
           ${body}
         </td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:24px 4px 0;font-size:12px;color:${C.muted};line-height:1.6">
-          otra — festival connections<br>
-          <a href="${APP_URL}" style="color:${C.muted}">otra.vercel.app</a>
+        <tr><td style="padding:8px 0 0;font-size:12px;color:${C.muted};line-height:1.8;border-top:1px solid ${C.border}">
+          OTRA — Find the people you vibed with<br>
+          <a href="https://otra.social" style="color:${C.primary};text-decoration:none">otra.social</a>
         </td></tr>
-
       </table>
     </td></tr>
   </table>
@@ -121,7 +120,7 @@ function activityDigestHtml(festivalName, artist) {
 function mutualMatchHtml(festivalName, otherName) {
   return wrap(`
     <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Mutual match</p>
-    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">You matched ✦</h1>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">It's time to connect ✦</h1>
     <p style="margin:0 0 4px;font-size:15px;color:${C.sec};line-height:1.6">You and <strong style="color:${C.dark}">${otherName || 'someone'}</strong> both accepted each other at <strong style="color:${C.dark}">${festivalName}</strong>.</p>
     ${divider()}
     <p style="margin:0;font-size:14px;color:${C.muted}">Open the app and share your Instagram to connect.</p>
@@ -130,9 +129,7 @@ function mutualMatchHtml(festivalName, otherName) {
 }
 
 function crowdRequestHtml(festivalName, senderName, postDescription, message) {
-  const msgBlock = message
-    ? `<div style="border-left:3px solid ${C.primary};padding:10px 14px;margin:16px 0;font-size:14px;color:${C.sec};font-style:italic;line-height:1.6">${message}</div>`
-    : '';
+  const msgBlock = message ? replyBlock(message) : '';
   return wrap(`
     <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Crowd</p>
     <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">Someone wants to connect</h1>
