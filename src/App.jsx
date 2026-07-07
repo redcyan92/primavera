@@ -348,7 +348,7 @@ const PrimaveraApp = () => {
         setNoteAuthors(authorsMap);
 
         // Build searchCards — one per targeted note
-        const userTargeted = camelNotes.filter(n => (n.visibility === 'targeted' || n.visibility === 'private') && n.festivalId === festivalId);
+        const userTargeted = camelNotes.filter(n => (n.visibility === 'targeted' || n.visibility === 'private') && n.festival_id === festivalId);
         const otherNotes = camelAll.filter(n => (n.visibility === 'targeted' || n.visibility === 'private') && n.user_id !== uid);
 
         const cards = userTargeted.map(myNote => {
