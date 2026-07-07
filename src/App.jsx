@@ -326,11 +326,15 @@ const PrimaveraApp = () => {
     lastRefresh.current = now;
 
     try {
-      const [notes, allNotes, existingMatches] = await Promise.all([
+      const [notes, allNotes, existingMatches, userRows] = await Promise.all([
         supabase.getNotes(uid),
         supabase.getAllNotes(festivalId),
         supabase.getMatches(uid),
+        supabase.getUserById(uid),
       ]);
+      if (Array.isArray(userRows) && userRows[0]) {
+        setEmailNotifications(!userRows[0].email_unsubscribed);
+      }
 
       const camelNotes = Array.isArray(notes) ? notes.map(toCamelCase) : [];
       setMyNotes(camelNotes);
