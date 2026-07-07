@@ -30,53 +30,114 @@ async function getUsersWithArtistInFestival(festivalId, artist, excludeUserId) {
   return rows.map(r => r.user_id).filter(id => { if (seen.has(id)) return false; seen.add(id); return true; });
 }
 
-// ── Email templates ───────────────────────────────────────────────────────────
+// ── Design tokens (matching app) ─────────────────────────────────────────────
+const C = {
+  bg:       '#F8FAFB',
+  card:     '#FFFFFF',
+  primary:  '#B50BF2',
+  tint:     'rgba(181,11,242,0.07)',
+  tintBorder: 'rgba(181,11,242,0.18)',
+  dark:     '#1D1D2F',
+  sec:      '#56524E',
+  muted:    '#9E9A93',
+  border:   '#E6E8EC',
+  surface:  '#F2F3F6',
+};
+
+// ── Shared primitives ─────────────────────────────────────────────────────────
 
 const btn = (label) =>
-  `<a href="${APP_URL}" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px">${label}</a>`;
+  `<a href="${APP_URL}" style="display:inline-block;margin-top:24px;padding:13px 28px;background:${C.primary};color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;letter-spacing:0.01em">${label}</a>`;
 
-const wrap = (body) => `
-<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 20px;color:#1D1D2F">
-<img src="${APP_URL}/icon.svg" width="40" alt="otra" style="margin-bottom:24px">
-${body}
-<p style="margin-top:40px;font-size:12px;color:#9E9A93">otra — festival connections</p>
+const chip = (text) =>
+  `<span style="display:inline-block;font-size:11px;color:${C.muted};background:${C.surface};border-radius:4px;padding:3px 9px;margin-right:6px;font-weight:500">${text}</span>`;
+
+const quoteBlock = (text, chips = '') =>
+  `<div style="background:${C.tint};border:1px solid ${C.tintBorder};border-radius:10px;padding:14px 16px;margin:18px 0">
+    ${chips ? `<div style="margin-bottom:8px">${chips}</div>` : ''}
+    <p style="margin:0;font-size:14px;color:${C.dark};line-height:1.65">${text}</p>
+  </div>`;
+
+const divider = () =>
+  `<hr style="border:none;border-top:1px solid ${C.border};margin:28px 0">`;
+
+// SVG logomark inlined so it renders in all clients
+const logo = `<svg width="28" height="28" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="90" stroke="${C.primary}" stroke-width="16"/>
+  <circle cx="100" cy="100" r="28" fill="${C.primary}"/>
+  <path d="M100 190 Q130 160 100 130" stroke="${C.primary}" stroke-width="14" stroke-linecap="round" fill="none"/>
+</svg>`;
+
+const wrap = (body) => `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${C.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:${C.dark}">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};padding:32px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+
+        <!-- Header -->
+        <tr><td style="padding:0 0 24px">${logo}</td></tr>
+
+        <!-- Card -->
+        <tr><td style="background:${C.card};border-radius:16px;padding:28px 28px 32px;border:1px solid ${C.border}">
+          ${body}
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:24px 4px 0;font-size:12px;color:${C.muted};line-height:1.6">
+          otra — festival connections<br>
+          <a href="${APP_URL}" style="color:${C.muted}">otra.vercel.app</a>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body></html>`;
 
+// ── Templates ─────────────────────────────────────────────────────────────────
+
 function searchLiveHtml(festivalName, description, artist) {
-  const artistLine = artist && artist !== 'Otro' ? `<p style="margin:4px 0 0;font-size:13px;color:#7C3AED">${artist}</p>` : '';
+  const chips = artist && artist !== 'Otro' ? chip(artist) : '';
   return wrap(`
-    <h2 style="margin:0 0 8px">Your search is live 🔍</h2>
-    <p style="color:#555">We're matching you with people at <strong>${festivalName}</strong> who shared the same moment.</p>
-    <div style="background:#F7F5F2;border-radius:8px;padding:14px;margin:20px 0;font-size:14px;color:#1D1D2F;line-height:1.6">${description}${artistLine}</div>
-    <p style="color:#555;font-size:14px">We'll notify you as soon as we find a match.</p>
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">AI Search</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">Your search is live</h1>
+    <p style="margin:0 0 4px;font-size:15px;color:${C.sec};line-height:1.6">We're matching you with people at <strong style="color:${C.dark}">${festivalName}</strong> who shared the same moment.</p>
+    ${quoteBlock(description, chips)}
+    <p style="margin:0;font-size:14px;color:${C.muted}">We'll notify you as soon as we find a match.</p>
     ${btn('See your search →')}
   `);
 }
 
 function activityDigestHtml(festivalName, artist) {
   return wrap(`
-    <h2 style="margin:0 0 8px">More people searching at ${festivalName}</h2>
-    <p style="color:#555">New searches for <strong>${artist}</strong> have appeared — there may be new matches waiting for you.</p>
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">New activity</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">More people searching at ${festivalName}</h1>
+    <p style="margin:0;font-size:15px;color:${C.sec};line-height:1.6">New searches for <strong style="color:${C.dark}">${artist}</strong> just appeared — there may be new matches waiting for you.</p>
     ${btn('Check your matches →')}
   `);
 }
 
 function mutualMatchHtml(festivalName, otherName) {
   return wrap(`
-    <h2 style="margin:0 0 8px">You have a mutual match ✦</h2>
-    <p style="color:#555">You and <strong>${otherName || 'someone'}</strong> both accepted each other at <strong>${festivalName}</strong>.</p>
-    <p style="color:#555;font-size:14px">Open the app to share your Instagram and connect.</p>
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Mutual match</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">You matched ✦</h1>
+    <p style="margin:0 0 4px;font-size:15px;color:${C.sec};line-height:1.6">You and <strong style="color:${C.dark}">${otherName || 'someone'}</strong> both accepted each other at <strong style="color:${C.dark}">${festivalName}</strong>.</p>
+    ${divider()}
+    <p style="margin:0;font-size:14px;color:${C.muted}">Open the app and share your Instagram to connect.</p>
     ${btn('Connect now →')}
   `);
 }
 
 function crowdRequestHtml(festivalName, senderName, postDescription, message) {
-  const msgLine = message ? `<blockquote style="border-left:3px solid #7C3AED;margin:16px 0;padding:8px 14px;color:#555;font-size:14px">${message}</blockquote>` : '';
+  const msgBlock = message
+    ? `<div style="border-left:3px solid ${C.primary};padding:10px 14px;margin:16px 0;font-size:14px;color:${C.sec};font-style:italic;line-height:1.6">${message}</div>`
+    : '';
   return wrap(`
-    <h2 style="margin:0 0 8px">Someone wants to connect with you</h2>
-    <p style="color:#555"><strong>${senderName || 'Someone'}</strong> saw your post at <strong>${festivalName}</strong> and wants to connect.</p>
-    <div style="background:#F7F5F2;border-radius:8px;padding:14px;margin:16px 0;font-size:14px;color:#1D1D2F;line-height:1.6">${postDescription}</div>
-    ${msgLine}
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Crowd</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">Someone wants to connect</h1>
+    <p style="margin:0 0 4px;font-size:15px;color:${C.sec};line-height:1.6"><strong style="color:${C.dark}">${senderName || 'Someone'}</strong> saw your post at <strong style="color:${C.dark}">${festivalName}</strong> and wants to connect.</p>
+    ${quoteBlock(postDescription)}
+    ${msgBlock}
     ${btn('See the request →')}
   `);
 }
