@@ -249,7 +249,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
 
         <div style={{
           width: '100%', backgroundColor: t.white, border: 'none',
-          borderRadius: radius.lg, padding: '14px 14px 10px',
+          borderRadius: radius.lg, padding: '14px 14px 52px',
           boxShadow: `0 0 18px 4px rgba(181,11,242,0.10), 0 1px 4px rgba(29,29,47,0.04)`, position: 'relative',
         }}>
           {!prompt && (
