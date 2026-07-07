@@ -441,7 +441,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
   // ── Step: self ────────────────────────────────────────────────────────────
   if (step === 'self') return (
     <div>
-      <StepHeader title="And a bit about you?" sub="So they can recognise you when we find a match" step={4} total={REFINE_TOTAL} onExit={handleReset} />
+      <StepHeader title="And a bit about you?" sub="Describe yourself through their eyes — what details would they use to recognise you?" step={4} total={REFINE_TOTAL} onExit={handleReset} />
 
       <SectionLabel>Describe yourself</SectionLabel>
       <textarea
