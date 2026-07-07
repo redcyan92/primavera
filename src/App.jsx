@@ -287,6 +287,7 @@ const PrimaveraApp = () => {
   const [userName, setUserName]             = useState(() => localStorage.getItem('fulmi_user_name') || '');
   const [editingName, setEditingName]       = useState(false);
   const [nameDraft, setNameDraft]           = useState('');
+  const [emailNotifications, setEmailNotifications] = useState(true);
   const [isModalOpen, setIsModalOpen]       = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showSignOutModal, setShowSignOutModal]             = useState(false);
@@ -586,6 +587,7 @@ const PrimaveraApp = () => {
         } else {
           const localName = localStorage.getItem('fulmi_user_name');
           if (localName && !users[0].name) await supabase.updateUser(uid, { name: localName });
+          if (users[0].email_unsubscribed) setEmailNotifications(false);
           setAuthStep(null);
           if (activeFestivalId) await loadData(uid, activeFestivalId);
         }
@@ -1982,6 +1984,31 @@ const PrimaveraApp = () => {
                       <p style={{ fontSize: '11px', color: t.textMuted, margin: 0 }}>{label}</p>
                     </div>
                   ))}
+                </div>
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: t.dark, fontFamily: font }}>Email notifications</p>
+                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: t.textMuted, fontFamily: font }}>Matches, searches and requests</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = !emailNotifications;
+                      setEmailNotifications(next);
+                      if (userId) supabase.updateUser(userId, { email_unsubscribed: !next });
+                    }}
+                    style={{
+                      width: '44px', height: '26px', borderRadius: '13px', border: 'none', cursor: 'pointer', flexShrink: 0,
+                      background: emailNotifications ? t.primary : t.border,
+                      position: 'relative', transition: 'background 0.2s',
+                    }}
+                  >
+                    <span style={{
+                      position: 'absolute', top: '3px',
+                      left: emailNotifications ? '21px' : '3px',
+                      width: '20px', height: '20px', borderRadius: '50%', background: '#fff',
+                      transition: 'left 0.2s', display: 'block',
+                    }} />
+                  </button>
                 </div>
               </div>
                 );
