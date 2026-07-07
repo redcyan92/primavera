@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 const resend    = new Resend(process.env.RESEND_API_KEY);
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const FROM  = 'otra <noreply@otra.social>';
+const FROM  = 'otra <onboarding@resend.dev>'; // swap to noreply@otra.social once domain is verified in Resend
 const APP_URL = 'https://otra.vercel.app';
 
 // ── Supabase helpers ──────────────────────────────────────────────────────────
