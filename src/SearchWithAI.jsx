@@ -269,7 +269,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
               border: 'none', outline: 'none', resize: 'none',
               fontSize: '14px', color: t.text, fontFamily: font,
               lineHeight: '1.6', boxSizing: 'border-box',
-              paddingRight: '44px', paddingBottom: '40px',
+              paddingRight: '44px', paddingBottom: '52px',
             }}
           />
           {/* Visibility indicator — bottom left */}
