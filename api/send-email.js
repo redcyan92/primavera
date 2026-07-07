@@ -22,9 +22,10 @@ async function getUser(id) {
 }
 
 async function getUsersWithArtistInFestival(festivalId, artist, excludeUserId) {
+  const minAge = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // notes at least 24h old
   const rows = await sbGet(
     'notes',
-    `festival_id=eq.${encodeURIComponent(festivalId)}&artist=eq.${encodeURIComponent(artist)}&user_id=neq.${excludeUserId}&select=user_id`
+    `festival_id=eq.${encodeURIComponent(festivalId)}&artist=eq.${encodeURIComponent(artist)}&user_id=neq.${excludeUserId}&created_at=lt.${minAge}&select=user_id`
   );
   if (!Array.isArray(rows)) return [];
   const seen = new Set();
