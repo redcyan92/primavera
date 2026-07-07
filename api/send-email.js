@@ -2,8 +2,9 @@ import { Resend } from 'resend';
 
 const resend    = new Resend(process.env.RESEND_API_KEY);
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const FROM  = 'otra <onboarding@resend.dev>'; // swap to noreply@otra.social once domain is verified in Resend
+// Service role key bypasses RLS — required to read other users' email addresses
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
+const FROM  = 'otra <noreply@otra.social>';
 const APP_URL = 'https://otra.vercel.app';
 
 // ── Supabase helpers ──────────────────────────────────────────────────────────
@@ -146,15 +147,24 @@ function crowdRequestHtml(festivalName, senderName, postDescription, message) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-  if (!process.env.RESEND_API_KEY) return res.status(500).json({ error: 'RESEND_API_KEY not set' });
+  if (!process.env.RESEND_API_KEY) {
+    console.error('send-email: RESEND_API_KEY is not set');
+    return res.status(500).json({ error: 'RESEND_API_KEY not set' });
+  }
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('send-email: Supabase env vars missing', { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_KEY: !!SUPABASE_KEY });
+    return res.status(500).json({ error: 'Supabase env not set' });
+  }
 
   const { type, ...data } = req.body ?? {};
+  console.log('send-email called:', type, JSON.stringify(data));
 
   try {
     if (type === 'search_live') {
       const { userId, festivalName, noteDescription, artist } = data;
       const user = await getUser(userId);
-      if (!user?.email) return res.status(200).json({ skipped: 'no email' });
+      console.log('send-email getUser result:', JSON.stringify(user));
+      if (!user?.email) return res.status(200).json({ skipped: 'no email', userId });
 
       await resend.emails.send({
         from: FROM, to: user.email,
