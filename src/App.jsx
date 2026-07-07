@@ -1827,13 +1827,6 @@ const PrimaveraApp = () => {
                 </h1>
                 <button onClick={resetVibe} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: t.textMuted, fontSize: '20px', lineHeight: 1 }}>✕</button>
               </div>
-              {/* Fade gradient below title — only on steps with a scrollable list */}
-              {vibeStep === 1 && <div style={{
-                flexShrink: 0, height: '28px', marginBottom: '-28px',
-                background: `linear-gradient(to bottom, ${t.bg}, transparent)`,
-                zIndex: 1, pointerEvents: 'none', position: 'relative',
-              }} />}
-
               {/* Step 0: text */}
               {vibeStep === 0 && (
                 <>
@@ -1847,36 +1840,36 @@ const PrimaveraApp = () => {
                       onChange={e => setVibeText(e.target.value)}
                       placeholder="Four Tet dropped that track and everyone just went silent. Still thinking about it."
                       style={{
-                        width: '100%', minHeight: '180px', padding: '14px 14px 48px', borderRadius: radius.lg,
+                        width: '100%', minHeight: '180px', padding: '14px 14px 14px', borderRadius: `${radius.lg} ${radius.lg} 0 0`,
                         fontSize: '14px', fontFamily: font, border: 'none',
                         color: t.dark, backgroundColor: t.white, boxSizing: 'border-box',
                         resize: 'none', outline: 'none', lineHeight: '1.65',
                       }}
                     />
-                    {/* Public indicator — bottom left */}
-                    <div style={{ position: 'absolute', bottom: '14px', left: '14px', display: 'flex', alignItems: 'center', gap: '5px', pointerEvents: 'none' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
-                      <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>Public · visible to everyone</span>
+                    {/* Public indicator + Next button — below textarea */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      backgroundColor: t.white, borderRadius: `0 0 ${radius.lg} ${radius.lg}`,
+                      padding: '10px 12px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>Public · visible to everyone</span>
+                      </div>
+                      <button
+                        onClick={() => setVibeStep(1)}
+                        disabled={!vibeText.trim()}
+                        style={{
+                          padding: '7px 18px', borderRadius: radius.md, border: 'none',
+                          backgroundColor: vibeText.trim() ? t.dark : t.borderDark,
+                          color: '#fff', cursor: vibeText.trim() ? 'pointer' : 'not-allowed',
+                          fontSize: '13px', fontWeight: '700', fontFamily: font,
+                          transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
+                        }}
+                      >Next</button>
                     </div>
-                    {/* Arrow button — bottom right */}
-                    <button
-                      onClick={() => setVibeStep(1)}
-                      disabled={!vibeText.trim()}
-                      style={{
-                        position: 'absolute', bottom: '12px', right: '12px',
-                        width: '36px', height: '36px', borderRadius: radius.circle, border: 'none',
-                        backgroundColor: vibeText.trim() ? t.dark : t.borderDark,
-                        color: '#fff', cursor: vibeText.trim() ? 'pointer' : 'not-allowed',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)', flexShrink: 0,
-                      }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                      </svg>
-                    </button>
                   </div>
                 </>
               )}
@@ -1884,39 +1877,40 @@ const PrimaveraApp = () => {
               {/* Step 1: artist */}
               {vibeStep === 1 && (
                 <>
-                  <p style={{ fontSize: '13px', color: t.textMuted, margin: '0 0 16px', fontFamily: font }}>
-                    Which artist were you at?
-                  </p>
                   <div style={{
                     flex: 1, minHeight: 0, maxHeight: '42vh',
+                    backgroundColor: t.white, borderRadius: radius.lg, padding: '14px 14px 0',
+                    overflowY: 'auto',
                     WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 48px), transparent 100%)',
                     maskImage: 'linear-gradient(to bottom, black calc(100% - 48px), transparent 100%)',
-                    overflowY: 'auto',
                   }}>
+                    <p style={{ fontSize: '13px', color: t.textMuted, margin: '0 0 12px', fontFamily: font }}>
+                      Tag an artist if your moment is related to one — optional
+                    </p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignContent: 'flex-start', paddingBottom: '48px' }}>
                       {(activeFestival?.artists || []).filter(a => a !== 'Otro').slice().sort((a, b) => a.localeCompare(b)).map(artist => (
                         <button key={artist} onClick={() => setVibeArtist(vibeArtist === artist ? null : artist)} style={{
                           padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
                           border: 'none',
-                          backgroundColor: vibeArtist === artist ? t.primaryBg : t.white,
+                          backgroundColor: vibeArtist === artist ? t.primaryBg : t.surface,
                           fontSize: '12px', color: vibeArtist === artist ? t.primary : t.textSec,
                           fontWeight: vibeArtist === artist ? '600' : '400', fontFamily: font,
-                          transition: 'background-color 0.15s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.15s cubic-bezier(0.23, 1, 0.32, 1), color 0.15s cubic-bezier(0.23, 1, 0.32, 1)',
+                          transition: 'background-color 0.15s cubic-bezier(0.23, 1, 0.32, 1), color 0.15s cubic-bezier(0.23, 1, 0.32, 1)',
                         }}>{artist}</button>
                       ))}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', paddingTop: '20px' }}>
+                  <div style={{ display: 'flex', gap: '10px', paddingTop: '16px' }}>
                     <button onClick={() => setVibeStep(0)} style={{
                       flex: 1, padding: '14px', borderRadius: radius.md, border: 'none',
                       backgroundColor: t.white,
                       color: t.dark, fontSize: '14px', fontWeight: '500', fontFamily: font, cursor: 'pointer',
-                    }}>← Back</button>
+                    }}>Back</button>
                     <button onClick={submitVibe} style={{
                       flex: 2, padding: '14px', borderRadius: radius.md, border: 'none',
                       backgroundColor: t.primary, color: '#fff',
                       fontSize: '14px', fontWeight: '700', fontFamily: font, cursor: 'pointer',
-                    }}>Share ✓</button>
+                    }}>Share</button>
                   </div>
                 </>
               )}

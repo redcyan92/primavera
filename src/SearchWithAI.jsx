@@ -28,14 +28,14 @@ const SectionLabel = ({ children }) => (
   <p style={{ fontSize: '11px', fontWeight: '600', color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 10px', fontFamily: font }}>{children}</p>
 );
 
-const NavButtons = ({ onBack, onNext, nextLabel = 'Next →', nextEnabled = true, isLast = false }) => (
+const NavButtons = ({ onBack, onNext, nextLabel = 'Next', nextEnabled = true, isLast = false }) => (
   <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', paddingBottom: '8px' }}>
     {onBack && (
       <button onClick={onBack} style={{
         flex: 1, padding: '13px', borderRadius: radius.md, border: 'none',
         backgroundColor: t.white, cursor: 'pointer', fontSize: '14px',
         color: t.text, fontWeight: '500', fontFamily: font,
-      }}>← Back</button>
+      }}>Back</button>
     )}
     <button onClick={onNext} disabled={!nextEnabled} style={{
       flex: 2, padding: '13px', borderRadius: radius.md, border: 'none',
@@ -393,7 +393,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         </div>
       </div>
 
-      <NavButtons onBack={() => setStep('input')} onNext={() => go('artist')} nextLabel="Next →" />
+      <NavButtons onBack={() => setStep('input')} onNext={() => go('artist')} nextLabel="Next" />
     </div>
   );
 
@@ -413,7 +413,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         ))}
       </div>
 
-      <NavButtons onBack={() => go('time')} onNext={() => go('location')} nextLabel="Next →" />
+      <NavButtons onBack={() => go('time')} onNext={() => go('location')} nextLabel="Next" />
     </div>
   );
 
@@ -434,7 +434,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
         ))}
       </div>
 
-      <NavButtons onBack={() => go('artist')} onNext={() => go('self')} nextLabel="Next →" />
+      <NavButtons onBack={() => go('artist')} onNext={() => go('self')} nextLabel="Next" />
     </div>
   );
 
