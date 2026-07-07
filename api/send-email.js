@@ -31,6 +31,27 @@ async function getUsersWithArtistInFestival(festivalId, artist, excludeUserId) {
   return rows.map(r => r.user_id).filter(id => { if (seen.has(id)) return false; seen.add(id); return true; });
 }
 
+async function hasDigestBeenSent(userId, festivalId, artist) {
+  const rows = await sbGet(
+    'email_digests',
+    `user_id=eq.${userId}&festival_id=eq.${encodeURIComponent(festivalId)}&artist=eq.${encodeURIComponent(artist)}&select=id`
+  );
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function recordDigestSent(userId, festivalId, artist) {
+  await fetch(`${SUPABASE_URL}/rest/v1/email_digests`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=ignore-duplicates',
+    },
+    body: JSON.stringify({ user_id: userId, festival_id: festivalId, artist }),
+  });
+}
+
 // ── Design tokens (matching app) ─────────────────────────────────────────────
 const C = {
   bg:       '#F8FAFB',
@@ -176,6 +197,8 @@ export default async function handler(req, res) {
       const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
       await Promise.all(userIds.map(async (uid) => {
+        const alreadySent = await hasDigestBeenSent(uid, festivalId, artist);
+        if (alreadySent) return;
         const user = await getUser(uid);
         if (!user?.email) return;
         await resend.emails.send({
@@ -184,6 +207,7 @@ export default async function handler(req, res) {
           html: activityDigestHtml(festivalName, artist),
           scheduledAt,
         });
+        await recordDigestSent(uid, festivalId, artist);
       }));
     }
 
