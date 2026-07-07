@@ -1887,7 +1887,7 @@ const PrimaveraApp = () => {
                     <p style={{ fontSize: '13px', color: t.textMuted, margin: '0 0 12px', fontFamily: font }}>
                       Tag an artist if your moment is related to one — optional
                     </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignContent: 'flex-start', paddingBottom: '48px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignContent: 'flex-start', paddingBottom: '48px', paddingTop: '4px' }}>
                       {(activeFestival?.artists || []).filter(a => a !== 'Otro').slice().sort((a, b) => a.localeCompare(b)).map(artist => (
                         <button key={artist} onClick={() => setVibeArtist(vibeArtist === artist ? null : artist)} style={{
                           padding: '6px 12px', borderRadius: radius.pill, cursor: 'pointer',
