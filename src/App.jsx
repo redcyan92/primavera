@@ -686,6 +686,12 @@ const PrimaveraApp = () => {
           setMyNotes(prev => [...prev, newNote]);
           setPublicNotes(prev => [...prev, newNote]);
         }
+        // Emails — fire and forget
+        const emailBase = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+        fetch('/api/send-email', { ...emailBase, body: JSON.stringify({ type: 'search_live', userId, festivalName: activeFestival?.fullName, noteDescription: newNote.description, artist: newNote.artist }) });
+        if (newNote.artist && newNote.artist !== 'Otro') {
+          fetch('/api/send-email', { ...emailBase, body: JSON.stringify({ type: 'activity_digest', festivalId: activeFestivalId, festivalName: activeFestival?.fullName, artist: newNote.artist, excludeUserId: userId }) });
+        }
         setIsModalOpen(false);
       }
     } catch (err) {
@@ -708,6 +714,7 @@ const PrimaveraApp = () => {
       user_1_response: 'yes',
       message: comment || null,
     });
+    fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'crowd_request', senderId: userId, receiverId: note.user_id, festivalName: activeFestival?.fullName, postDescription: note.description, message: comment || null }) });
   };
 
   const handleLikePublic = (noteId) => {
@@ -746,6 +753,9 @@ const PrimaveraApp = () => {
         const revealed = otherResponse === 'yes';
         const updateData = isUser1 ? { user_1_response: 'yes', revealed } : { user_2_response: 'yes', revealed };
         await supabase.updateMatch(record.id, updateData);
+        if (revealed) {
+          fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'mutual_match', user1Id: record.user_1_id, user2Id: record.user_2_id, festivalName: activeFestival?.fullName }) });
+        }
       } else {
         await supabase.createMatch({
           note_1_id: noteId, note_2_id: matchId,
@@ -778,6 +788,7 @@ const PrimaveraApp = () => {
       if (theirNote) {
         setConfirmedMatches(prev => [...prev, { matchId, note: theirNote, score: record.score, quality: record.quality }]);
       }
+      fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'mutual_match', user1Id: record.user_1_id, user2Id: record.user_2_id, festivalName: activeFestival?.fullName }) });
     }
   };
 
