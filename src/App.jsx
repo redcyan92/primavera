@@ -935,7 +935,7 @@ const PrimaveraApp = () => {
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 20px 0' }}>
           <OtraLogo color='#FFFFFF' style={{ width: '100%', height: 'auto', display: 'block' }} />
         </div>
-        <div style={{ position: 'absolute', zIndex: 1, inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px', pointerEvents: 'none' }}>
+        <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px', paddingBottom: '60px' }}>
           <h1 style={{
             fontSize: '42px', fontWeight: '500', color: '#FFFFFF',
             margin: 0, lineHeight: '1.15', textAlign: 'center',
