@@ -14,7 +14,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', backgroundColor: '#F8FAFB', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', backgroundColor: '#F8FAFB', fontFamily: 'system-ui, sans-serif' }}>
           <p style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>Something went wrong</p>
           <p style={{ fontSize: '13px', color: '#888', marginBottom: '24px', textAlign: 'center' }}>{this.state.error.message}</p>
           <button onClick={() => window.location.reload()} style={{ padding: '12px 24px', backgroundColor: '#B50BF2', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
@@ -818,7 +818,7 @@ const PrimaveraApp = () => {
 
     return (
       <div style={{
-        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100svh',
         backgroundColor: '#EEE1FD', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
@@ -903,7 +903,7 @@ const PrimaveraApp = () => {
   if (authStep === 'splash') {
     return (
       <div style={{
-        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100svh',
         backgroundColor: '#F1F9B5', fontFamily: font,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
@@ -976,7 +976,7 @@ const PrimaveraApp = () => {
         onTouchStart={e => { emailSwipeRef.start = e.touches[0].clientX; }}
         onTouchEnd={e => { if (emailSwipeRef.start !== null && e.changedTouches[0].clientX - emailSwipeRef.start > 50) { setAuthStep('onboarding'); } emailSwipeRef.start = null; }}
         style={{
-        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100svh',
         backgroundColor: t.primary, fontFamily: font,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -1026,7 +1026,7 @@ const PrimaveraApp = () => {
   if (authStep === 'otp') {
     return (
       <div style={{
-        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100svh',
         backgroundColor: t.primary, fontFamily: font,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -1107,7 +1107,7 @@ const PrimaveraApp = () => {
         onTouchStart={e => { ageSwipeRef.start = e.touches[0].clientX; }}
         onTouchEnd={e => { if (ageSwipeRef.start !== null && e.changedTouches[0].clientX - ageSwipeRef.start > 50) { setAuthStep('email'); } ageSwipeRef.start = null; }}
         style={{
-        maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
+        maxWidth: '480px', margin: '0 auto', minHeight: '100svh',
         backgroundColor: t.bg, fontFamily: font,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -1284,7 +1284,7 @@ const PrimaveraApp = () => {
   const totalConnectionsNotif = unseenCrowdCount + unseenAICount;
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: t.bg, fontFamily: font, position: 'relative' }}>
+    <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100svh', display: 'flex', flexDirection: 'column', backgroundColor: t.bg, fontFamily: font, position: 'relative' }}>
 
       {/* Top header — flowing fade */}
       <div style={{
