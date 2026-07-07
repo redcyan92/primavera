@@ -423,11 +423,12 @@ const PrimaveraApp = () => {
           const confirmed = (await Promise.all(confirmedRaw.map(async r => {
             const isUser1 = r.user_1_id === uid;
             const theirNoteId = isUser1 ? r.note_2_id : r.note_1_id;
+            const myNoteId   = isUser1 ? r.note_1_id : r.note_2_id;
             const theirUserId = isUser1 ? r.user_2_id : r.user_1_id;
             const theirNote = camelAll.find(n => n.id === theirNoteId);
             if (!theirNote) return null;
             const userRes = await supabase.getUserById(theirUserId);
-            return { matchId: r.id, note: theirNote, score: r.score, quality: r.quality, authorName: displayNameFor(userRes?.[0]) };
+            return { matchId: r.id, myNoteId, note: theirNote, score: r.score, quality: r.quality, authorName: displayNameFor(userRes?.[0]) };
           }))).filter(Boolean);
           setConfirmedMatches(confirmed);
         } else {
@@ -1467,10 +1468,13 @@ const PrimaveraApp = () => {
                 {searchCards.length === 0 ? (
                   <NoSearchCard onCreateSearch={() => navigateTo('notes')} />
                 ) : searchCards.map(({ note: myNote, matches }) => {
+                  // Confirmed match for this note (by myNoteId survives festival switches)
+                  const confirmedForNote = confirmedMatches.find(cm => cm.myNoteId === myNote.id);
+
                   const carouselItems = matches
                     .filter(m => m.userResponse !== 'no')
                     .map(m => {
-                      const confirmed = confirmedMatches.find(cm => cm.note?.id === m.id);
+                      const confirmed = confirmedMatches.find(cm => cm.note?.id === m.id) || (confirmedForNote?.note?.id === m.id ? confirmedForNote : null);
                       let state;
                       if (confirmed) {
                         const theyHaveIg = !!confirmed.note?.instagram;
@@ -1485,6 +1489,14 @@ const PrimaveraApp = () => {
                       }
                       return { match: m, state, confirmed: confirmed || null };
                     });
+
+                  // If card.matches is empty but we have a confirmed match, synthesise a carousel item
+                  if (carouselItems.length === 0 && confirmedForNote) {
+                    const theyHaveIg = !!confirmedForNote.note?.instagram;
+                    const iHaveIg = !!myNote?.instagram;
+                    const state = (theyHaveIg && iHaveIg) ? 'mutual_done' : iHaveIg ? 'mutual_wait_theirs' : 'mutual_add_ig';
+                    carouselItems.push({ match: { ...confirmedForNote.note, userResponse: 'yes' }, state, confirmed: confirmedForNote });
+                  }
 
                   const idx = carouselIndexes[myNote.id] || 0;
                   const clampedIdx = Math.min(idx, Math.max(0, carouselItems.length - 1));

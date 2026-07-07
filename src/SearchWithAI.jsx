@@ -94,7 +94,9 @@ const StepHeader = ({ title, sub, step, total, onExit }) => (
 const REFINE_STEPS = ['time', 'artist', 'location', 'self'];
 const REFINE_TOTAL = REFINE_STEPS.length;
 
-function getSearchState(suggestedMatches, confirmedMatches) {
+function getSearchState(suggestedMatches, confirmedMatches, myNoteId) {
+  // Check confirmed by myNoteId first — survives festival switches where card.matches may be empty
+  if (myNoteId && confirmedMatches?.some(cm => cm.myNoteId === myNoteId)) return 'connected';
   if (!suggestedMatches || suggestedMatches.length === 0) return 'searching';
   const visible = suggestedMatches.filter(m => m.userResponse !== 'no');
   if (visible.length === 0) return 'searching';
@@ -307,7 +309,7 @@ export default function SearchWithAI({ onSave, artists = [], days = [], mySearch
             {mySearches.map(card => {
               const note = card.note ?? card;
               const cardMatches = card.matches ?? [];
-              const state = getSearchState(cardMatches, confirmedMatches);
+              const state = getSearchState(cardMatches, confirmedMatches, note.id);
               const stateStyle = STATE_LABELS[state];
               const metaParts = [
                 note.artist && note.artist !== 'Otro' ? note.artist : null,
