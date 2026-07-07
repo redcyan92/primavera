@@ -944,7 +944,7 @@ const PrimaveraApp = () => {
             Find the people you vibed with
           </h1>
         </div>
-        <div style={{ position: 'relative', zIndex: 1, padding: '0 24px 64px' }}>
+        <div style={{ position: 'relative', zIndex: 1, padding: '0 24px 52px' }}>
           <button
             onClick={() => setAuthStep('onboarding')}
             style={{
@@ -1833,43 +1833,43 @@ const PrimaveraApp = () => {
                   <p style={{ fontSize: '13px', color: t.textMuted, margin: '0 0 16px', fontFamily: font }}>
                     Share a moment with everyone at the festival — visible to all on the Crowd wall. To find a specific person, use Search instead.
                   </p>
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ borderRadius: radius.lg, overflow: 'hidden', backgroundColor: t.white }}>
                     <textarea
                       autoFocus
                       value={vibeText}
                       onChange={e => setVibeText(e.target.value)}
                       placeholder="Four Tet dropped that track and everyone just went silent. Still thinking about it."
                       style={{
-                        width: '100%', minHeight: '180px', padding: '14px 14px 52px', borderRadius: radius.lg,
+                        width: '100%', minHeight: '180px', padding: '14px',
                         fontSize: '14px', fontFamily: font, border: 'none',
                         color: t.dark, backgroundColor: t.white, boxSizing: 'border-box',
-                        resize: 'none', outline: 'none', lineHeight: '1.65',
+                        resize: 'none', outline: 'none', lineHeight: '1.65', display: 'block',
                       }}
                     />
-                    {/* Public indicator — bottom left */}
-                    <div style={{ position: 'absolute', bottom: '14px', left: '14px', display: 'flex', alignItems: 'center', gap: '5px', pointerEvents: 'none' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
-                      <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>Public · visible to everyone</span>
+                    {/* Bottom bar — Public indicator + Next button */}
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '10px 12px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span style={{ fontSize: '11px', color: t.textMuted, fontFamily: font }}>Public · visible to everyone</span>
+                      </div>
+                      <button
+                        onClick={() => setVibeStep(1)}
+                        disabled={!vibeText.trim()}
+                        style={{
+                          width: '36px', height: '36px', borderRadius: radius.circle, border: 'none',
+                          backgroundColor: vibeText.trim() ? t.dark : t.borderDark,
+                          color: '#fff', cursor: vibeText.trim() ? 'pointer' : 'not-allowed',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)', flexShrink: 0,
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                      </button>
                     </div>
-                    {/* Circle arrow button — bottom right */}
-                    <button
-                      onClick={() => setVibeStep(1)}
-                      disabled={!vibeText.trim()}
-                      style={{
-                        position: 'absolute', bottom: '12px', right: '12px',
-                        width: '36px', height: '36px', borderRadius: radius.circle, border: 'none',
-                        backgroundColor: vibeText.trim() ? t.dark : t.borderDark,
-                        color: '#fff', cursor: vibeText.trim() ? 'pointer' : 'not-allowed',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
-                      }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                      </svg>
-                    </button>
                   </div>
                 </>
               )}
