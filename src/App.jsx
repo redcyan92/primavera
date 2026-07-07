@@ -1341,7 +1341,7 @@ const PrimaveraApp = () => {
               })()}
             </h1>
             {/* Cards pushed to bottom */}
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px', paddingTop: '24px' }}>
 
               {/* AI Search card */}
               <button onClick={() => navigateTo('notes')} style={{
