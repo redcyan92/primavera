@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { createHmac } from 'crypto';
 
 const resend    = new Resend(process.env.RESEND_API_KEY);
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -17,8 +18,13 @@ async function sbGet(table, query) {
 }
 
 async function getUser(id) {
-  const rows = await sbGet('users', `id=eq.${id}&select=id,email,name`);
+  const rows = await sbGet('users', `id=eq.${id}&select=id,email,name,email_unsubscribed`);
   return rows?.[0] ?? null;
+}
+
+function unsubscribeUrl(userId) {
+  const token = createHmac('sha256', process.env.UNSUBSCRIBE_SECRET).update(userId).digest('hex');
+  return `${APP_URL}/api/unsubscribe?uid=${userId}&token=${token}`;
 }
 
 async function getUsersWithArtistInFestival(festivalId, artist, excludeUserId) {
@@ -97,7 +103,7 @@ const logo = `<svg viewBox="0 0 27.76 8.41" xmlns="http://www.w3.org/2000/svg" w
   <circle fill="#B50BF2" cx="4.2" cy="4.21" r=".88"/>
 </svg>`;
 
-const wrap = (body) => `<!DOCTYPE html>
+const wrap = (body, userId) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:${C.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:${C.dark}">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};padding:40px 16px">
@@ -110,6 +116,7 @@ const wrap = (body) => `<!DOCTYPE html>
         <tr><td style="padding:8px 0 0;font-size:12px;color:${C.muted};line-height:1.8;border-top:1px solid ${C.border}">
           OTRA — Find the people you vibed with<br>
           <a href="https://otra.social" style="color:${C.primary};text-decoration:none">otra.social</a>
+          ${userId ? `&nbsp;·&nbsp;<a href="${unsubscribeUrl(userId)}" style="color:${C.muted};text-decoration:none">Unsubscribe</a>` : ''}
         </td></tr>
       </table>
     </td></tr>
@@ -118,7 +125,7 @@ const wrap = (body) => `<!DOCTYPE html>
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 
-function searchLiveHtml(festivalName, description, artist) {
+function searchLiveHtml(festivalName, description, artist, userId) {
   const chips = artist && artist !== 'Otro' ? chip(artist) : '';
   return wrap(`
     <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">AI Search</p>
@@ -127,19 +134,19 @@ function searchLiveHtml(festivalName, description, artist) {
     ${quoteBlock(description, chips)}
     <p style="margin:0;font-size:14px;color:${C.muted}">We'll notify you as soon as we find a match.</p>
     ${btn('See your search →')}
-  `);
+  `, userId);
 }
 
-function activityDigestHtml(festivalName, artist) {
+function activityDigestHtml(festivalName, artist, userId) {
   return wrap(`
     <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">New activity</p>
     <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">More people searching at ${festivalName}</h1>
     <p style="margin:0;font-size:15px;color:${C.sec};line-height:1.6">New searches for <strong style="color:${C.dark}">${artist}</strong> just appeared — there may be new matches waiting for you.</p>
     ${btn('Check your matches →')}
-  `);
+  `, userId);
 }
 
-function mutualMatchHtml(festivalName, otherName) {
+function mutualMatchHtml(festivalName, otherName, userId) {
   return wrap(`
     <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Mutual match</p>
     <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.dark};line-height:1.3">It's time to connect ✦</h1>
@@ -147,10 +154,10 @@ function mutualMatchHtml(festivalName, otherName) {
     ${divider()}
     <p style="margin:0;font-size:14px;color:${C.muted}">Open the app and share your Instagram to connect.</p>
     ${btn('Connect now →')}
-  `);
+  `, userId);
 }
 
-function crowdRequestHtml(festivalName, senderName, postDescription, message) {
+function crowdRequestHtml(festivalName, senderName, postDescription, message, userId) {
   const msgBlock = message ? replyBlock(message) : '';
   return wrap(`
     <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:${C.primary};letter-spacing:0.06em;text-transform:uppercase">Crowd</p>
@@ -159,7 +166,7 @@ function crowdRequestHtml(festivalName, senderName, postDescription, message) {
     ${quoteBlock(postDescription)}
     ${msgBlock}
     ${btn('See the request →')}
-  `);
+  `, userId);
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -183,12 +190,12 @@ export default async function handler(req, res) {
       const { userId, festivalName, noteDescription, artist } = data;
       const user = await getUser(userId);
       console.log('send-email getUser result:', JSON.stringify(user));
-      if (!user?.email) return res.status(200).json({ skipped: 'no email', userId });
+      if (!user?.email || user.email_unsubscribed) return res.status(200).json({ skipped: 'no email or unsubscribed' });
 
       await resend.emails.send({
         from: FROM, to: user.email,
         subject: `Your search is live at ${festivalName}`,
-        html: searchLiveHtml(festivalName, noteDescription, artist),
+        html: searchLiveHtml(festivalName, noteDescription, artist, userId),
       });
     }
 
@@ -201,11 +208,11 @@ export default async function handler(req, res) {
         const alreadySent = await hasDigestBeenSent(uid, festivalId, artist);
         if (alreadySent) return;
         const user = await getUser(uid);
-        if (!user?.email) return;
+        if (!user?.email || user.email_unsubscribed) return;
         await resend.emails.send({
           from: FROM, to: user.email,
           subject: `More people searching at ${festivalName} for ${artist}`,
-          html: activityDigestHtml(festivalName, artist),
+          html: activityDigestHtml(festivalName, artist, uid),
           scheduledAt,
         });
         await recordDigestSent(uid, festivalId, artist);
@@ -217,15 +224,15 @@ export default async function handler(req, res) {
       const [user1, user2] = await Promise.all([getUser(user1Id), getUser(user2Id)]);
 
       await Promise.all([
-        user1?.email && resend.emails.send({
+        user1?.email && !user1.email_unsubscribed && resend.emails.send({
           from: FROM, to: user1.email,
           subject: `You matched at ${festivalName} — connect now`,
-          html: mutualMatchHtml(festivalName, user2?.name),
+          html: mutualMatchHtml(festivalName, user2?.name, user1Id),
         }),
-        user2?.email && resend.emails.send({
+        user2?.email && !user2.email_unsubscribed && resend.emails.send({
           from: FROM, to: user2.email,
           subject: `You matched at ${festivalName} — connect now`,
-          html: mutualMatchHtml(festivalName, user1?.name),
+          html: mutualMatchHtml(festivalName, user1?.name, user2Id),
         }),
       ]);
     }
@@ -233,12 +240,12 @@ export default async function handler(req, res) {
     else if (type === 'crowd_request') {
       const { senderId, receiverId, festivalName, postDescription, message } = data;
       const [sender, receiver] = await Promise.all([getUser(senderId), getUser(receiverId)]);
-      if (!receiver?.email) return res.status(200).json({ skipped: 'no email' });
+      if (!receiver?.email || receiver.email_unsubscribed) return res.status(200).json({ skipped: 'no email or unsubscribed' });
 
       await resend.emails.send({
         from: FROM, to: receiver.email,
         subject: `Someone wants to connect with you at ${festivalName}`,
-        html: crowdRequestHtml(festivalName, sender?.name, postDescription, message),
+        html: crowdRequestHtml(festivalName, sender?.name, postDescription, message, receiverId),
       });
     }
 
