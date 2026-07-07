@@ -2927,7 +2927,7 @@ const VibesFeed = ({ notes, noteAuthors, onSendRequest, onLike, myUserId, onDele
                     placeholder="Write a message…"
                     autoFocus
                     style={{
-                      width: '100%', minHeight: '110px', maxHeight: '240px', padding: '14px 14px 60px',
+                      width: '100%', minHeight: '110px', maxHeight: '240px', padding: '14px 72px 68px 14px',
                       borderRadius: radius.md, border: 'none',
                       fontSize: '14px', fontFamily: font, color: t.dark,
                       backgroundColor: t.white, resize: 'none', outline: 'none', overflowY: 'auto',
